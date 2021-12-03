@@ -6,6 +6,8 @@
 
 #include <jclib/memory.h>
 
+#include <string_view>
+
 namespace lbx::api
 {
 	/**
@@ -36,4 +38,14 @@ namespace lbx::api
 	*/
 	[[nodiscard]] LichessClientHandle new_lichess_client();
 
+	/**
+	 * @brief Follows another player
+	 * @param _client Lichess client object
+	 * @param _playerName Name of the player to follow
+	 * @return True on good follow, false otherwise
+	*/
+	bool follow_player(LichessClient& _client, std::string_view _playerName);
+
+
+	void test(LichessClient& _client);
 };

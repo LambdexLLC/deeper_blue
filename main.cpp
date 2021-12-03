@@ -2,6 +2,7 @@
 #include "utility/http.hpp"
 
 #include "api/env.hpp"
+#include "api/api.hpp"
 
 #include <iostream>
 
@@ -14,6 +15,9 @@ int main()
 	{
 		return 1;
 	};
+
+	auto _client = api::new_lichess_client();
+	api::test(*_client);
 
 	return 0;
 };
