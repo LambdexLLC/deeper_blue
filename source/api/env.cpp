@@ -5,6 +5,8 @@
 
 #include <jclib/type_traits.h>
 
+#include <optional>
+
 namespace lbx::api
 {
 	/**
@@ -18,9 +20,20 @@ namespace lbx::api
 		fs::path env_root;
 
 		/**
-		 * @brief Lichess oath token string
+		 * @brief Holds the env variables
 		*/
-		std::string lichess_oath_token{};
+		struct Vars
+		{
+			/**
+			 * @brief Lichess oath token string
+			*/
+			std::string lichess_oath_token{};
+		};
+
+		/**
+		 * @brief Holds the env variables if they have been loaded
+		*/
+		std::optional<Vars> vars{ std::nullopt };
 	};
 
 	namespace
@@ -58,17 +71,22 @@ namespace lbx::api
 
 		auto& _envRoot = _env.env_root;
 		
+		Env::Vars _envVars{};
+
 		// Read lichess json
 		json _lichessJson{};
 		try
 		{
 			_lichessJson = read_json_file(_envRoot / "lichess.json");
-			_env.lichess_oath_token = _lichessJson["token"];
+			_envVars.lichess_oath_token = _lichessJson["token"];
 		}
 		catch (const json_exception& _exc)
 		{
 			return false;
 		};
+
+		// Set variables
+		_env.vars = std::move(_envVars);
 
 		// Good load
 		return true;
@@ -80,6 +98,21 @@ namespace lbx::api
 	std::pair<std::string, std::string> make_lichess_bearer_authentication_token_header()
 	{
 		auto& _env = get_env();
-		return http::make_bearer_token_authentication_header(_env.lichess_oath_token);
+		JCLIB_ASSERT(_env.vars);
+		auto& _vars = *_env.vars;
+
+		return http::make_bearer_token_authentication_header(_vars.lichess_oath_token);
+	};
+
+	/**
+	 * @brief Sets the bearer auth token for an http client to the env's lichess oath token
+	 * @param _client HTTP client
+	*/
+	void set_lichess_bearer_token_auth(httplib::Client& _client)
+	{
+		auto& _env = get_env();
+		JCLIB_ASSERT(_env.vars);
+		auto& _vars = *_env.vars;
+		_client.set_bearer_token_auth(_vars.lichess_oath_token.c_str());
 	};
 };
