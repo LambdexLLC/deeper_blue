@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <compare>
 #include <charconv>
+#include <string_view>
 
 namespace lbx::chess
 {
@@ -22,7 +23,8 @@ namespace lbx::chess
 		r5,
 		r6,
 		r7,
-		r8
+		r8,
+		END
 	};
 
 	constexpr inline auto operator<=>(Rank lhs, Rank rhs) noexcept
@@ -33,18 +35,26 @@ namespace lbx::chess
 	constexpr inline Rank operator+(Rank lhs, uint8_t rhs) noexcept
 	{
 		const auto _out = Rank(jc::to_underlying(lhs) + rhs);
-		JCLIB_ASSERT(_out >= Rank::r1 && _out <= Rank::r8);
+		JCLIB_ASSERT(_out >= Rank::r1 && _out <= Rank::END);
 		return _out;
 	};
 	constexpr inline Rank operator-(Rank lhs, uint8_t rhs) noexcept
 	{
 		const auto _out = Rank(jc::to_underlying(lhs) - rhs);
-		JCLIB_ASSERT(_out >= Rank::r1 && _out <= Rank::r8);
+		JCLIB_ASSERT(_out >= Rank::r1 && _out <= Rank::END);
 		return _out;
 	};
 	constexpr inline uint8_t operator-(Rank lhs, Rank rhs) noexcept
 	{
 		return jc::to_underlying(lhs) - jc::to_underlying(rhs);
+	};
+	constexpr inline uint8_t distance(Rank lhs, Rank rhs) noexcept
+	{
+		return (lhs < rhs) ? (rhs - lhs) : (lhs - rhs);
+	};
+	constexpr inline int8_t sdistance(Rank lhs, Rank rhs) noexcept
+	{
+		return (int8_t)lhs - (int8_t)rhs;
 	};
 
 
@@ -61,7 +71,8 @@ namespace lbx::chess
 		e,
 		f,
 		g,
-		h
+		h,
+		END,
 	};
 
 
@@ -73,19 +84,27 @@ namespace lbx::chess
 	constexpr inline File operator+(File lhs, uint8_t rhs) noexcept
 	{
 		const auto _out = File(jc::to_underlying(lhs) + rhs);
-		JCLIB_ASSERT(_out >= File::a && _out <= File::h);
+		JCLIB_ASSERT(_out >= File::a && _out <= File::END);
 		return _out;
 	};
 	constexpr inline File operator-(File lhs, uint8_t rhs) noexcept
 	{
 		const auto _out = File(jc::to_underlying(lhs) - rhs);
-		JCLIB_ASSERT(_out >= File::a && _out <= File::h);
+		JCLIB_ASSERT(_out >= File::a && _out <= File::END);
 		return _out;
 	};
 
 	constexpr inline uint8_t operator-(File lhs, File rhs) noexcept
 	{
 		return jc::to_underlying(lhs) - jc::to_underlying(rhs);
+	};
+	constexpr inline uint8_t distance(File lhs, File rhs) noexcept
+	{
+		return (lhs < rhs) ? (rhs - lhs) : (lhs - rhs);
+	};
+	constexpr inline int8_t sdistance(File lhs, File rhs) noexcept
+	{
+		return (int8_t)lhs - (int8_t)rhs;
 	};
 
 
@@ -197,13 +216,13 @@ namespace lbx::chess
 		constexpr Position& operator+=(value_type inc) noexcept
 		{
 			this->value_ += inc;
-			JCLIB_ASSERT(this->get() < 64);
+			JCLIB_ASSERT(this->get() <= 64);
 			return *this;
 		};
 		constexpr Position& operator-=(value_type inc) noexcept
 		{
 			this->value_ -= inc;
-			JCLIB_ASSERT(this->get() < 64);
+			JCLIB_ASSERT(this->get() <= 64);
 			return *this;
 		};
 		friend constexpr inline Position operator+(const Position& lhs, value_type rhs) noexcept
@@ -318,6 +337,36 @@ namespace lbx::chess
 		uint8_t file_ : 4, rank_ : 4;
 	};
 
+	/**
+	 * @brief Creates a position pair value from a rank and file
+	 * @param _rank Rank value
+	 * @param _file File value
+	 * @return Position pair
+	*/
+	constexpr inline PositionPair operator,(Rank _rank, File _file) noexcept
+	{
+		return PositionPair{ _rank, _file };
+	};
+
+
+
+	static_assert(distance(Rank::r1, Rank::r5) == distance(Rank::r5, Rank::r1));
+	static_assert(distance(File::f, File::a) == distance(File::a, File::f));
+
+	static_assert((Position)PositionPair{ Rank::r1, File::a } == Position{ 0 });
+	
+	static_assert((Position)PositionPair{ Rank::r1, File::b } == Position{ 1 });
+	static_assert(PositionPair{ Rank::r1, File::b } == PositionPair{ Position{ 1 } });
+	
+	static_assert(PositionPair{ Rank::r8, File::h } == PositionPair{ Position{ 63 } });
+	static_assert((Position)PositionPair{ Rank::r8, File::h } == Position{ 63 });
+
+	static_assert(PositionPair{ Rank::r1, File::h } == PositionPair{ Position{ 7 } });
+	static_assert((Position)PositionPair{ Rank::r1, File::h } == Position{ 7 });
+
+	static_assert(PositionPair{ Rank::r8, File::a } == PositionPair{ Position{ 56 } });
+	static_assert((Position)PositionPair { Rank::r8, File::a } == Position{ 56 });
+
 };
 
 #pragma region STRING_CONVERSIONS
@@ -382,9 +431,22 @@ namespace lbx::chess
 		_value = _pair;
 		return _out;
 	};
+	constexpr inline std::from_chars_result from_chars(std::string_view _str, Position& _value)
+	{
+		return from_chars(_str.data(), _str.data() + _str.size(), _value);
+	};
+
 	constexpr inline std::to_chars_result to_chars(char* _begin, char* _end, const Position& _value)
 	{
 		return to_chars(_begin, _end, PositionPair{ _value });
 	};
+
+
+	static_assert([]() {
+		Position _pos{};
+		from_chars(std::string_view{ "a6" }, _pos);
+		return _pos == (Position)PositionPair { Rank::r6, File::a };
+		}());
+
 };
 #pragma endregion STRING_CONVERSIONS

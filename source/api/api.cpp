@@ -61,6 +61,12 @@ namespace lbx::api
 
 	std::vector<GameStream> open_active_games(LichessClient& _client)
 	{
+		auto _challenges = _client.list_challenges();
+		for (auto& c : _challenges)
+		{
+			_client.accept_challenge(c.id);
+		};
+
 		std::vector<GameStream> _out{};
 		auto _games = _client.list_games();
 		for (auto& _game : _games)
@@ -99,12 +105,12 @@ namespace lbx::api
 	{
 		auto& _moveString = this->state_->state.moves;
 		std::vector<chess::Move> _out{};
-		char _buffer[4]{};
+		char _buffer[5]{};
 		for (auto v : _moveString | std::views::split(' '))
 		{
 			chess::Move _move{};
 			std::ranges::copy(v, _buffer);
-			const auto _result = chess::from_chars(_buffer, _buffer + 4, _move);
+			const auto _result = chess::from_chars(_buffer, _buffer + 5, _move);
 			JCLIB_ASSERT(_result.ec == std::errc{});
 			_out.push_back(_move);
 		};
