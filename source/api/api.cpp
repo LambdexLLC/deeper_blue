@@ -95,10 +95,36 @@ namespace lbx::api
 		};
 	};
 
+	std::vector<chess::Move> GameStream::get_moves() const
+	{
+		auto& _moveString = this->state_->state.moves;
+		std::vector<chess::Move> _out{};
+		char _buffer[4]{};
+		for (auto v : _moveString | std::views::split(' '))
+		{
+			chess::Move _move{};
+			std::ranges::copy(v, _buffer);
+			const auto _result = chess::from_chars(_buffer, _buffer + 4, _move);
+			JCLIB_ASSERT(_result.ec == std::errc{});
+			_out.push_back(_move);
+		};
+		return _out;
+	};
 
-	GameStream::GameStream(LichessClient& _client, std::string_view _gameID, bool _isMyTurn) :
+	/**
+	 * @brief Gets our piece color
+	 * @return Color
+	*/
+	chess::Color GameStream::my_color() const
+	{
+		return this->my_color_;
+	};
+
+
+	GameStream::GameStream(LichessClient& _client, std::string_view _gameID, bool _isMyTurn, chess::Color _myColor) :
 		client_{ &_client },
 		state_{ new LichessGameStateFull{} },
+		my_color_{ _myColor },
 		is_my_turn_{ _isMyTurn }
 	{
 		_client.get_game_state(_gameID, *this->state_);
@@ -106,9 +132,18 @@ namespace lbx::api
 	GameStream::GameStream(LichessClient& _client, const LichessGame& _game) :
 		client_{ &_client },
 		state_{ new LichessGameStateFull{} },
+		my_color_{},
 		is_my_turn_{ _game.is_my_turn }
 	{
 		_client.get_game_state(_game.game_id, *this->state_);
+		if (_game.color == "white")
+		{
+			this->my_color_ = chess::Color::white;
+		}
+		else if (_game.color == "black")
+		{
+			this->my_color_ = chess::Color::black;
+		};
 	};
 
 };
