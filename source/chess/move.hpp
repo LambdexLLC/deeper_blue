@@ -35,7 +35,7 @@ namespace lbx::chess
 		Piece promotion = Piece::empty;
 	};
 
-	inline std::from_chars_result from_chars(char* _begin, const char* _end, Move& _value)
+	inline std::from_chars_result from_chars(const char* _begin, const char* _end, Move& _value)
 	{
 		auto _result = from_chars(_begin, _end, _value.from);
 		if (_result.ec != std::errc{})
@@ -44,8 +44,46 @@ namespace lbx::chess
 			return _result;
 		};
 
-		return from_chars(_result.ptr, _end, _value.to);
+		_result = from_chars(_result.ptr, _end, _value.to);
+		if (_result.ec != std::errc{})
+		{
+			// Error occured
+			return _result;
+		};
+
+		if (_result.ptr != _end)
+		{
+			// Promo!
+			switch (*_result.ptr)
+			{
+			case 'q':
+				_value.promotion = Piece::queen;
+				++_result.ptr;
+				break;
+			case 'r':
+				_value.promotion = Piece::rook;
+				++_result.ptr;
+				break;
+			case 'b':
+				_value.promotion = Piece::bishop;
+				++_result.ptr;
+				break;
+			case 'k':
+				_value.promotion = Piece::king;
+				++_result.ptr;
+				break;
+			default:
+				break;
+			};
+		};
+
+		return _result;
 	};
+	inline std::from_chars_result from_chars(std::string_view _str, Move& _value)
+	{
+		return from_chars(_str.data(), _str.data() + _str.size(), _value);
+	};
+
 	inline std::to_chars_result to_chars(char* _begin, char* _end, const Move& _value)
 	{
 		auto _result = to_chars(_begin, _end, _value.from);
