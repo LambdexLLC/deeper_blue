@@ -1,5 +1,5 @@
 # Enables ADD_GIT_DEPENDENCY functionality
-option(ENABLE_GIT_DEPENDENCIES "Enables automatic cloning of dependencies that do not already exit" OFF)
+option(ENABLE_GIT_DEPENDENCIES "Enables automatic cloning of dependencies that do not already exit" ON)
 
 
 find_package(Git QUIET)
@@ -29,13 +29,11 @@ function(ADD_GIT_DEPENDENCY_FN depPath depTarget depRepo)
 			if (ARGC GREATER 3)
 				execute_process(COMMAND
 					${GIT_EXECUTABLE} clone -b "${ARGV3}" ${depRepo} ${depPath}
-					RESULTS_VARIABLE gitResult
-					COMMAND_ERROR_IS_FATAL ANY)
+					RESULTS_VARIABLE gitResult)
 			else()
 				execute_process(COMMAND
 					${GIT_EXECUTABLE} clone ${depRepo} ${depPath}
-					RESULTS_VARIABLE gitResult
-					COMMAND_ERROR_IS_FATAL ANY)
+					RESULTS_VARIABLE gitResult)
 			endif()
 
 			# Check result

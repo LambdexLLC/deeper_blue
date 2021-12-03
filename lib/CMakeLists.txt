@@ -1,6 +1,9 @@
 # Add the required libraries
 
-#ADD_GIT_DEPENDENCY("cpp-http" httplib "https://github.com/yhirose/cpp-httplib")
+#find_package(OpenSSL REQUIRED)
+
+ADD_GIT_DEPENDENCY("${CMAKE_CURRENT_LIST_DIR}/cpp-http" httplib "https://github.com/yhirose/cpp-httplib")
+
 
 
 # Trickle down!

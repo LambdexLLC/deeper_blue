@@ -7,7 +7,8 @@ project(deeper_blue VERSION 0.0.1)
 
 # Libraries to be privately linked
 set(private_link 
-    nlohmann_json)
+    nlohmann_json
+    httplib)
 
 # Directories to be privately included
 set(private_include 
