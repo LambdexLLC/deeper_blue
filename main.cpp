@@ -1,10 +1,19 @@
 #include "utility/json.hpp"
 #include "utility/http.hpp"
 
+#include "api/env.hpp"
+
 #include <iostream>
 
 int main()
 {
-    std::cout << "Fuck your world\n"; 
-    return 0;
+	using namespace lbx;
+
+	api::set_env_folder_path(SOURCE_ROOT "/env");
+	if (!api::load_env())
+	{
+		return 1;
+	};
+
+	return 0;
 };
