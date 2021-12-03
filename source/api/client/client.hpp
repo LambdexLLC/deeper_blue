@@ -40,7 +40,7 @@ namespace lbx::api
 
 		std::vector<LichessGame> list_games();
 
-		bool send_move(std::string_view _gameID, std::string_view _move);
+		bool send_move(std::string_view _gameID, std::string_view _move, std::string* _errmsg);
 		bool write_chat(std::string_view _gameID, std::string_view _room, std::string_view _text);
 
 		struct ChallengeParams

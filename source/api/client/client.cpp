@@ -42,8 +42,8 @@ namespace lbx::api
 					std::string_view _input{ _data, _len };
 					auto _firstLineEnd = _input.find('\n');
 
-					_contentJson  = json::parse(std::string_view{ _data, _len }, nullptr, false);
-					return !_contentJson.is_discarded();
+					_contentJson = json::parse(std::string_view{ _data, _len }, nullptr, false);
+					return false;
 				};
 			};
 			const http::ContentReceiver* _useReciever{};
@@ -292,7 +292,7 @@ namespace lbx::api
 		return this->accept_challenge(_challenge.id);
 	};
 
-	bool LichessClient::send_move(std::string_view _gameID, std::string_view _move)
+	bool LichessClient::send_move(std::string_view _gameID, std::string_view _move, std::string* _errmsg)
 	{
 		std::string _postPath = std::format("/api/bot/game/{}/move/{}", _gameID, _move);
 
@@ -315,6 +315,16 @@ namespace lbx::api
 				JCLIB_ABORT();
 				return false;
 			};
+		}
+		else if (_response->status == 400)
+		{
+			// Write error message
+			if (_errmsg)
+			{
+				json::parse(_response->body).at("error").get_to(*_errmsg);
+			};
+			
+			return false;
 		}
 		else
 		{

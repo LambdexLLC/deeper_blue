@@ -2,6 +2,12 @@
 
 #include "client/client.hpp"
 
+#include <jclib/ranges.h>
+#include <jclib/algorithm.h>
+
+#include <ranges>
+#include <algorithm>
+
 namespace lbx::api
 {
 	namespace
@@ -51,24 +57,58 @@ namespace lbx::api
 		return _client.follow_player(_playerName);
 	};
 
-	void test(LichessClient& _client)
-	{
-		{
-			auto _challenges = _client.list_challenges();
-			for (auto& c : _challenges)
-			{
-				_client.accept_challenge(c);
-			};
-		};
 
+
+	std::vector<GameStream> open_active_games(LichessClient& _client)
+	{
+		std::vector<GameStream> _out{};
+		auto _games = _client.list_games();
+		for (auto& _game : _games)
 		{
-			auto _games = _client.list_games();
-			for (auto& g : _games)
-			{
-				LichessGameStateFull _state{};
-				_client.get_game_state(g.game_id, _state);
-				std::cout << _state.black.name << '\n';
-			};
+			_out.push_back(GameStream{ _client, _game });
+		};
+		return _out;
+	};
+
+
+
+	void GameStream::GameStateDeleter::operator()(LichessGameStateFull* _ptr)
+	{
+		delete _ptr;
+	};
+
+
+	bool GameStream::send_move(std::string_view _move)
+	{
+		std::string _errmsg{};
+		if (this->client_->send_move(this->state_->game_id, _move, &_errmsg))
+		{
+			this->state_->state.moves.push_back(' ');
+			this->state_->state.moves.append(_move);
+			this->is_my_turn_ = false;
+			return true;
+		}
+		else
+		{
+			std::cout << "Failed to send move : " << _errmsg << '\n';
+			return false;
 		};
 	};
+
+
+	GameStream::GameStream(LichessClient& _client, std::string_view _gameID, bool _isMyTurn) :
+		client_{ &_client },
+		state_{ new LichessGameStateFull{} },
+		is_my_turn_{ _isMyTurn }
+	{
+		_client.get_game_state(_gameID, *this->state_);
+	};
+	GameStream::GameStream(LichessClient& _client, const LichessGame& _game) :
+		client_{ &_client },
+		state_{ new LichessGameStateFull{} },
+		is_my_turn_{ _game.is_my_turn }
+	{
+		_client.get_game_state(_game.game_id, *this->state_);
+	};
+
 };

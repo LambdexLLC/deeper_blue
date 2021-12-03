@@ -6,6 +6,7 @@
 
 #include <jclib/memory.h>
 
+#include <vector>
 #include <string_view>
 
 namespace lbx::api
@@ -47,5 +48,49 @@ namespace lbx::api
 	bool follow_player(LichessClient& _client, std::string_view _playerName);
 
 
-	void test(LichessClient& _client);
+
+	// Forward decl for game stream
+	struct LichessGame;
+	struct LichessGameStateFull;
+	
+
+
+	/**
+	 * @brief Provides an interface for an open chess game
+	*/
+	class GameStream
+	{
+	private:
+		
+		struct GameStateDeleter
+		{
+			void operator()(LichessGameStateFull* _ptr);
+		};
+		using GameStateHandle = std::unique_ptr<LichessGameStateFull, GameStateDeleter>;
+
+	public:
+
+		bool is_my_turn() const
+		{
+			return this->is_my_turn_;
+		};
+
+		bool send_move(std::string_view _move);
+
+
+
+		explicit GameStream(LichessClient& _client, std::string_view _gameID, bool _isMyTurn);
+		explicit GameStream(LichessClient& _client, const LichessGame& _game);
+
+	private:
+		LichessClient* client_{};
+		GameStateHandle state_{};
+		bool is_my_turn_ = false;
+	};
+
+
+
+	std::vector<GameStream> open_active_games(LichessClient& _client);
+
+
 };
