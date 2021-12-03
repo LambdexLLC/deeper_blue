@@ -38,4 +38,38 @@ namespace lbx::api
 
 		return _client;
 	};
+
+
+	/**
+	 * @brief Follows another player
+	 * @param _client Lichess client object
+	 * @param _playerName Name of the player to follow
+	 * @return True on good follow, false otherwise
+	*/
+	bool follow_player(LichessClient& _client, std::string_view _playerName)
+	{
+		return _client.follow_player(_playerName);
+	};
+
+	void test(LichessClient& _client)
+	{
+		{
+			auto _challenges = _client.list_challenges();
+			for (auto& c : _challenges)
+			{
+				_client.accept_challenge(c);
+			};
+		};
+
+		{
+			auto _games = _client.list_games();
+			for (auto& g : _games)
+			{
+				if (g.opponent.username == "SomewhatAccurate")
+				{
+					_client.send_move(g.game_id, "");
+				};
+			};
+		};
+	};
 };
