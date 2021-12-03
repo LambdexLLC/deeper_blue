@@ -61,6 +61,8 @@ namespace lbx::api
 		bool create_challenge(std::string_view _username, const ChallengeParams& _params, LichessGame& _game);
 		bool create_challenge(std::string_view _username, const ChallengeParams& _params, LichessChallenge& _challenge);
 
+		void get_game_state(std::string_view _gameID, LichessGameStateFull& _game);
+
 
 		/**
 		 * @brief Checks if the client is still alive

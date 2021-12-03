@@ -16,6 +16,16 @@ namespace lbx::api
 		{
 			json _contentJson = json::object();
 
+			uint64_t _current = 0;
+			uint64_t _total = 0;
+
+			http::Progress _progressFn = [&](uint64_t _currentIn, uint64_t _totalIn) -> bool
+			{
+				_current = _currentIn;
+				_total = _totalIn;
+				return true;
+			};
+
 			const http::ContentReceiver _contentReceiverJson = [&](const char* _data, size_t _len) -> bool
 			{
 				_contentJson = json::parse(std::string_view{ _data,  _len }, nullptr, false);
@@ -25,10 +35,13 @@ namespace lbx::api
 			{
 				if (_len == 1 && _data[0] == '\n')
 				{
-					return false;
+					return true;
 				}
 				else
 				{
+					std::string_view _input{ _data, _len };
+					auto _firstLineEnd = _input.find('\n');
+
 					_contentJson  = json::parse(std::string_view{ _data, _len }, nullptr, false);
 					return !_contentJson.is_discarded();
 				};
@@ -55,7 +68,7 @@ namespace lbx::api
 				return true;
 			};
 
-			auto _out = _client.Get(_path, _headers, _responseHandler, _reciever);
+			auto _out = _client.Get(_path, _headers, _responseHandler, _reciever, _progressFn);
 			
 			if (_out)
 			{
@@ -342,6 +355,22 @@ namespace lbx::api
 		};
 
 	};
+
+	void LichessClient::get_game_state(std::string_view _gameID, LichessGameStateFull& _game)
+	{
+		const auto _path = std::format("/api/bot/game/stream/{}", _gameID);
+		http::Headers _headers{};
+		auto _response = http_get_json(this->http_client_, _headers, _path.c_str());
+		if (_response)
+		{
+			_game = *_response;
+		}
+		else
+		{
+			JCLIB_ABORT();
+		};
+	};
+
 
 	void LichessClient::test()
 	{

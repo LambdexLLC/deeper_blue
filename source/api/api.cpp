@@ -65,10 +65,9 @@ namespace lbx::api
 			auto _games = _client.list_games();
 			for (auto& g : _games)
 			{
-				if (g.opponent.username == "SomewhatAccurate")
-				{
-					_client.send_move(g.game_id, "");
-				};
+				LichessGameStateFull _state{};
+				_client.get_game_state(g.game_id, _state);
+				std::cout << _state.black.name << '\n';
 			};
 		};
 	};

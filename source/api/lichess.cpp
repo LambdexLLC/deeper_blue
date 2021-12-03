@@ -43,6 +43,55 @@ namespace lbx::api
 	{
 		_json.at("id").get_to(_value.id);
 	};
+
+	void from_json(const json& _json, LichessGameState& _value)
+	{
+		_json.at("moves").get_to(_value.moves);
+		_json.at("wtime").get_to(_value.wtime);
+		_json.at("btime").get_to(_value.btime);
+		_json.at("winc").get_to(_value.winc);
+		_json.at("binc").get_to(_value.binc);
+		_json.at("status").get_to(_value.status);
+	};
+
+	void from_json(const json& _json, LichessGamePlayer& _value)
+	{
+		_json.at("id").get_to(_value.id);
+		_json.at("name").get_to(_value.name);
+		_json.at("provisional").get_to(_value.provisional);
+		_json.at("rating").get_to(_value.rating);
+		if (_json.at("title").is_string())
+		{
+			_json.at("title").get_to(_value.title);
+		}
+		else
+		{
+			_value.title = std::string{};
+		};
+	};
+
+	void from_json(const json& _json, LichessGameStateFull& _value)
+	{
+		_json.at("id").get_to(_value.game_id);
+		_json.at("rated").get_to(_value.rated);
+		_json.at("variant").get_to(_value.variant);
+
+		if (const auto& _clock = _json.at("clock"); _clock.is_object())
+		{
+			_clock.at("initial").get_to(_value.clock.initial);
+			_clock.at("increment").get_to(_value.clock.increment);
+		};
+
+		_json.at("speed").get_to(_value.speed);
+		_json.at("perf").at("name").get_to(_value.perf_name);
+		_json.at("createdAt").get_to(_value.created_at);
+
+		_json.at("white").get_to(_value.white);
+		_json.at("black").get_to(_value.black);
+
+		_json.at("initialFen").get_to(_value.initial_fen);
+		_json.at("state").get_to(_value.state);
+	};
 };
 
 #pragma endregion JSON_CONVERSIONS
