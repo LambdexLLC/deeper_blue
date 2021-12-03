@@ -1,3 +1,13 @@
+# Build artifact output
+out/
+
+# Common IDE temp dirs
 .vs/
 .vscode/
-out/
+
+# Ignore libraries
+lib/cpp-http/
+lib/jclib/
+
+# Environment ignore
+env/
