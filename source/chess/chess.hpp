@@ -3,6 +3,7 @@
 #include "move.hpp"
 #include "board.hpp"
 
+#include <ranges>
 #include <numeric>
 #include <algorithm>
 
@@ -129,22 +130,11 @@ namespace lbx::chess
 	{
 		JCLIB_ASSERT((_maxRank - _minRank) == (_maxFile - _minFile));
 
-		if (_maxFile - _minFile >= 2)
-		{
-			_minFile = _minFile + 1;
-			_maxFile = _maxFile - 1;
-			_minRank = _minRank + 1;
-			_maxRank = _maxRank - 1;
-		}
-		else
-		{
-			return std::nullopt;
-		};
-
 		for (uint8_t _offset = 0; _offset != (_maxFile - _minFile); ++_offset)
 		{
 			const auto _at = (_minRank + _offset, _minFile + _offset);
-			if (_board[_at] != Piece::empty)
+			if (_board[_at] != Piece::empty &&
+				_at != (_minRank, _minFile))
 			{
 				return _at;
 			};
@@ -153,7 +143,62 @@ namespace lbx::chess
 	};
 
 
+	/**
+	 * @brief Struct for holding the possible moves a knight may make
+	*/
+	struct PossibleKnightMoves
+	{
+		/**
+		 * @brief Storage for all of the possible moves, get "count" to determine
+		 * how many of these positions are actually valid
+		*/
+		std::array<PositionPair, 8> pos;
+		
+		/**
+		 * @brief How many "good" positions are held by pos
+		*/
+		size_t count;
+	};
 
+	/**
+	 * @brief Gets the possible moves a knight may make. Does not check for putting same-color king in check.
+	 * @param _board Chess board state
+	 * @param _knightPos Position of the knight to find moves for, must be a knight!
+	 * @return Possible moves struct
+	*/
+	constexpr inline PossibleKnightMoves get_knight_possible_moves(const Board& _board, PositionPair _knightPos)
+	{
+		JCLIB_ASSERT((jc::to_underlying(_board[_knightPos]) & ~0b1) == jc::to_underlying(Piece::knight));
+		const auto _knightColor = get_color(_board[_knightPos]);
+		const auto _rank = (int)_knightPos.rank();
+		const auto _file = (int)_knightPos.file();
+
+		std::array<std::pair<int, int>, 8> _unboundedMoves{};
+		_unboundedMoves[0] = { _rank + 1, _file + 2 };
+		_unboundedMoves[1] = { _rank + 2, _file + 1 };
+		_unboundedMoves[2] = { _rank - 1, _file - 2 };
+		_unboundedMoves[3] = { _rank - 2, _file - 1 };
+		_unboundedMoves[4] = { _rank + 1, _file - 2 };
+		_unboundedMoves[5] = { _rank + 2, _file - 1 };
+		_unboundedMoves[6] = { _rank - 1, _file + 2 };
+		_unboundedMoves[7] = { _rank - 2, _file + 1 };
+
+		PossibleKnightMoves _out{};
+		for (auto& _unbounded : _unboundedMoves)
+		{
+			if (_unbounded.first >= 0 && _unbounded.first <= 7 &&
+				_unbounded.second >= 0 && _unbounded.second <= 7)
+			{
+				auto _pos = (Rank(_unbounded.first), File(_unbounded.second));
+				if (_board[_pos] == Piece::empty || get_color(_board[_pos]) != _knightColor)
+				{
+					_out.pos[_out.count++] = _pos;
+				};
+			};
+		};
+
+		return _out;
+	};
 
 	/**
 	 * @brief Determines if a piece is being immediately threatened by an enemy piece
@@ -264,6 +309,99 @@ namespace lbx::chess
 						};
 					};
 					break;
+				case Piece::knight:
+				{
+					const auto _possibleMoves = get_knight_possible_moves(_board, _squarePosPair);
+					for (auto m : std::views::counted(_possibleMoves.pos.begin(), _possibleMoves.count))
+					{
+						if (m == _position)
+						{
+							return _squarePos;
+						};
+					};
+				};
+				break;
+				case Piece::pawn:
+				{
+					const auto _pawnColor = get_color(_board[_squarePosPair]);
+					if (_pawnColor == Color::white)
+					{
+						// Look for diagonal + 1 capture
+						if ((_squarePosPair.file() != File::h) &&
+							(_position == (_squarePosPair.rank() + 1, _squarePosPair.file() + 1)))
+						{
+							// Pawn would take
+							return _squarePosPair;
+						};
+						if ((_squarePosPair.file() != File::a) &&
+							(_position == (_squarePosPair.rank() + 1, _squarePosPair.file() - 1)))
+						{
+							// Pawn would take
+							return _squarePosPair;
+						};
+
+						if (_squarePosPair.rank() == Rank::r2)
+						{
+							// Look for diagonal + 2 capture
+							if ((_squarePosPair.file() != File::h) &&
+								(_position == (_squarePosPair.rank() + 2, _squarePosPair.file() + 1)))
+							{
+								// Pawn would take
+								return _squarePosPair;
+							};
+							if ((_squarePosPair.file() != File::a) &&
+								(_position == (_squarePosPair.rank() + 2, _squarePosPair.file() - 1)))
+							{
+								// Pawn would take
+								return _squarePosPair;
+							};
+						};
+					}
+					else if (_pawnColor == Color::black)
+					{
+						// Look for diagonal - 1 capture
+						if ((_squarePosPair.file() != File::h) &&
+							(_position == (_squarePosPair.rank() - 1, _squarePosPair.file() + 1)))
+						{
+							// Pawn would take
+							return _squarePosPair;
+						};
+						if ((_squarePosPair.file() != File::a) &&
+							(_position == (_squarePosPair.rank() - 1, _squarePosPair.file() - 1)))
+						{
+							// Pawn would take
+							return _squarePosPair;
+						};
+
+						if (_squarePosPair.rank() == Rank::r2)
+						{
+							// Look for diagonal - 2 capture
+							if ((_squarePosPair.file() != File::h) &&
+								(_position == (_squarePosPair.rank() - 2, _squarePosPair.file() + 1)))
+							{
+								// Pawn would take
+								return _squarePosPair;
+							};
+							if ((_squarePosPair.file() != File::a) &&
+								(_position == (_squarePosPair.rank() - 2, _squarePosPair.file() - 1)))
+							{
+								// Pawn would take
+								return _squarePosPair;
+							};
+						};
+					};
+				};
+				break;
+				case Piece::king:
+				{
+					if (distance(_squarePosPair.file(), _position.file()) <= 1 &&
+						distance(_squarePosPair.rank(), _position.rank()) <= 1)
+					{
+						// King is threatening
+						return _squarePos;
+					};
+				};
+				break;
 				default:
 					break;
 				}
@@ -361,14 +499,17 @@ namespace lbx::chess
 			else
 			{
 				// Check if there are any pieces in the way
-				const auto _rankMin = std::min(_from.rank(), _to.rank());
-				const auto _fileMin = std::min(_from.file(), _to.file());
+				
+				// How much to increment each axis each loop
+				const int8_t _incRank = (_from.rank() < _to.rank()) ? 1 : -1;
+				const int8_t _incFile = (_from.file() < _to.file()) ? 1 : -1;
+
+				// Position we are looking at
+				auto _at = (_from.rank(), _from.file());
 
 				// Check for collisions
 				for (uint8_t _offset = 0; _offset != _forwardDistance; ++_offset)
 				{
-					const auto _at = (_rankMin + _offset, _fileMin + _offset);
-					
 					// Ignore begin and end positions
 					if (_at != _from && _at != _to)
 					{
@@ -377,6 +518,9 @@ namespace lbx::chess
 							return MoveValidity::other_piece_in_the_way;
 						};
 					};
+
+					// Increment by axis
+					_at = (_at.rank() + _incRank, _at.file() + _incFile);
 				};
 			};
 		
@@ -482,6 +626,36 @@ namespace lbx::chess
 				return MoveValidity::illegal_piece_movement;
 			};
 		};
+	
+		constexpr inline MoveValidity validate_move_king_common(const Board& _board, const Move& _move, const Color& _color)
+		{
+			const auto& _from = _move.from;
+			const auto& _to = _move.to;
+			
+			if (_to == (Rank::r4, File::h))
+			{
+				JCLIB_ASSERT(true);
+			};
+
+			const auto _horizontalDistance = distance(_from.file(), _to.file());
+			const auto _verticalDistance = distance(_from.rank(), _to.rank());
+
+			if (_horizontalDistance > 1 || _verticalDistance > 1)
+			{
+				// King can only move 1 square at a time
+				return MoveValidity::illegal_piece_movement;
+			};
+
+			return MoveValidity::valid;
+		};
+		constexpr inline MoveValidity validate_move_king_white(const Board& _board, const Move& _move, const Color& _color)
+		{
+			return validate_move_king_common(_board, _move, _color);
+		};
+		constexpr inline MoveValidity validate_move_king_black(const Board& _board, const Move& _move, const Color& _color)
+		{
+			return validate_move_king_common(_board, _move, _color);
+		};
 	};
 
 	/**
@@ -574,9 +748,15 @@ namespace lbx::chess
 			break;
 		case Piece::pawn_black:
 		{
-			const auto _forwardDistance = sdistance(_from.rank(), _to.rank());
-			const auto _horizontalDistance = sdistance(_from.file(), _to.file());
-			
+			const auto _forwardDistance = sdistance(_to.rank(), _from.rank());
+			const auto _horizontalDistance = distance(_from.file(), _to.file());
+
+			// Cannot move pawn backwards
+			if (_forwardDistance < 0)
+			{
+				return MoveValidity::illegal_piece_movement;
+			};
+
 			if (_horizontalDistance == 0)
 			{
 				// Check if this isn't the first move
@@ -586,6 +766,10 @@ namespace lbx::chess
 					if (_forwardDistance != -1)
 					{
 						return MoveValidity::illegal_piece_movement;
+					}
+					else if (_board[_to] != Piece::empty)
+					{
+						return MoveValidity::other_piece_in_the_way;
 					};
 				}
 				else
@@ -595,37 +779,31 @@ namespace lbx::chess
 					{
 						return MoveValidity::illegal_piece_movement;
 					};
+
+					if (_board[(_to.rank() - 1, _to.file())] != Piece::empty)
+					{
+						// Piece in the way
+						return MoveValidity::other_piece_in_the_way;
+					}
+					else if (_board[_to] != Piece::empty)
+					{
+						// Piece in the way
+						return MoveValidity::other_piece_in_the_way;
+					};
 				};
 			}
 			else if (_horizontalDistance == 1)
 			{
 				// Check if this is a diagonal capture
-				if (_from.rank() != Rank::r7)
+				if (_board[_to] == Piece::empty)
 				{
-					// Can only move forward one
-					if (_forwardDistance != -1)
-					{
-						return MoveValidity::illegal_piece_movement;
-					};
-				}
-				else
+					return MoveValidity::illegal_piece_movement;
+				};
+				
+				// Can only move forward one
+				if (_forwardDistance != -1)
 				{
-					// Can move forward a max of 2
-					if (_forwardDistance == -2)
-					{
-						// Check for collision in next tile
-						if (_from.rank() > Rank::r1)
-						{
-							if (_board[PositionPair{ _from.rank() - 1, _from.file() }] != Piece::empty)
-							{
-								return MoveValidity::other_piece_in_the_way;
-							};
-						};
-					}
-					else if (_forwardDistance != -1)
-					{
-						return MoveValidity::illegal_piece_movement;
-					};
+					return MoveValidity::illegal_piece_movement;
 				};
 			}
 			else
@@ -639,6 +817,12 @@ namespace lbx::chess
 		{
 			const auto _forwardDistance = sdistance(_to.rank(), _from.rank());
 			const auto _horizontalDistance = distance(_from.file(), _to.file());
+			
+			// Cannot move pawn backwards
+			if (_forwardDistance < 0)
+			{
+				return MoveValidity::illegal_piece_movement;
+			};
 
 			if (_horizontalDistance == 0)
 			{
@@ -649,6 +833,11 @@ namespace lbx::chess
 					if (_forwardDistance != 1)
 					{
 						return MoveValidity::illegal_piece_movement;
+					}
+					else if (_board[_to] != Piece::empty)
+					{
+						// Piece in the way
+						return MoveValidity::other_piece_in_the_way;
 					};
 				}
 				else
@@ -657,6 +846,17 @@ namespace lbx::chess
 					if (_forwardDistance > 2)
 					{
 						return MoveValidity::illegal_piece_movement;
+					};
+
+					if (_board[(_to.rank() + 1, _to.file())] != Piece::empty)
+					{
+						// Piece in the way
+						return MoveValidity::other_piece_in_the_way;
+					}
+					else if (_board[_to] != Piece::empty)
+					{
+						// Piece in the way
+						return MoveValidity::other_piece_in_the_way;
 					};
 				};
 			}
@@ -669,33 +869,10 @@ namespace lbx::chess
 					return MoveValidity::illegal_piece_movement;
 				};
 
-				// Check if this is a diagonal capture
-				if (_from.rank() != Rank::r2)
+				// Can only move forward one
+				if (_forwardDistance != -1)
 				{
-					// Can only move forward one
-					if (_forwardDistance != 1)
-					{
-						return MoveValidity::illegal_piece_movement;
-					};
-				}
-				else
-				{
-					// Can move forward a max of 2
-					if (_forwardDistance == 2)
-					{
-						// Check for collision in next tile
-						if (_from.rank() < Rank::r8)
-						{
-							if (_board[PositionPair{ _from.rank() + 1, _from.file() }] != Piece::empty)
-							{
-								return MoveValidity::other_piece_in_the_way;
-							};
-						};
-					}
-					else if(_forwardDistance != 1)
-					{
-						return MoveValidity::illegal_piece_movement;
-					};
+					return MoveValidity::illegal_piece_movement;
 				};
 			}
 			else
@@ -708,26 +885,19 @@ namespace lbx::chess
 		break;
 
 		case Piece::king_white:
-		{
-			const auto _forwardDistance = distance(_from.rank(), _to.rank());
-			const auto _horizontalDistance = distance(_from.file(), _to.file());
-			if (_forwardDistance > 1 || _horizontalDistance > 1)
+			if (const auto _result = move_check::validate_move_king_white(_board, _move, _player);
+				_result != MoveValidity::valid)
 			{
-				return MoveValidity::illegal_piece_movement;
+				return _result;
 			};
-		};
-		break;
+			break;
 		case Piece::king_black:
-		{
-			const auto _forwardDistance = distance(_from.rank(), _to.rank());
-			const auto _horizontalDistance = distance(_from.file(), _to.file());
-			if (_forwardDistance > 1 || _horizontalDistance > 1)
+			if (const auto _result = move_check::validate_move_king_black(_board, _move, _player);
+				_result != MoveValidity::valid)
 			{
-				return MoveValidity::illegal_piece_movement;
+				return _result;
 			};
-		};
-		break;
-
+			break;
 		case Piece::knight_black:
 			if (const auto _result = move_check::validate_move_knight_black(_board, _move, _player);
 				_result != MoveValidity::valid)
@@ -750,7 +920,18 @@ namespace lbx::chess
 		// Check if the king would be in check after applying the move
 		Board _checkTestBoard{ _board };
 		apply_move(_checkTestBoard, _move, _player);
-		auto _king = _checkTestBoard.find(Piece::king | _player);
+		
+		Piece _kingPiece{};
+		if (_player == Color::white)
+		{
+			_kingPiece = Piece::king_white;
+		}
+		else
+		{
+			_kingPiece = Piece::king_black;
+		};
+
+		auto _king = _checkTestBoard.find(_kingPiece);
 		if (_king)
 		{
 			auto _threatenedByPiece = is_piece_threatened(_checkTestBoard, _king.value());

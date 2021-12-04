@@ -225,6 +225,16 @@ namespace lbx::chess
 			JCLIB_ASSERT(this->get() <= 64);
 			return *this;
 		};
+		
+		constexpr Position& operator++()
+		{
+			return (*this) += 1;
+		};
+		constexpr Position& operator--()
+		{
+			return (*this) -= 1;
+		};
+
 		friend constexpr inline Position operator+(const Position& lhs, value_type rhs) noexcept
 		{
 			auto _out = lhs;

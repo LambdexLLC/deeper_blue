@@ -4,9 +4,14 @@
 	Contains all of the functionality needed to interact with the remote lichess chess API
 */
 
+#include "chess/move.hpp"
+
 #include "utility/json.hpp"
 
 #include <jclib/memory.h>
+
+#include <string>
+#include <vector>
 
 namespace lbx::api
 {
@@ -14,6 +19,9 @@ namespace lbx::api
 	 * @brief Forwards lichess events to their associated APIs.
 	*/
 	void forward_events();
+
+	// Forward decl for account API
+	class LichessGameAPI;
 
 	/**
 	 * @brief Abstract base class for recieving and reacting to
@@ -27,6 +35,20 @@ namespace lbx::api
 		 * @brief Accepts an incoming challenge from another player
 		*/
 		virtual bool accept_challenge(std::string_view _challengeID) final;
+
+		/**
+		 * @brief Gets the games we are currently playing in
+		 * @return The list of game IDs
+		*/
+		virtual std::vector<std::string> get_current_games() final;
+
+		/**
+		 * @brief Creates a challenge against another user
+		 * @param _username Username of the user to challenge
+		*/
+		virtual bool challenge_user(std::string_view _username) final;
+
+
 
 	public:
 
@@ -69,6 +91,15 @@ namespace lbx::api
 	*/
 	class LichessGameAPI
 	{
+	protected:
+
+		/**
+		 * @brief Submits this as our move for the turn
+		 * @param _move Move to submit
+		 * @return True if move was valid, false otherwise
+		*/
+		virtual bool submit_move(const chess::Move& _move) final;
+
 	public:
 
 		/**
@@ -89,5 +120,10 @@ namespace lbx::api
 
 	};
 
-
+	/**
+	 * @brief Sets the game API to use for handling events from a particular game
+	 * @param _gameID ID of the game to set the API of
+	 * @param _api API to use
+	*/
+	void set_game_api(std::string_view _gameID, jc::borrow_ptr<LichessGameAPI> _api);
 };
