@@ -43,6 +43,15 @@ namespace lbx::api
 		std::string id;
 	};
 
+	struct LichessGamePlayer
+	{
+		std::string id;
+		std::string name;
+		bool provisional;
+		int rating;
+		std::string title;
+	};
+
 	struct LichessGameState
 	{
 		std::string moves;
@@ -53,14 +62,6 @@ namespace lbx::api
 		std::string status;
 	};
 
-	struct LichessGamePlayer
-	{
-		std::string id;
-		std::string name;
-		bool provisional;
-		int rating;
-		std::string title;
-	};
 
 	struct LichessGameStateFull
 	{

@@ -80,9 +80,6 @@ namespace lbx::api
 		*/
 		bool follow_player(std::string_view _playerName);
 
-		void test();
-
-
 
 		/**
 		 * @brief Constructs the client by connecting to the lichess URL. ENV MUST BE LOADED (api::load_env())

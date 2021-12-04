@@ -382,18 +382,6 @@ namespace lbx::api
 	};
 
 
-	void LichessClient::test()
-	{
-		http::Headers _headers{};
-		_headers.insert(api::make_lichess_bearer_authentication_token_header());
-		
-		auto _responseOpt = http_get_json(this->http_client_, _headers, "/api/stream/event");
-		JCLIB_ASSERT(_responseOpt);
-
-		auto& _response = *_responseOpt;
-		std::cout << _response.dump('\t', 1) << '\n';
-	};
-
 	/**
 	* @brief Constructs the client by connecting to the lichess URL
 	* @param _lichessURL Lichess website URL

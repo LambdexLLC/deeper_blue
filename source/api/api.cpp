@@ -126,6 +126,11 @@ namespace lbx::api
 		return this->my_color_;
 	};
 
+	std::string GameStream::id() const
+	{
+		return this->state_->game_id;
+	};
+
 
 	GameStream::GameStream(LichessClient& _client, std::string_view _gameID, bool _isMyTurn, chess::Color _myColor) :
 		client_{ &_client },
