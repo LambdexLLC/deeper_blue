@@ -4,103 +4,90 @@
 	Contains all of the functionality needed to interact with the remote lichess chess API
 */
 
-#include "chess/move.hpp"
+#include "utility/json.hpp"
 
 #include <jclib/memory.h>
-
-#include <vector>
-#include <string_view>
 
 namespace lbx::api
 {
 	/**
-	 * @brief Client data storage
+	 * @brief Forwards lichess events to their associated APIs.
 	*/
-	struct LichessClient;
+	void forward_events();
 
 	/**
-	 * @brief Deleter function object type for the lichess client type
+	 * @brief Abstract base class for recieving and reacting to
+	 * lichess account events.
 	*/
-	struct LichessClientDeleter
+	class LichessAccountAPI
 	{
+	protected:
+
 		/**
-		 * @brief Destroys and the frees a lichess client
-		 * @param _client Client to delete
+		 * @brief Accepts an incoming challenge from another player
 		*/
-		void operator()(LichessClient* _client);
-	};
-
-	/**
-	 * @brief RAII owning handle to a lichess client object
-	*/
-	using LichessClientHandle = std::unique_ptr<LichessClient, LichessClientDeleter>;
-
-	/**
-	 * @brief Creates a new lichess client object
-	 * @return Owning handle to a new lichess client
-	*/
-	[[nodiscard]] LichessClientHandle new_lichess_client();
-
-	/**
-	 * @brief Follows another player
-	 * @param _client Lichess client object
-	 * @param _playerName Name of the player to follow
-	 * @return True on good follow, false otherwise
-	*/
-	bool follow_player(LichessClient& _client, std::string_view _playerName);
-
-
-
-	// Forward decl for game stream
-	struct LichessGame;
-	struct LichessGameStateFull;
-	
-
-
-	/**
-	 * @brief Provides an interface for an open chess game
-	*/
-	class GameStream
-	{
-	private:
-		
-		struct GameStateDeleter
-		{
-			void operator()(LichessGameStateFull* _ptr);
-		};
-		using GameStateHandle = std::unique_ptr<LichessGameStateFull, GameStateDeleter>;
+		virtual bool accept_challenge(std::string_view _challengeID) final;
 
 	public:
 
-		bool is_my_turn() const
-		{
-			return this->is_my_turn_;
-		};
-
-		bool send_move(std::string_view _move);
-
-		std::vector<chess::Move> get_moves() const;
+		/**
+		 * @brief Invoked when a game is started
+		*/
+		virtual void on_game_start(const json& _event) {};
 
 		/**
-		 * @brief Gets our piece color
-		 * @return Color
+		 * @brief Invoked when a game finishes
 		*/
-		chess::Color my_color() const;
+		virtual void on_game_finish(const json& _event) {};
 
+		/**
+		 * @brief Invoked when a player challenges you
+		*/
+		virtual void on_challenge(const json& _event) {};
 
-		explicit GameStream(LichessClient& _client, std::string_view _gameID, bool _isMyTurn, chess::Color _myColor);
-		explicit GameStream(LichessClient& _client, const LichessGame& _game);
+		/**
+		 * @brief Invoked when a player cancels their challenge to you
+		*/
+		virtual void on_challenge_canceled(const json& _event) {};
 
-	private:
-		LichessClient* client_{};
-		GameStateHandle state_{};
-		chess::Color my_color_{};
-		bool is_my_turn_ = false;
+		/**
+		 * @brief Invoked when a challenge you created was declined
+		*/
+		virtual void on_challenge_declined(const json& _event) {};
+
 	};
 
+	/**
+	 * @brief Sets the lichess account api interface
+	 * @param _api Borrowing pointer to to an account API interface object
+	*/
+	void set_account_api(jc::borrow_ptr<LichessAccountAPI> _api);
 
+	/**
+	 * @brief Abstract base class for recieving and reacting to
+	 * lichess game events.
+	*/
+	class LichessGameAPI
+	{
+	public:
 
-	std::vector<GameStream> open_active_games(LichessClient& _client);
+		/**
+		 * @brief Invoked initially upon loading a game
+		*/
+		virtual void on_game(const json& _event) {};
+
+		/**
+		 * @brief Invoked when a move is played, a draw is offered,
+		 * or the game ends.
+		*/
+		virtual void on_game_change(const json& _event) {};
+
+		/**
+		 * @brief Invoked when a chat message is sent
+		*/
+		virtual void on_chat(const json& _event) {};
+
+	};
 
 
 };
