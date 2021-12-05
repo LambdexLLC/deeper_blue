@@ -1,5 +1,6 @@
 #pragma once
 
+#include "generic/generic_board.hpp"
 #include "basic.hpp"
 
 #include <jclib/config.h>
@@ -11,40 +12,16 @@
 
 namespace lbx::chess
 {
-	struct Board
+	/**
+	 * @brief Describes a board of chess pieces
+	*/
+	class PieceBoard : public GenericBoard<Piece>
 	{
-	private:
-		using container_type = std::array<Piece, 64>;
 	public:
-		using iterator = typename container_type::iterator;
-		using const_iterator = typename container_type::const_iterator;
-
-		constexpr iterator begin() noexcept { return this->board.begin(); };
-		constexpr const_iterator begin() const noexcept { return this->board.cbegin(); };
-		constexpr const_iterator cbegin() const noexcept { return this->board.cbegin(); };
-
-		constexpr iterator end() noexcept { return this->board.end(); };
-		constexpr const_iterator end() const noexcept { return this->board.cend(); };
-		constexpr const_iterator cend() const noexcept { return this->board.cend(); };
-
-
-		container_type board{};
-
-
-
-
-		std::optional<Square> en_passant = std::nullopt;
-		bool black_can_castle_kingside = true;
-		bool black_can_castle_queenside = true;
-		bool white_can_castle_kingside = true;
-		bool white_can_castle_queenside = true;
-		Color turn = Color::white;
-
-
 		std::optional<PositionPair> find(Piece _piece) const
 		{
 			Position p{};
-			for (auto _square : this->board)
+			for (auto _square : *this)
 			{
 				if (_square == _piece)
 				{
@@ -55,73 +32,63 @@ namespace lbx::chess
 			return std::nullopt;
 		};
 
-
-		/**
-		 * @brief Gets the piece at a given board position
-		 * @param _pos Position to get piece from
-		 * @return Piece at position
-		*/
-		constexpr Piece& at(Position _pos) 
-		{
-			JCLIB_ASSERT(_pos.get() < 64);
-			return this->board.at(_pos.get());
-		};
-
-		/**
-		 * @brief Gets the piece at a given board position
-		 * @param _pos Position to get piece from
-		 * @return Piece at position
-		*/
-		constexpr const Piece& at(Position _pos) const
-		{
-			JCLIB_ASSERT(_pos.get() < 64);
-			return this->board.at(_pos.get());
-		};
-
-		/**
-		 * @brief Gets the piece at a given board position
-		 * @param _pos Position to get piece from
-		 * @return Piece at position
-		*/
-		constexpr Piece& operator[](Position _pos)
-		{
-			return this->at(_pos);
-		};
-
-		/**
-		 * @brief Gets the piece at a given board position
-		 * @param _pos Position to get piece from
-		 * @return Piece at position
-		*/
-		constexpr const Piece& operator[](Position _pos) const
-		{
-			return this->at(_pos);
-		};
+		using GenericBoard::GenericBoard;
+		using GenericBoard::operator=;
 	};
 
-	constexpr inline Board make_standard_board()
+	/**
+	 * @brief Describes a board of pieces with game state
+	*/
+	class BoardWithState : public PieceBoard
+	{
+	public:
+
+		std::optional<Square> en_passant = std::nullopt;
+		bool black_can_castle_kingside = true;
+		bool black_can_castle_queenside = true;
+		bool white_can_castle_kingside = true;
+		bool white_can_castle_queenside = true;
+		Color turn = Color::white;
+
+
+		// Pull down special member functions
+
+		using PieceBoard::PieceBoard;
+		using PieceBoard::operator=;
+
+		constexpr BoardWithState(PieceBoard&& other) :
+			PieceBoard{ std::move(other) }
+		{};
+		constexpr BoardWithState(const PieceBoard& other) :
+			PieceBoard{ other }
+		{};
+
+	};
+
+
+
+
+	constexpr inline PieceBoard make_standard_board()
 	{
 		constexpr auto default_line = std::array<Piece, 8>
 		{
 			Piece::rook, Piece::knight, Piece::bishop, Piece::queen, Piece::king, Piece::bishop, Piece::knight, Piece::rook
 		};
 
-		Board output{};
-		auto& board = output.board;
+		PieceBoard _board{};
 
-		for (int i = 0; i < 8; i++)
+		for (uint8_t i = 0; i < 8; i++)
 		{
-			board[i + 56] = default_line[i] | Color::black;
-			board[i + 48] = Piece::pawn | Color::black;
-			board[i + 8] = Piece::pawn | Color::white;
-			board[i] = default_line[i] | Color::white;
+			_board[i + 56] = default_line[i] | Color::black;
+			_board[i + 48] = Piece::pawn | Color::black;
+			_board[i + 8] = Piece::pawn | Color::white;
+			_board[i] = default_line[i] | Color::white;
 		};
 
-		return output;
+		return _board;
 	};
 
-
-	inline std::string stringify_board(const Board& _board)
+	inline std::string stringify_board(const PieceBoard& _board)
 	{
 		std::string _out{};
 		_out.resize(64, ' ');
@@ -192,10 +159,10 @@ namespace lbx::chess
 namespace std
 {
 	template <>
-	struct formatter<lbx::chess::Board, char> :
+	struct formatter<lbx::chess::PieceBoard, char> :
 		formatter<std::string, char>
 	{
-		auto format(const lbx::chess::Board& _board, auto& _ctx)
+		auto format(const lbx::chess::PieceBoard& _board, auto& _ctx)
 		{
 			auto _str = lbx::chess::stringify_board(_board);
 			_str.insert(_str.begin() + 64, '\n');
@@ -208,5 +175,13 @@ namespace std
 			_str.insert(_str.begin() + 8,  '\n');
 			return formatter<std::string, char>::format(_str, _ctx);
 		};
+	};
+
+	template <>
+	struct formatter<lbx::chess::BoardWithState, char> :
+		formatter<lbx::chess::PieceBoard, char>
+	{
+		using formatter<lbx::chess::PieceBoard, char>::formatter;
+		using formatter<lbx::chess::PieceBoard, char>::format;
 	};
 };

@@ -44,7 +44,7 @@ namespace lbx::chess
 		 * @return The move the engine would like to make, this should be pre-checked for validity.
 		 * An engine returning illegal moves is considered a broken engine.
 		*/
-		virtual Move calculate_move(const Board& _board, Color _player) = 0;
+		virtual Move calculate_move(const BoardWithState& _board, Color _player) = 0;
 
 		/**
 		 * @brief Same as calculate_move() but this may return multiple moves. Returned moves
@@ -59,7 +59,7 @@ namespace lbx::chess
 		 * 
 		 * @return One or more moves that this engine will try to play.
 		*/
-		virtual std::vector<Move> calculate_multiple_moves(const Board& _board, Color _player) { return {}; };
+		virtual std::vector<Move> calculate_multiple_moves(const BoardWithState& _board, Color _player) { return {}; };
 
 		IChessEngine() = default;
 		virtual ~IChessEngine() = default;

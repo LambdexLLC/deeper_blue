@@ -52,7 +52,7 @@ namespace lbx::chess
 	 * @param _player Player to get value of
 	 * @return Total value
 	*/
-	int ChessEngine_Baby::get_player_material(const Board& _board, Color _player) const
+	int ChessEngine_Baby::get_player_material(const PieceBoard& _board, Color _player) const
 	{
 		int _value = 0;
 		for (auto& s : _board)
@@ -66,7 +66,7 @@ namespace lbx::chess
 	};
 
 
-	std::vector<ChessEngine_Baby::RankedMove> ChessEngine_Baby::find_best_moves(const Board& _board, Color _player)
+	std::vector<ChessEngine_Baby::RankedMove> ChessEngine_Baby::find_best_moves(const BoardWithState& _board, Color _player)
 	{
 		std::vector<RankedMove> _rankedMoves{};
 
@@ -74,7 +74,7 @@ namespace lbx::chess
 		auto _randomMoves = this->random_fallback_.calculate_multiple_moves(_board, _player);
 		for (auto& m : _randomMoves)
 		{
-			Board _b{ _board };
+			BoardWithState _b{ _board };
 			chess::apply_move(_b, m, _player);
 			_b.turn = !_b.turn;
 
@@ -97,7 +97,7 @@ namespace lbx::chess
 
 
 
-	std::vector<Move> ChessEngine_Baby::calculate_multiple_moves(const Board& _board, Color _player)
+	std::vector<Move> ChessEngine_Baby::calculate_multiple_moves(const BoardWithState& _board, Color _player)
 	{
 		auto _moves = this->find_best_moves(_board, _player);
 
