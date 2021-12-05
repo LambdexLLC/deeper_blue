@@ -1,6 +1,6 @@
 #include "chess/chess.hpp"
 
-#include "chess/engines/random_engine.hpp"
+#include "chess/engines/baby_engine.hpp"
 
 #include "utility/io.hpp"
 #include "utility/json.hpp"
@@ -31,7 +31,7 @@ private:
 	chess::Color my_color_ = chess::Color::white;
 	bool is_my_turn_ = false;
 
-	chess::ChessEngine_Random engine_{};
+	chess::ChessEngine_Baby engine_{};
 
 	void process_my_turn()
 	{
@@ -116,7 +116,7 @@ public:
 		this->recreate_board_from_move_string(_event.at("state").at("moves"));
 
 		// Dump board string
-		println("{}", chess::stringify_board(this->board_));
+		println("{}", this->board_);
 
 		// If it is our turn to play, make the move and submit
 		if (this->is_my_turn_)

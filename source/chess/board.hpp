@@ -7,12 +7,32 @@
 #include <array>
 #include <string>
 #include <optional>
+#include <format>
 
 namespace lbx::chess
 {
 	struct Board
 	{
-		std::array<Piece, 64> board{};
+	private:
+		using container_type = std::array<Piece, 64>;
+	public:
+		using iterator = typename container_type::iterator;
+		using const_iterator = typename container_type::const_iterator;
+
+		constexpr iterator begin() noexcept { return this->board.begin(); };
+		constexpr const_iterator begin() const noexcept { return this->board.cbegin(); };
+		constexpr const_iterator cbegin() const noexcept { return this->board.cbegin(); };
+
+		constexpr iterator end() noexcept { return this->board.end(); };
+		constexpr const_iterator end() const noexcept { return this->board.cend(); };
+		constexpr const_iterator cend() const noexcept { return this->board.cend(); };
+
+
+		container_type board{};
+
+
+
+
 		std::optional<Square> en_passant = std::nullopt;
 		bool black_can_castle_kingside = true;
 		bool black_can_castle_queenside = true;
@@ -165,5 +185,28 @@ namespace lbx::chess
 		};
 
 		return _out;
+	};
+
+};
+
+namespace std
+{
+	template <>
+	struct formatter<lbx::chess::Board, char> :
+		formatter<std::string, char>
+	{
+		auto format(const lbx::chess::Board& _board, auto& _ctx)
+		{
+			auto _str = lbx::chess::stringify_board(_board);
+			_str.insert(_str.begin() + 64, '\n');
+			_str.insert(_str.begin() + 56, '\n');
+			_str.insert(_str.begin() + 48, '\n');
+			_str.insert(_str.begin() + 40, '\n');
+			_str.insert(_str.begin() + 32, '\n');
+			_str.insert(_str.begin() + 24, '\n');
+			_str.insert(_str.begin() + 16, '\n');
+			_str.insert(_str.begin() + 8,  '\n');
+			return formatter<std::string, char>::format(_str, _ctx);
+		};
 	};
 };

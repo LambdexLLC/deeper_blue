@@ -3,6 +3,8 @@
 #include "move.hpp"
 #include "board.hpp"
 
+#include <jclib/functional.h>
+
 #include <ranges>
 #include <numeric>
 #include <algorithm>
@@ -90,7 +92,7 @@ namespace lbx::chess
 			return std::nullopt;
 		};
 
-		for (_minRank; _minRank != _maxRank; _minRank = _minRank + 1)
+		for (_minRank; _minRank <= _maxRank; _minRank = _minRank + 1)
 		{
 			const auto _at = (_minRank, _file);
 			if (_board[_at] != Piece::empty)
@@ -360,20 +362,20 @@ namespace lbx::chess
 					else if (_pawnColor == Color::black)
 					{
 						// Look for diagonal - 1 capture
-						if ((_squarePosPair.file() != File::h) &&
+						if ((_squarePosPair.file() != File::h) && (_squarePosPair.rank() != Rank::r1) &&
 							(_position == (_squarePosPair.rank() - 1, _squarePosPair.file() + 1)))
 						{
 							// Pawn would take
 							return _squarePosPair;
 						};
-						if ((_squarePosPair.file() != File::a) &&
+						if ((_squarePosPair.file() != File::a) && (_squarePosPair.rank() != Rank::r1) &&
 							(_position == (_squarePosPair.rank() - 1, _squarePosPair.file() - 1)))
 						{
 							// Pawn would take
 							return _squarePosPair;
 						};
 
-						if (_squarePosPair.rank() == Rank::r2)
+						if (_squarePosPair.rank() == Rank::r7)
 						{
 							// Look for diagonal - 2 capture
 							if ((_squarePosPair.file() != File::h) &&
@@ -421,11 +423,17 @@ namespace lbx::chess
 			auto& _to = _move.to;
 			auto& _from = _move.from;
 
+			if (_from == (Rank::r8, File::h))
+			{
+				if (_to == (Rank::r8, File::g))
+				{
+					auto q = jc::equals & true;
+				};
+			};
+
 			const auto _forwardDistance = distance(_from.rank(), _to.rank());
 			const auto _horizontalDistance = distance(_from.file(), _to.file());
-
 			
-
 			if (_forwardDistance != 0 && _horizontalDistance != 0)
 			{
 				// Cannot move diagonally
@@ -748,7 +756,7 @@ namespace lbx::chess
 			break;
 		case Piece::pawn_black:
 		{
-			const auto _forwardDistance = sdistance(_to.rank(), _from.rank());
+			const auto _forwardDistance = sdistance(_from.rank(), _to.rank());
 			const auto _horizontalDistance = distance(_from.file(), _to.file());
 
 			// Cannot move pawn backwards
@@ -763,7 +771,7 @@ namespace lbx::chess
 				if (_from.rank() != Rank::r7)
 				{
 					// Check for valid forward move
-					if (_forwardDistance != -1)
+					if (_forwardDistance != 1)
 					{
 						return MoveValidity::illegal_piece_movement;
 					}
@@ -775,7 +783,7 @@ namespace lbx::chess
 				else
 				{
 					// Check for valid forward move, allow double move on first move
-					if (_forwardDistance < -2)
+					if (_forwardDistance > 2)
 					{
 						return MoveValidity::illegal_piece_movement;
 					};
@@ -801,7 +809,7 @@ namespace lbx::chess
 				};
 				
 				// Can only move forward one
-				if (_forwardDistance != -1)
+				if (_forwardDistance != 1)
 				{
 					return MoveValidity::illegal_piece_movement;
 				};
@@ -870,7 +878,7 @@ namespace lbx::chess
 				};
 
 				// Can only move forward one
-				if (_forwardDistance != -1)
+				if (_forwardDistance != 1)
 				{
 					return MoveValidity::illegal_piece_movement;
 				};
