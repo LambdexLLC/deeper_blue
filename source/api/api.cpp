@@ -231,6 +231,17 @@ namespace lbx::api
 	};
 
 	/**
+	 * @brief Challenges the AI to a game
+	 * @param _level Bot level, must be 1 up to 8
+	 * @return True on good challenge, false otherwise
+	*/
+	bool LichessAccountAPI::challenge_ai(int _level)
+	{
+		const auto _result = lichess::challenge_ai(get_account_api_state().client(), _level);
+		return _result.has_value() && _result.value();
+	};
+
+	/**
 	 * @brief Submits this as our move for the turn
 	 * @param _move Move to submit
 	 * @return True if move was valid, false otherwise

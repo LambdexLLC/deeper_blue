@@ -155,4 +155,51 @@ namespace lbx::api::lichess
 		};
 	};
 
+	// Challenges the AI to a game
+	// https://lichess.org/api#operation/challengeAi
+	jc::maybe<bool, std::string> challenge_ai(http::Client& _client, int _level)
+	{
+		http::Params _params
+		{
+			{ "level", std::to_string(_level) },
+			{ "days", "1" },
+			{ "color", "random" },
+			{ "variant", "standard" },
+			{ "fen",  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" }
+		};
+		
+		const auto _result = _client.Post("/api/challenge/ai", _params);
+		if (_result)
+		{
+			if (_result->status == 200 || _result->status == 201)
+			{
+				// Succesfull challenge
+				return true;
+			}
+			else if (_result->status == 400)
+			{
+				// Bad challenge
+				const auto _response = json::parse(_result->body, nullptr, false);
+				if (_response.is_discarded())
+				{
+					JCLIB_ABORT();
+					return std::string{};
+				};
+
+				// Get error message
+				return (std::string)_response.at("error");
+			}
+			else
+			{
+				JCLIB_ABORT();
+				return std::string{};
+			};
+		}
+		else
+		{
+			JCLIB_ABORT();
+			return std::string{};
+		};
+	};
+
 };

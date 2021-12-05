@@ -98,11 +98,20 @@ public:
 	void on_game(const lbx::json& _event) final
 	{
 		// Determine my color
-		if (_event.at("white").at("id") == "lambdex")
+		const auto _dmp = _event.dump(1, '\t', true);
+		println("{}", _dmp);
+
+		if (const auto _whiteJson = _event.at("white");
+			_whiteJson.is_object() &&
+			_whiteJson.contains("id") &&
+			_whiteJson.at("id") == "lambdex")
 		{
 			this->my_color_ = chess::Color::white;
 		}
-		else if (_event.at("black").at("id") == "lambdex")
+		else if (const auto _blackJson = _event.at("black");
+			_blackJson.is_object() &&
+			_blackJson.contains("id") &&
+			_blackJson.at("id") == "lambdex")
 		{
 			this->my_color_ = chess::Color::black;
 		}
@@ -211,6 +220,8 @@ public:
 			this->games_.push_back(jc::make_unique<GameAPI>());
 			api::set_game_api(_game, this->games_.back().get());
 		};
+
+		this->challenge_ai(1);
 	};
 
 };

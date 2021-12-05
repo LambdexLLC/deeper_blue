@@ -1,57 +1,607 @@
 current
- p  k   
         
         
         
-K       
-        
-        
-  n     
+      P 
+  P R   
+kPB    P
+P  R    
+   K  Q 
 
 
 possible:
 
 
- p  k   
         
         
         
-        
-K       
-        
-  n     
+      P 
+  P R   
+kPB    P
+P  R  Q 
+   K    
 
 
 
- p  k   
         
         
         
- K      
-        
-        
-  n     
+      P 
+  P R   
+kP     P
+P  R    
+B  K  Q 
 
 
 
- p  k   
-        
-        
- K      
         
         
         
-  n     
+    B P 
+  P R   
+kP     P
+P  R    
+   K  Q 
 
 
 
- p  k   
-        
-        
-K       
         
         
         
-  n     
+      P 
+  P R  P
+kPB     
+P  R    
+   K  Q 
+
+
+
+        
+        
+        
+      P 
+  PQR   
+kPB    P
+P  R    
+   K    
+
+
+
+        
+        
+        
+      P 
+  P R   
+kPB    P
+P KR    
+      Q 
+
+
+
+        
+        
+        
+      P 
+  P R   
+kPB   QP
+P  R    
+   K    
+
+
+
+        
+        
+      P 
+        
+  P R   
+kPB    P
+P  R    
+   K  Q 
+
+
+
+        
+        
+        
+B     P 
+  P R   
+kP     P
+P  R    
+   K  Q 
+
+
+
+        
+        
+        
+  Q   P 
+  P R   
+kPB    P
+P  R    
+   K    
+
+
+
+        
+        
+ Q      
+      P 
+  P R   
+kPB    P
+P  R    
+   K    
+
+
+
+        
+        
+        
+    R P 
+  P     
+kPB    P
+P  R    
+   K  Q 
+
+
+
+        
+        
+        
+      P 
+  P R   
+kPB Q  P
+P  R    
+   K    
+
+
+
+        
+      B 
+        
+      P 
+  P R   
+kP     P
+P  R    
+   K  Q 
+
+
+
+        
+        
+        
+      P 
+  P R   
+kPB    P
+P  R Q  
+   K    
+
+
+
+        
+        
+        
+      P 
+  P R   
+kPB    P
+P  R    
+    K Q 
+
+
+
+        
+        
+        
+      P 
+  P R   
+kPB    P
+P  RK   
+      Q 
+
+
+
+        
+        
+        
+      P 
+  P R   
+kPB    P
+P  R    
+  K   Q 
+
+
+
+        
+        
+        
+      P 
+  P R   
+kPB    P
+P  R    
+   KQ   
+
+
+
+        
+        
+        
+      P 
+  P R   
+kPB    P
+P  R    
+   K   Q
+
+
+
+        
+        
+        
+      P 
+  P R   
+kPB    P
+P   R   
+   K  Q 
+
+
+
+        
+        
+        
+      P 
+  P     
+kPB    P
+P  R    
+   KR Q 
+
+
+
+        
+        
+        
+      P 
+  P R   
+kPB    P
+P  R   Q
+   K    
+
+
+
+        
+        
+        
+  P   P 
+    R   
+kPB    P
+P  R    
+   K  Q 
+
+
+
+        
+        
+        
+      P 
+  P R Q 
+kPB    P
+P  R    
+   K    
+
+
+
+        
+Q       
+        
+      P 
+  P R   
+kPB    P
+P  R    
+   K    
+
+
+
+        
+        
+    R   
+      P 
+  P     
+kPB    P
+P  R    
+   K  Q 
+
+
+
+        
+    R   
+        
+      P 
+  P     
+kPB    P
+P  R    
+   K  Q 
+
+
+
+        
+        
+        
+      P 
+  P R   
+kPB    P
+PR      
+   K  Q 
+
+
+
+        
+        
+        
+      P 
+  P     
+kPB R  P
+P  R    
+   K  Q 
+
+
+
+        
+        
+        
+      P 
+  PBR   
+kP     P
+P  R    
+   K  Q 
+
+
+
+        
+        
+        
+      P 
+  P  R  
+kPB    P
+P  R    
+   K  Q 
+
+
+
+        
+        
+        
+      P 
+  P R   
+kPB    P
+P      R
+   K  Q 
+
+
+
+        
+        
+        
+      P 
+  P    R
+kPB    P
+P  R    
+   K  Q 
+
+
+
+        
+        
+        
+      P 
+  P R   
+kPB    P
+P R     
+   K  Q 
+
+
+
+        
+        
+        
+      P 
+  P R   
+kPB    P
+P  R    
+   K Q  
+
+
+
+       B
+        
+        
+      P 
+  P R   
+kP     P
+P  R    
+   K  Q 
+
+
+
+        
+        
+        
+      P 
+  PR    
+kPB    P
+P  R    
+   K  Q 
+
+
+
+    R   
+        
+        
+      P 
+  P     
+kPB    P
+P  R    
+   K  Q 
+
+
+
+        
+        
+        
+      P 
+  P     
+kPB    P
+P  RR   
+   K  Q 
+
+
+
+        
+        
+        
+      P 
+ BP R   
+kP     P
+P  R    
+   K  Q 
+
+
+
+        
+        
+        
+      P 
+  P R   
+kPB    P
+P     R 
+   K  Q 
+
+
+
+        
+        
+        
+      P 
+ PP R   
+k B    P
+P  R    
+   K  Q 
+
+
+
+        
+        
+        
+      P 
+  P R   
+kPB    P
+P    R  
+   K  Q 
+
+
+
+        
+        
+     B  
+      P 
+  P R   
+kP     P
+P  R    
+   K  Q 
+
+
+
+        
+        
+        
+      P 
+  P   R 
+kPB    P
+P  R    
+   K  Q 
+
+
+
+        
+        
+   R    
+      P 
+  P R   
+kPB    P
+P       
+   K  Q 
+
+
+
+        
+        
+        
+      P 
+  P R   
+kP     P
+PB R    
+   K  Q 
+
+
+
+        
+        
+        
+      P 
+  PRR   
+kPB    P
+P       
+   K  Q 
+
+
+
+        
+        
+        
+      P 
+P P R   
+kPB    P
+   R    
+   K  Q 
+
+
+
+   R    
+        
+        
+      P 
+  P R   
+kPB    P
+P       
+   K  Q 
+
+
+
+        
+        
+        
+      P 
+  P R   
+kPBR   P
+P       
+   K  Q 
+
+
+
+        
+   R    
+        
+      P 
+  P R   
+kPB    P
+P       
+   K  Q 
+
+
+
+        
+        
+        
+   R  P 
+  P R   
+kPB    P
+P       
+   K  Q 
 
 
