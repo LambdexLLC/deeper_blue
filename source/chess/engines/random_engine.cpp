@@ -11,7 +11,7 @@ namespace lbx::chess
 	/**
 	 *  Returns all (supposedly) valid moves randomly shuffled
 	*/
-	std::vector<Move> ChessEngine_Random::calculate_multiple_moves(const Board& _board, Color _player)
+	std::vector<Move> ChessEngine_Random::calculate_multiple_moves(const BoardWithState& _board, Color _player)
 	{
 		Position _from{};
 		Position _to{};

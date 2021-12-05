@@ -22,7 +22,7 @@ namespace lbx::chess
 		/**
 		 *	Returns a random but (hopefully) valid move
 		*/
-		Move calculate_move(const Board& _board, Color _player) final
+		Move calculate_move(const BoardWithState& _board, Color _player) final
 		{
 			return this->calculate_multiple_moves(_board, _player).front();
 		};
@@ -30,7 +30,7 @@ namespace lbx::chess
 		/**
 		 *  Returns all (supposedly) valid moves randomly shuffled
 		*/
-		std::vector<Move> calculate_multiple_moves(const Board& _board, Color _player) final;
+		std::vector<Move> calculate_multiple_moves(const BoardWithState& _board, Color _player) final;
 
 	};
 

@@ -27,7 +27,7 @@ struct GameAPI final : public lbx::api::LichessGameAPI
 {
 private:
 
-	chess::Board board_{};
+	chess::BoardWithState board_{};
 	chess::Color my_color_ = chess::Color::white;
 	bool is_my_turn_ = false;
 
@@ -47,7 +47,7 @@ private:
 		};
 	};
 
-	void recreate_board_from_move_string(const std::string& _movesString, chess::Board _initialBoardState = chess::make_standard_board())
+	void recreate_board_from_move_string(const std::string& _movesString, chess::BoardWithState _initialBoardState = chess::make_standard_board())
 	{
 		// Create new board
 		this->board_ = _initialBoardState;

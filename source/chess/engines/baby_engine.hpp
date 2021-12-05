@@ -24,27 +24,27 @@ namespace lbx::chess
 		 * @param _player Player to get value of
 		 * @return Total value
 		*/
-		int get_player_material(const Board& _board, Color _player) const;
+		int get_player_material(const PieceBoard& _board, Color _player) const;
 
 
 		struct RankedMove
 		{
-			Board board;
+			BoardWithState board;
 			int value;
 			Move move;
 		};
-		std::vector<RankedMove> find_best_moves(const Board& _board, Color _player);
+		std::vector<RankedMove> find_best_moves(const BoardWithState& _board, Color _player);
 
 	public:
 
 		bool is_stateless() const final { return false; };
 
-		Move calculate_move(const Board& _board, Color _player) final
+		Move calculate_move(const BoardWithState& _board, Color _player) final
 		{
 			return this->calculate_multiple_moves(_board, _player).front();
 		};
 
-		std::vector<Move> calculate_multiple_moves(const Board& _board, Color _player) final;
+		std::vector<Move> calculate_multiple_moves(const BoardWithState& _board, Color _player) final;
 
 	private:
 

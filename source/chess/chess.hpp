@@ -57,13 +57,12 @@ namespace lbx::chess
 		king_in_check,
 	};
 
-
 	/**
 	 * @brief Applies a move to a chess board without checking for validity
 	 * @param _board Board to apply move on
 	 * @param _move Move to apply
 	*/
-	constexpr inline void apply_move(Board& _board, const Move& _move, const Color& _player)
+	constexpr inline void apply_move(PieceBoard& _board, const Move& _move, const Color& _player)
 	{
 		auto _piece = _board[_move.from];
 		_board[_move.to] = _piece;
@@ -80,7 +79,7 @@ namespace lbx::chess
 	};
 
 	// Path along file, exclusive min and max, ie. checks squares between points
-	constexpr inline std::optional<PositionPair> find_piece_in_path(const Board& _board, File _file, Rank _minRank, Rank _maxRank)
+	constexpr inline std::optional<PositionPair> find_piece_in_path(const PieceBoard& _board, File _file, Rank _minRank, Rank _maxRank)
 	{
 		if (_maxRank - _minRank >= 2)
 		{
@@ -104,7 +103,7 @@ namespace lbx::chess
 	};
 
 	// Path along rank, exclusive min and max, ie. checks squares between points
-	constexpr inline std::optional<PositionPair> find_piece_in_path(const Board& _board, Rank _rank, File _minFile, File _maxFile)
+	constexpr inline std::optional<PositionPair> find_piece_in_path(const PieceBoard& _board, Rank _rank, File _minFile, File _maxFile)
 	{
 		if (_maxFile - _minFile >= 2)
 		{
@@ -128,7 +127,7 @@ namespace lbx::chess
 	};
 
 	// Diagonal path, exclusive min and max, ie. checks squares between points
-	constexpr inline std::optional<PositionPair> find_piece_in_path(const Board& _board, Rank _minRank, Rank _maxRank, File _minFile, File _maxFile)
+	constexpr inline std::optional<PositionPair> find_piece_in_path(const PieceBoard& _board, Rank _minRank, Rank _maxRank, File _minFile, File _maxFile)
 	{
 		JCLIB_ASSERT((_maxRank - _minRank) == (_maxFile - _minFile));
 
@@ -168,7 +167,7 @@ namespace lbx::chess
 	 * @param _knightPos Position of the knight to find moves for, must be a knight!
 	 * @return Possible moves struct
 	*/
-	constexpr inline PossibleKnightMoves get_knight_possible_moves(const Board& _board, PositionPair _knightPos)
+	constexpr inline PossibleKnightMoves get_knight_possible_moves(const PieceBoard& _board, PositionPair _knightPos)
 	{
 		JCLIB_ASSERT((jc::to_underlying(_board[_knightPos]) & ~0b1) == jc::to_underlying(Piece::knight));
 		const auto _knightColor = get_color(_board[_knightPos]);
@@ -208,14 +207,14 @@ namespace lbx::chess
 	 * @param _position Position of the piece to check for threat
 	 * @return Position of the enemy piece that is directly threatening this piece, or nullopt if there isnt one
 	*/
-	constexpr inline std::optional<PositionPair> is_piece_threatened(const Board& _board, PositionPair _position)
+	constexpr inline std::optional<PositionPair> is_piece_threatened(const PieceBoard& _board, PositionPair _position)
 	{
 		const auto _piece = _board[_position];
 		JCLIB_ASSERT(_piece != Piece::empty);
 		const auto _pieceColor = get_color(_piece);
 
 		Position _squarePos{ 0 };
-		for (auto& _square : _board.board)
+		for (auto& _square : _board)
 		{
 			if (_square != Piece::empty && _pieceColor != get_color(_square))
 			{
@@ -418,7 +417,7 @@ namespace lbx::chess
 	namespace move_check
 	{
 		// validation for a rook move, color independent
-		constexpr inline MoveValidity validate_move_rook_common(const Board& _board, const Move& _move, const Color& _player)
+		constexpr inline MoveValidity validate_move_rook_common(const PieceBoard& _board, const Move& _move, const Color& _player)
 		{
 			auto& _to = _move.to;
 			auto& _from = _move.from;
@@ -481,17 +480,17 @@ namespace lbx::chess
 			return MoveValidity::valid;
 		};
 		
-		constexpr inline MoveValidity validate_move_rook_white(const Board& _board, const Move& _move, const Color& _player)
+		constexpr inline MoveValidity validate_move_rook_white(const PieceBoard& _board, const Move& _move, const Color& _player)
 		{
 			return validate_move_rook_common(_board, _move, _player);
 		};
-		constexpr inline MoveValidity validate_move_rook_black(const Board& _board, const Move& _move, const Color& _player)
+		constexpr inline MoveValidity validate_move_rook_black(const PieceBoard& _board, const Move& _move, const Color& _player)
 		{
 			return validate_move_rook_common(_board, _move, _player);
 		};
 		
 		// validation for a bishop move, color independent
-		constexpr inline MoveValidity validate_move_bishop_common(const Board& _board, const Move& _move, const Color& _player)
+		constexpr inline MoveValidity validate_move_bishop_common(const PieceBoard& _board, const Move& _move, const Color& _player)
 		{
 			auto& _to = _move.to;
 			auto& _from = _move.from;
@@ -535,17 +534,17 @@ namespace lbx::chess
 			return MoveValidity::valid;
 		};
 
-		constexpr inline MoveValidity validate_move_bishop_white(const Board& _board, const Move& _move, const Color& _player)
+		constexpr inline MoveValidity validate_move_bishop_white(const PieceBoard& _board, const Move& _move, const Color& _player)
 		{
 			return validate_move_bishop_common(_board, _move, _player);
 		};
-		constexpr inline MoveValidity validate_move_bishop_black(const Board& _board, const Move& _move, const Color& _player)
+		constexpr inline MoveValidity validate_move_bishop_black(const PieceBoard& _board, const Move& _move, const Color& _player)
 		{
 			return validate_move_bishop_common(_board, _move, _player);
 		};
 
 		// validation for a queen move, color independent
-		constexpr inline MoveValidity validate_move_queen_common(const Board& _board, const Move& _move, const Color& _player)
+		constexpr inline MoveValidity validate_move_queen_common(const PieceBoard& _board, const Move& _move, const Color& _player)
 		{
 			auto& _to = _move.to;
 			auto& _from = _move.from;
@@ -586,7 +585,7 @@ namespace lbx::chess
 			return MoveValidity::valid;
 		};
 
-		constexpr inline MoveValidity validate_move_knight_white(const Board& _board, const Move& _move, const Color& _color)
+		constexpr inline MoveValidity validate_move_knight_white(const PieceBoard& _board, const Move& _move, const Color& _color)
 		{
 			auto& _to = _move.to;
 			auto& _from = _move.from;
@@ -610,7 +609,7 @@ namespace lbx::chess
 				return MoveValidity::illegal_piece_movement;
 			};
 		};
-		constexpr inline MoveValidity validate_move_knight_black(const Board& _board, const Move& _move, const Color& _color)
+		constexpr inline MoveValidity validate_move_knight_black(const PieceBoard& _board, const Move& _move, const Color& _color)
 		{
 			auto& _to = _move.to;
 			auto& _from = _move.from;
@@ -635,7 +634,7 @@ namespace lbx::chess
 			};
 		};
 	
-		constexpr inline MoveValidity validate_move_king_common(const Board& _board, const Move& _move, const Color& _color)
+		constexpr inline MoveValidity validate_move_king_common(const PieceBoard& _board, const Move& _move, const Color& _color)
 		{
 			const auto& _from = _move.from;
 			const auto& _to = _move.to;
@@ -656,11 +655,11 @@ namespace lbx::chess
 
 			return MoveValidity::valid;
 		};
-		constexpr inline MoveValidity validate_move_king_white(const Board& _board, const Move& _move, const Color& _color)
+		constexpr inline MoveValidity validate_move_king_white(const PieceBoard& _board, const Move& _move, const Color& _color)
 		{
 			return validate_move_king_common(_board, _move, _color);
 		};
-		constexpr inline MoveValidity validate_move_king_black(const Board& _board, const Move& _move, const Color& _color)
+		constexpr inline MoveValidity validate_move_king_black(const PieceBoard& _board, const Move& _move, const Color& _color)
 		{
 			return validate_move_king_common(_board, _move, _color);
 		};
@@ -673,7 +672,7 @@ namespace lbx::chess
 	 * @param _player Player making the move
 	 * @return True if move is valid, false otherwise
 	*/
-	constexpr inline MoveValidity is_move_valid(const Board& _board, const Move& _move, const Color& _player)
+	constexpr inline MoveValidity is_move_valid(const BoardWithState& _board, const Move& _move, const Color& _player)
 	{
 		const auto _movingPiece = _board[_move.from];
 		
@@ -926,7 +925,7 @@ namespace lbx::chess
 		};
 		
 		// Check if the king would be in check after applying the move
-		Board _checkTestBoard{ _board };
+		PieceBoard _checkTestBoard{ _board };
 		apply_move(_checkTestBoard, _move, _player);
 		
 		Piece _kingPiece{};
