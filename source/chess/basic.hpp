@@ -2,6 +2,8 @@
 
 #include <jclib/type_traits.h>
 
+#include <format>
+#include <string>
 #include <cstdint>
 #include <compare>
 #include <charconv>
@@ -56,8 +58,7 @@ namespace lbx::chess
 	{
 		return (int8_t)lhs - (int8_t)rhs;
 	};
-
-
+	
 
 	/**
 	 * @brief Named board file values (column)
@@ -74,7 +75,6 @@ namespace lbx::chess
 		h,
 		END,
 	};
-
 
 	constexpr inline auto operator<=>(File lhs, File rhs) noexcept
 	{
@@ -108,7 +108,9 @@ namespace lbx::chess
 	};
 
 
-
+	/**
+	 * @brief Enumerates the colors assigned to a piece or player
+	*/
 	enum class Color : bool 
 	{
 		white = 0,
@@ -124,6 +126,8 @@ namespace lbx::chess
 	{
 		return Color( !jc::to_underlying(c) );
 	};
+
+
 
 	enum class Piece : uint8_t
 	{
@@ -156,7 +160,8 @@ namespace lbx::chess
 
 	constexpr inline Piece operator|(Piece piece, Color color)
 	{
-		return Piece(jc::to_underlying(piece) | jc::to_underlying(color));
+		return Piece(jc::to_underlying(piece) |
+			static_cast<std::underlying_type_t<Piece>>(jc::to_underlying(color)));
 	};
 
 	/**
@@ -179,7 +184,11 @@ namespace lbx::chess
 		return Piece( jc::to_underlying(_piece) & ~0b1 );
 	};
 
-
+	/**
+	 * @brief Gets the color of a square on a chess board when giving its index
+	 * @param square Board square index
+	 * @return Color of the square
+	*/
 	constexpr inline Color get_square_color(Square square)
 	{
 		JCLIB_ASSERT(square < 64);
@@ -379,8 +388,7 @@ namespace lbx::chess
 		return PositionPair{ _rank, _file };
 	};
 
-
-
+#pragma region COMPILE_TIME_TESTS
 	static_assert(distance(Rank::r1, Rank::r5) == distance(Rank::r5, Rank::r1));
 	static_assert(distance(File::f, File::a) == distance(File::a, File::f));
 
@@ -397,12 +405,120 @@ namespace lbx::chess
 
 	static_assert(PositionPair{ Rank::r8, File::a } == PositionPair{ Position{ 56 } });
 	static_assert((Position)PositionPair { Rank::r8, File::a } == Position{ 56 });
-
+#pragma endregion COMPILE_TIME_TESTS
 };
+
+
+/*
+	Various string conversions for the basic types
+*/
 
 #pragma region STRING_CONVERSIONS
 namespace lbx::chess
 {
+	/**
+	 * @brief Gets the converted string form of a rank
+	 * @param _rank Rank to convert
+	 * @return String
+	*/
+	constexpr inline std::string_view to_string(const Rank& _rank) noexcept
+	{
+		switch (_rank)
+		{
+		case Rank::r1:
+			return "1";
+		case Rank::r2:
+			return "2";
+		case Rank::r3:
+			return "3";
+		case Rank::r4:
+			return "4";
+		case Rank::r5:
+			return "5";
+		case Rank::r6:
+			return "6";
+		case Rank::r7:
+			return "7";
+		case Rank::r8:
+			return "8";
+		};
+	};
+	constexpr inline char to_char(const Rank& _rank) noexcept
+	{
+		return to_string(_rank).front();
+	};
+
+	/**
+	 * @brief Converts a character into a rank
+	 * @param c Character to convert from
+	 * @param _outvalue Value to write the converted rank to
+	 * @return True if character was valid, false otherwise
+	*/
+	constexpr inline bool from_char(const char c, Rank& _outvalue) noexcept
+	{
+		if (c >= '1' && c <= '8')
+		{
+			_outvalue = Rank::r1 + (c - '1');
+			return true;
+		}
+		else
+		{
+			return false;
+		};
+	};
+
+
+	/**
+	 * @brief Gets the converted string form of a file
+	 * @param _file File to convert
+	 * @return String
+	*/
+	constexpr inline std::string_view to_string(const File& _file) noexcept
+	{
+		switch (_file)
+		{
+		case File::a:
+			return "a";
+		case File::b:
+			return "b";
+		case File::c:
+			return "c";
+		case File::d:
+			return "d";
+		case File::e:
+			return "e";
+		case File::f:
+			return "f";
+		case File::g:
+			return "g";
+		case File::h:
+			return "h";
+		};
+	};
+	constexpr inline char to_char(const File& _file) noexcept
+	{
+		return to_string(_file).front();
+	};
+
+	/**
+	 * @brief Converts a character into a file
+	 * @param c Character to convert from
+	 * @param _outvalue Value to write the converted file to
+	 * @return True if character was valid, false otherwise
+	*/
+	constexpr inline bool from_char(const char c, File& _outvalue) noexcept
+	{
+		if (c >= 'a' && c <= 'h')
+		{
+			_outvalue = File::a + (c - 'a');
+			return true;
+		}
+		else
+		{
+			return false;
+		};
+	};
+
 	/**
 	 * @brief Parses a chess square from a string formatted like "a1"
 	 * @param _begin Beginning of string section to parse
@@ -448,6 +564,21 @@ namespace lbx::chess
 		};
 	};
 
+	// Shorthand version of to_chars
+	constexpr inline std::string to_string(const PositionPair& _value)
+	{
+		std::string _out(2, '\0');
+		
+		// Convert each component and set their characters for the output string
+		const auto _file = to_string(_value.file());
+		const auto _rank = to_string(_value.rank());
+		_out[0] = _file[0];
+		_out[1] = _file[2];
+
+		return _out;
+	};
+
+
 	/**
 	 * @brief Parses a chess square from a string formatted like "a1"
 	 * @param _begin Beginning of string section to parse
@@ -472,6 +603,13 @@ namespace lbx::chess
 		return to_chars(_begin, _end, PositionPair{ _value });
 	};
 
+	// Shorthand version of to_chars, calls the to_string for PositionPair
+	constexpr inline std::string to_string(const Position& _value)
+	{
+		return to_string(PositionPair{ _value });
+	};
+
+
 
 	static_assert([]() {
 		Position _pos{};
@@ -481,3 +619,50 @@ namespace lbx::chess
 
 };
 #pragma endregion STRING_CONVERSIONS
+
+
+/*
+	Formatters for the basic types
+*/
+
+#pragma region BASIC_TYPE_FORMATTERS
+namespace std
+{
+	template <>
+	struct formatter<lbx::chess::Rank> : public formatter<std::string_view, char>
+	{
+		auto format(const lbx::chess::Rank& _value, auto& _ctx)
+		{
+			const auto _str = lbx::chess::to_string(_value);
+			return formatter<std::string_view, char>::format(_str, _ctx);
+		};
+	};
+	template <>
+	struct formatter<lbx::chess::File> : public formatter<std::string_view, char>
+	{
+		auto format(const lbx::chess::File& _value, auto& _ctx)
+		{
+			const auto _str = lbx::chess::to_string(_value);
+			return formatter<std::string_view, char>::format(_str, _ctx);
+		};
+	};
+	template <>
+	struct formatter<lbx::chess::PositionPair> : public formatter<std::string, char>
+	{
+		auto format(const lbx::chess::PositionPair& _value, auto& _ctx)
+		{
+			const auto _str = lbx::chess::to_string(_value);
+			return formatter<std::string, char>::format(_str, _ctx);
+		};
+	};
+	template <>
+	struct formatter<lbx::chess::Position> : public formatter<std::string, char>
+	{
+		auto format(const lbx::chess::Position& _value, auto& _ctx)
+		{
+			const auto _str = lbx::chess::to_string(_value);
+			return formatter<std::string, char>::format(_str, _ctx);
+		};
+	};
+};
+#pragma endregion BASIC_TYPE_FORMATTERS
