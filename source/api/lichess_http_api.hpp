@@ -33,4 +33,9 @@ namespace lbx::api::lichess
 	// Returns a true or an error string on failure
 	// https://lichess.org/api#operation/boardGameMove
 	jc::maybe<bool, std::string> send_move(http::Client& _client, std::string_view _gameID, std::string_view _move);
+
+	// Challenges the AI to a game
+	// https://lichess.org/api#operation/challengeAi
+	jc::maybe<bool, std::string> challenge_ai(http::Client& _client, int _level);
+
 };

@@ -48,7 +48,12 @@ namespace lbx::api
 		*/
 		virtual bool challenge_user(std::string_view _username) final;
 
-
+		/**
+		 * @brief Challenges the AI to a game
+		 * @param _level Bot level, must be 1 up to 8
+		 * @return True on good challenge, false otherwise
+		*/
+		virtual bool challenge_ai(int _level) final;
 
 	public:
 
