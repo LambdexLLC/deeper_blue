@@ -1,0 +1,57 @@
+current
+ p  k   
+        
+        
+        
+K       
+        
+        
+  n     
+
+
+possible:
+
+
+ p  k   
+        
+        
+        
+        
+K       
+        
+  n     
+
+
+
+ p  k   
+        
+        
+        
+ K      
+        
+        
+  n     
+
+
+
+ p  k   
+        
+        
+ K      
+        
+        
+        
+  n     
+
+
+
+ p  k   
+        
+        
+K       
+        
+        
+        
+  n     
+
+

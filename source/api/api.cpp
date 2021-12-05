@@ -1,155 +1,314 @@
 #include "api.hpp"
+#include "env.hpp"
 
-#include "client/client.hpp"
+#include "lichess_http_api.hpp"
 
-#include <jclib/ranges.h>
-#include <jclib/algorithm.h>
+#include "utility/io.hpp"
+#include "utility/httpstream.hpp"
+#include "utility/unordered_map.hpp"
 
 #include <ranges>
-#include <algorithm>
 
 namespace lbx::api
 {
 	namespace
 	{
-		/**
-		 * @brief URL for lichess
-		*/
 		constexpr inline auto lichess_url_v = "https://lichess.org";
+
+		struct LichessGameAPI_State
+		{
+		public:
+
+			jc::borrow_ptr<LichessGameAPI> api{};
+
+			std::string_view game_id() const
+			{
+				return this->game_id_;
+			};
+
+			void forward_events()
+			{
+				if (this->api)
+				{
+					while (this->event_stream_.has_events())
+					{
+						const auto _event = this->event_stream_.next_event();
+						if (_event.is_object() && _event.contains("type"))
+						{
+							if (const auto _typeJson = _event.at("type"); _typeJson.is_string())
+							{
+								std::string_view _type = _typeJson;
+								if (_type.starts_with("game"))
+								{
+									if (_type.ends_with("Full"))
+									{
+										this->api->on_game(_event);
+									}
+									else if (_type.ends_with("State"))
+									{
+										this->api->on_game_change(_event);
+									}
+									else
+									{
+										JCLIB_ABORT();
+									};
+								}
+								else if (_type.starts_with("chatLine"))
+								{
+									this->api->on_chat(_event);
+								};
+							};
+						};
+					};
+				};
+			};
+
+			auto& client()
+			{
+				return this->client_;
+			};
+			const auto& client() const
+			{
+				return this->client_;
+			};
+
+			static auto make_client()
+			{
+				http::Client _client{ lichess_url_v };
+				api::set_lichess_bearer_token_auth(_client);
+				return _client;
+			};
+
+			auto make_event_stream(const std::string_view _gameID)
+			{
+				this->path_ = std::format("/api/bot/game/stream/{}", _gameID);
+				return http::HTTPClientEventStream{ this->event_client_, this->path_.c_str() };
+			};
+
+			LichessGameAPI_State(const std::string_view _gameID) :
+				game_id_{ _gameID },
+				client_{ this->make_client() },
+				event_client_{ this->make_client() },
+				stream_{ make_event_stream(_gameID) },
+				event_stream_{ this->stream_.get_stream() }
+			{};
+
+		private:
+			std::string game_id_;
+			std::string path_;
+			http::Client client_;
+			http::Client event_client_;
+			http::HTTPClientEventStream stream_;
+			http::HTTPClientEventStream::Stream event_stream_;
+		};
+
+		struct LichessAccountAPI_State
+		{
+		public:
+
+			jc::borrow_ptr<LichessAccountAPI> account_api{};
+			unordered_map<std::string, std::unique_ptr<LichessGameAPI_State>> games{};
+
+
+			void forward_events()
+			{
+				if (this->account_api)
+				{
+					while (this->event_stream_.has_events())
+					{
+						const auto _event = this->event_stream_.next_event();
+						if (_event.is_object() && _event.contains("type"))
+						{
+							if (const auto _typeJson = _event.at("type"); _typeJson.is_string())
+							{
+								std::string_view _type = _typeJson;
+								if (_type.starts_with("game"))
+								{
+									if (_type.ends_with("Start"))
+									{
+										this->account_api->on_game_start(_event);
+									}
+									else if (_type.ends_with("Finish"))
+									{
+										this->account_api->on_game_finish(_event);
+									}
+									else
+									{
+										JCLIB_ABORT();
+									};
+								}
+								else if (_type.starts_with("challenge"))
+								{
+									if (_type.ends_with("Canceled"))
+									{
+										this->account_api->on_challenge_canceled(_event);
+									}
+									else if (_type.ends_with("Declined"))
+									{
+										this->account_api->on_challenge_declined(_event);
+									}
+									else
+									{
+										this->account_api->on_challenge(_event);
+									};
+								};
+							};
+						};
+					};
+				};
+
+				// Tell game APIs to forward events
+				for (auto& _game : this->games | std::views::values)
+				{
+					_game->forward_events();
+				};
+			};
+
+			auto& client()
+			{
+				return this->client_;
+			};
+			const auto& client() const
+			{
+				return this->client_;
+			};
+
+			static auto make_client()
+			{
+				http::Client _client{ lichess_url_v };
+				api::set_lichess_bearer_token_auth(_client);
+				return _client;
+			};
+
+			LichessAccountAPI_State() :
+				client_{ this->make_client() },
+				event_client_{ this->make_client() },
+				stream_{ this->event_client_, "/api/stream/event" },
+				event_stream_{ this->stream_.get_stream() }
+			{};
+
+		private:
+			http::Client client_;
+			http::Client event_client_;
+			http::HTTPClientEventStream stream_;
+			http::HTTPClientEventStream::Stream event_stream_;
+		};
+	};
+
+	inline auto& get_account_api_state()
+	{
+		static LichessAccountAPI_State state_;
+		return state_;
+	};
+
+
+	/**
+	 * @brief Accepts an incoming challenge from another player
+	*/
+	bool LichessAccountAPI::accept_challenge(std::string_view _challengeID)
+	{
+		const auto _result = lichess::accept_challenge(get_account_api_state().client(), _challengeID);
+		return _result.has_value() && _result.value();
 	};
 
 	/**
-	 * @brief Destroys and the frees a lichess client
-	 * @param _client Client to delete
+	 * @brief Gets the games we are currently playing in
+	 * @return The list of game IDs
 	*/
-	void LichessClientDeleter::operator()(LichessClient* _client)
+	std::vector<std::string> LichessAccountAPI::get_current_games()
 	{
-		delete _client;
+		return lichess::get_current_games(get_account_api_state().client());
 	};
 
 	/**
-	 * @brief Creates a new lichess client object
-	 * @return Owning handle to a new lichess client
+	 * @brief Creates a challenge against another user
+	 * @param _username Username of the user to challenge
 	*/
-	[[nodiscard]] LichessClientHandle new_lichess_client()
+	bool LichessAccountAPI::challenge_user(std::string_view _username)
 	{
-		// Construct client
-		LichessClientHandle _client{ new LichessClient{ lichess_url_v } };
+		const auto _result = lichess::challenge_user(get_account_api_state().client(), _username);
+		return _result.has_value() && _result.value();
+	};
 
-		// Close client early if it is not considered "good"
-		if (!_client->good())
+	/**
+	 * @brief Submits this as our move for the turn
+	 * @param _move Move to submit
+	 * @return True if move was valid, false otherwise
+	*/
+	bool LichessGameAPI::submit_move(const chess::Move& _move)
+	{
+		// Find our API state object
+		auto& _accountState = get_account_api_state();
+		for (auto& _game : _accountState.games | std::views::values)
 		{
-			_client.reset();
+			if (_game->api == this)
+			{
+				// Stringify move
+				std::array<char, 6> _buffer{};
+				const auto _tocResult = chess::to_chars(_buffer.data(), _buffer.data() + _buffer.size(), _move);
+				JCLIB_ASSERT(_tocResult.ec == std::errc{});
+
+				// Move in string form
+				std::string_view _moveStr{ _buffer.data(), _tocResult.ptr };
+				
+				const auto _gameID = _game->game_id();
+				
+				// Try submit move
+				const auto _moveResult = lichess::send_move(_game->client(), _gameID, _moveStr);
+				if (_moveResult && _moveResult.value())
+				{
+					// We did it!
+					return true;
+				}
+				else
+				{
+					// keep searching fool
+					println("Invalid Move : {}", _moveResult.alternate());
+				};
+			};
 		};
 
-		return _client;
+		// Either no moves were valid or could not find API
+		return false;
 	};
 
 
 	/**
-	 * @brief Follows another player
-	 * @param _client Lichess client object
-	 * @param _playerName Name of the player to follow
-	 * @return True on good follow, false otherwise
+	 * @brief Forwards lichess events to their associated APIs.
 	*/
-	bool follow_player(LichessClient& _client, std::string_view _playerName)
+	void forward_events()
 	{
-		return _client.follow_player(_playerName);
-	};
-
-
-
-	std::vector<GameStream> open_active_games(LichessClient& _client)
-	{
-		auto _challenges = _client.list_challenges();
-		for (auto& c : _challenges)
-		{
-			_client.accept_challenge(c.id);
-		};
-
-		std::vector<GameStream> _out{};
-		auto _games = _client.list_games();
-		for (auto& _game : _games)
-		{
-			_out.push_back(GameStream{ _client, _game });
-		};
-		return _out;
-	};
-
-
-
-	void GameStream::GameStateDeleter::operator()(LichessGameStateFull* _ptr)
-	{
-		delete _ptr;
-	};
-
-
-	bool GameStream::send_move(std::string_view _move)
-	{
-		std::string _errmsg{};
-		if (this->client_->send_move(this->state_->game_id, _move, &_errmsg))
-		{
-			this->state_->state.moves.push_back(' ');
-			this->state_->state.moves.append(_move);
-			this->is_my_turn_ = false;
-			return true;
-		}
-		else
-		{
-			std::cout << "Failed to send move : " << _errmsg << '\n';
-			return false;
-		};
-	};
-
-	std::vector<chess::Move> GameStream::get_moves() const
-	{
-		auto& _moveString = this->state_->state.moves;
-		std::vector<chess::Move> _out{};
-		char _buffer[5]{};
-		for (auto v : _moveString | std::views::split(' '))
-		{
-			chess::Move _move{};
-			std::ranges::copy(v, _buffer);
-			const auto _result = chess::from_chars(_buffer, _buffer + 5, _move);
-			JCLIB_ASSERT(_result.ec == std::errc{});
-			_out.push_back(_move);
-		};
-		return _out;
+		get_account_api_state().forward_events();
 	};
 
 	/**
-	 * @brief Gets our piece color
-	 * @return Color
+	 * @brief Sets the lichess account api interface
+	 * @param _api Borrowing pointer to to an account API interface object
 	*/
-	chess::Color GameStream::my_color() const
+	void set_account_api(jc::borrow_ptr<LichessAccountAPI> _api)
 	{
-		return this->my_color_;
+		get_account_api_state().account_api = _api;
 	};
 
+	/**
+	 * @brief Sets the game API to use for handling events from a particular game
+	 * @param _gameID ID of the game to set the API of
+	 * @param _api API to use
+	*/
+	void set_game_api(std::string_view _gameID, jc::borrow_ptr<LichessGameAPI> _api)
+	{
+		auto& _accountState = get_account_api_state();
+		auto& _games = _accountState.games;
 
-	GameStream::GameStream(LichessClient& _client, std::string_view _gameID, bool _isMyTurn, chess::Color _myColor) :
-		client_{ &_client },
-		state_{ new LichessGameStateFull{} },
-		my_color_{ _myColor },
-		is_my_turn_{ _isMyTurn }
-	{
-		_client.get_game_state(_gameID, *this->state_);
-	};
-	GameStream::GameStream(LichessClient& _client, const LichessGame& _game) :
-		client_{ &_client },
-		state_{ new LichessGameStateFull{} },
-		my_color_{},
-		is_my_turn_{ _game.is_my_turn }
-	{
-		_client.get_game_state(_game.game_id, *this->state_);
-		if (_game.color == "white")
+		auto it = _games.find(_gameID);
+		if (it == _games.end())
 		{
-			this->my_color_ = chess::Color::white;
-		}
-		else if (_game.color == "black")
-		{
-			this->my_color_ = chess::Color::black;
+			// Add state to games
+			it = _games.insert(it, { (std::string)_gameID, jc::make_unique<LichessGameAPI_State>(_gameID) });
 		};
+
+		// Set api
+		it->second->api = _api;
 	};
 
 };

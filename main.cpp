@@ -1,5 +1,8 @@
 #include "chess/chess.hpp"
 
+#include "chess/engines/baby_engine.hpp"
+
+#include "utility/io.hpp"
 #include "utility/json.hpp"
 #include "utility/http.hpp"
 
@@ -7,6 +10,7 @@
 #include "api/api.hpp"
 
 #include <jclib/thread.h>
+#include <jclib/timer.h>
 
 #include <random>
 #include <ranges>
@@ -14,125 +18,220 @@
 #include <algorithm>
 #include <iostream>
 
+using namespace lbx;
+
+/**
+ * @brief Interface implementation for interacting with a single chess game
+*/
+struct GameAPI final : public lbx::api::LichessGameAPI
+{
+private:
+
+	chess::Board board_{};
+	chess::Color my_color_ = chess::Color::white;
+	bool is_my_turn_ = false;
+
+	chess::ChessEngine_Baby engine_{};
+
+	void process_my_turn()
+	{
+		JCLIB_ASSERT(this->is_my_turn_);
+		const auto _moves = this->engine_.calculate_multiple_moves(this->board_, this->my_color_);
+		for (auto& m : _moves)
+		{
+			if (this->submit_move(m))
+			{
+				this->is_my_turn_ = false;
+				break;
+			};
+		};
+	};
+
+	void recreate_board_from_move_string(const std::string& _movesString, chess::Board _initialBoardState = chess::make_standard_board())
+	{
+		// Create new board
+		this->board_ = _initialBoardState;
+
+		// Parse moves string
+		std::vector<chess::Move> _moves{};
+		std::array<char, 8> _buffer{ '\0' };
+		for (auto _moveStr : _movesString | std::views::split(' '))
+		{
+			std::ranges::copy(_moveStr, _buffer.begin());
+			const auto _bufferLen = std::ranges::distance(_moveStr);
+
+			chess::Move _move{};
+			chess::from_chars(_buffer.data(), _buffer.data() + _bufferLen, _move);
+			_moves.push_back(_move);
+		};
+
+		// Determine whose move it is
+		if ((_moves.size() % 2) == 0)
+		{
+			// Current turn is white
+			this->board_.turn = chess::Color::white;
+			this->is_my_turn_ = (this->my_color_ == chess::Color::white);
+		}
+		else
+		{
+			// Current turn is black
+			this->board_.turn = chess::Color::black;
+			this->is_my_turn_ = (this->my_color_ == chess::Color::black);
+		};
+
+		// Apply moves to board
+		bool _isBlacksTurn = false;
+		for (auto& _move : _moves)
+		{
+			chess::Color _player = (_isBlacksTurn) ? chess::Color::black : chess::Color::white;
+			chess::apply_move(this->board_, _move, _player);
+			_isBlacksTurn = !_isBlacksTurn;
+		};
+	};
+
+public:
+
+	/**
+	 * @brief Invoked initially upon loading a game
+	 * See https://lichess.org/api#operation/botGameStream
+	*/
+	void on_game(const lbx::json& _event) final
+	{
+		// Determine my color
+		if (_event.at("white").at("id") == "lambdex")
+		{
+			this->my_color_ = chess::Color::white;
+		}
+		else if (_event.at("black").at("id") == "lambdex")
+		{
+			this->my_color_ = chess::Color::black;
+		}
+		else
+		{
+			// Failed to determine what my color is.
+			JCLIB_ABORT();
+		};
+		
+		// Recreate board state
+		this->recreate_board_from_move_string(_event.at("state").at("moves"));
+
+		// Dump board string
+		println("{}", this->board_);
+
+		// If it is our turn to play, make the move and submit
+		if (this->is_my_turn_)
+		{
+			this->process_my_turn();
+		};
+	};
+
+	/**
+	 * @brief Invoked when a move is played, a draw is offered,
+	 * or the game ends.
+	*/
+	void on_game_change(const lbx::json& _event) final
+	{
+		// Check that this was a move
+		if (_event.at("status") != "started")
+		{
+			// Not a move
+			return;
+		}
+		else
+		{
+			// Opponent made a move, now its our turn
+
+			// Recreate board from moves
+			this->recreate_board_from_move_string(_event.at("moves"));
+			
+			// Process turn if it is our turn
+			if (this->is_my_turn_)
+			{
+				this->process_my_turn();
+			};
+		};
+	};
+
+	/**
+	 * @brief Invoked when a chat message is sent
+	*/
+	void on_chat(const lbx::json& _event) final
+	{
+	
+	};
+
+};
+
+
+struct AccountAPI final : public lbx::api::LichessAccountAPI
+{
+public:
+
+	std::vector<std::unique_ptr<GameAPI>> games_{};
+
+
+	/**
+	 * @brief Invoked when a player challenges you
+	*/
+	void on_challenge(const lbx::json& _event) final
+	{
+		const std::string_view _challengeID = _event.at("challenge").at("id");
+
+		// Of course we accept it
+		this->accept_challenge(_challengeID);
+	};
+
+	/**
+	 * @brief Invoked when a game is started
+	 * https://lichess.org/api#operation/apiStreamEvent
+	*/
+	void on_game_start(const lbx::json& _event) final
+	{
+		lbx::println("game was started");
+		const std::string _gameID = _event.at("game").at("id");
+		this->games_.push_back(jc::make_unique<GameAPI>());
+		api::set_game_api(_gameID, this->games_.back().get());
+	};
+
+	/**
+	 * @brief Invoked when a game finishes
+	*/
+	void on_game_finish(const lbx::json& _event) final
+	{
+		lbx::println("game was finished");
+	};
+
+	AccountAPI()
+	{
+		// Create a game API for each of the current games
+		const auto _games = this->get_current_games();
+		lbx::println("Currently playing {} games", _games.size());
+		for (auto& _game : _games)
+		{
+			this->games_.push_back(jc::make_unique<GameAPI>());
+			api::set_game_api(_game, this->games_.back().get());
+		};
+	};
+
+};
+
 int main()
 {
 	using namespace lbx;
-
-	{
-		chess::Move _testMove{};
-		chess::from_chars("d3a2", _testMove);
-		JCLIB_ASSERT(_testMove.from == (chess::Rank::r3, chess::File::d));
-		JCLIB_ASSERT(_testMove.to == (chess::Rank::r2, chess::File::a));
-	};
 
 	api::set_env_folder_path(SOURCE_ROOT "/env");
 	if (!api::load_env())
 	{
 		return 1;
 	};
+
+	AccountAPI _accountAPI{};
+	api::set_account_api(&_accountAPI);
 	
 	while (true)
 	{
-		auto _client = api::new_lichess_client();
-		auto _games = api::open_active_games(*_client);
-
-		for (auto& _game : _games)
-		{
-			if (_game.is_my_turn())
-			{
-				const auto _myColor = _game.my_color();
-				auto _board = chess::make_standard_board();
-
-				_board.turn = _myColor;
-
-				{
-					auto _moves = _game.get_moves();
-					bool _colorToggle = false;
-					for (auto& _move : _moves)
-					{
-						chess::apply_move(_board, _move, chess::Color(_colorToggle));
-						_colorToggle = !_colorToggle;
-					};
-				};
-
-				{
-					auto _str = chess::stringify_board(_board);
-					_str.insert(_str.begin() + 64, '\n');
-					_str.insert(_str.begin() + 56, '\n');
-					_str.insert(_str.begin() + 48, '\n');
-					_str.insert(_str.begin() + 40, '\n');
-					_str.insert(_str.begin() + 32, '\n');
-					_str.insert(_str.begin() + 24, '\n');
-					_str.insert(_str.begin() + 16, '\n');
-					_str.insert(_str.begin() + 8, '\n');
-					std::cout << _str << '\n';
-				};
-
-
-				chess::Position _fromPos{};
-				chess::Position _toPos{};
-
-				chess::Move _move{};
-				std::vector<chess::Move> _allPossibleMoves{};
-
-				while (true)
-				{
-					_move.from = _fromPos;
-					_move.to = _toPos;
-
-					if (_board.at(_move.from) != chess::Piece::empty &&
-						chess::get_color(_board.at(_move.from)) == _myColor)
-					{
-						if (_move.from == (chess::Rank::r2, chess::File::a))
-						{
-							if (_move.to == (chess::Rank::r3, chess::File::a))
-							{
-								_move.promotion = chess::Piece::empty;
-							};
-						};
-						if (chess::is_move_valid(_board, _move, _myColor) == chess::MoveValidity::valid)
-						{
-							_allPossibleMoves.push_back(_move);
-						};
-					};
-					
-					_fromPos = _fromPos + 1;
-					if (_fromPos.get() == 64)
-					{
-						_fromPos = chess::Position{ 0 };
-						_toPos = _toPos + 1;
-						if (_toPos == chess::Position{ 64 })
-						{
-							break;
-						};
-					};
-				};
-
-				// Shuffle possible moves
-				std::random_device rd;
-				std::mt19937 g(rd());
-				std::ranges::shuffle(_allPossibleMoves, g);
-
-				// Try to use the moves until we find a valid one
-				bool _foundMove = false;
-				for (auto& _move : _allPossibleMoves)
-				{
-					auto _moveStr = _move.to_string();
-					if (_game.send_move(_moveStr))
-					{
-						_foundMove = true;
-						break;
-					};
-				};
-
-				if (!_foundMove)
-				{
-					std::cout << "no valid moves found!\n";
-				};
-			};
-		};
-
-		jc::sleep(0.25);
+		api::forward_events();
+		jc::sleep(0.1f);
 	};
 
 	return 0;

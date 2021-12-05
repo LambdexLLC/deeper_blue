@@ -114,6 +114,17 @@ namespace lbx::chess
 		white = 0,
 		black = 1,
 	};
+
+	/**
+	 * @brief Converts white to black and vice-versa
+	 * @param c Color to convert
+	 * @return Inverted color
+	*/
+	constexpr inline Color operator!(Color c)
+	{
+		return Color( !jc::to_underlying(c) );
+	};
+
 	enum class Piece : uint8_t
 	{
 		empty = 0,
@@ -156,6 +167,16 @@ namespace lbx::chess
 	constexpr inline Color get_color(Piece _piece)
 	{
 		return static_cast<Color>(jc::to_underlying(_piece) & 0x1);
+	};
+
+	/**
+	 * @brief Gets the white piece version of the given piece
+	 * @param _piece Piece to get white version of
+	 * @return Piece
+	*/
+	constexpr inline Piece as_white(Piece _piece)
+	{
+		return Piece( jc::to_underlying(_piece) & ~0b1 );
 	};
 
 
@@ -225,6 +246,16 @@ namespace lbx::chess
 			JCLIB_ASSERT(this->get() <= 64);
 			return *this;
 		};
+		
+		constexpr Position& operator++()
+		{
+			return (*this) += 1;
+		};
+		constexpr Position& operator--()
+		{
+			return (*this) -= 1;
+		};
+
 		friend constexpr inline Position operator+(const Position& lhs, value_type rhs) noexcept
 		{
 			auto _out = lhs;
