@@ -318,6 +318,117 @@ int main()
 		return 1;
 	};
 
+	
+	chess::BoardWithState _board = chess::make_standard_board();
+	std::vector<std::pair<int, chess::ChessEngine_Neural>> _population{};
+	_population.resize(100);
+	size_t n = 0;
+
+	{
+		chess::ChessEngine_Neural _base{};
+		std::ifstream _winner{ SOURCE_ROOT "/winner.txt" };
+		for (auto& g : _base.genes_)
+		{
+			_winner >> g;
+			_winner.ignore(1);
+		};
+		chess::build_network_from_genetics(_base.genes_, _base.net_);
+		for (auto& p : _population)
+		{
+			p.second = _base;
+		};
+	};
+
+	chess::ChessEngine_Random _baby{};
+
+	while (true)
+	{
+		if ((n % 100) == 0)
+		{
+			println("generation {}", n);
+		};
+		
+		for (auto& p : _population)
+		{
+			auto& _engine = p.second;
+			p.first = 0.0f;
+			
+			auto _pBoard = _board;
+			while (true)
+			{
+				auto _move = _engine.calculate_move(_pBoard, _pBoard.turn);
+				
+				if (chess::is_move_valid(_pBoard, _move, _pBoard.turn) == chess::MoveValidity::valid)
+				{
+					p.first += 2;
+					p.first += chess::rate_move(_pBoard, _move).get_rating();
+				}
+				else
+				{
+					p.first -= 1;
+					break;
+				};
+
+				chess::apply_move(_pBoard, _move, _pBoard.turn);
+				auto _babyMove = _baby.calculate_move(_pBoard, _pBoard.turn);
+				chess::apply_move(_pBoard, _babyMove, _pBoard.turn);
+			};
+		};
+
+		std::ranges::sort(_population, [](auto& lhs, auto& rhs) -> bool
+			{
+				return lhs.first > rhs.first;
+			});
+
+		if (!(_population.front().first > 0.0f))
+		{
+			for (auto& p : _population)
+			{
+				p.second = chess::ChessEngine_Neural{};
+			};
+			continue;
+		};
+		
+		if ((n % 100) == 0)
+		{
+			println("best fitness = {}", _population.front().first);
+
+			auto& _winner = _population.front().second;
+			std::ofstream _winnerFile{ SOURCE_ROOT "/winner.txt" };
+			for (auto& g : _winner.genes_)
+			{
+				_winnerFile << g << ',';
+			};
+			_winnerFile.flush();
+		};
+		n++;
+
+		auto _parents = std::span{ _population.begin(), _population.size() / 10 };
+		auto _outputInto = std::span{ _population.begin() + _parents.size(), _population.end() };
+		
+		auto pIt = _parents.begin();
+		for (auto& o : _outputInto | std::views::values)
+		{
+			o = pIt->second;
+			for (auto& g : o.genes_)
+			{
+				static std::random_device rnd{};
+				static std::mt19937 mt{ rnd() };
+				static std::uniform_int_distribution dist{ -10000, 10000 };
+				g += rand<int>(mt, dist);
+			};
+			chess::build_network_from_genetics(o.genes_, o.net_);
+
+			++pIt;
+			if (pIt == _parents.end())
+			{
+				pIt = _parents.begin();
+			};
+		};
+
+	};
+
+
 	AccountAPI _accountAPI{};
 	api::set_account_api(&_accountAPI);
 	
