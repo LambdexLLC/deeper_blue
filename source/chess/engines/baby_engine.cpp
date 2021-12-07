@@ -1,3 +1,5 @@
+#include "chess/board/bitboard.hpp"
+
 #include "baby_engine.hpp"
 
 #include "chess/chess.hpp"
