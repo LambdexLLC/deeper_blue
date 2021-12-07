@@ -129,7 +129,7 @@ namespace lbx::chess
 		/**
 		 * @brief Sets all bits to "false"
 		*/
-		void reset_all()
+		void set_all()
 		{
 			this->bs_.reset();
 		};
@@ -171,45 +171,45 @@ namespace lbx::chess
 
 #pragma region OPERATOR_OVERLOADS
 
-		friend constexpr inline BitBoard operator~(const BitBoard& rhs) noexcept
+		friend inline BitBoard operator~(const BitBoard& rhs) noexcept
 		{
 			return BitBoard{ ~rhs.bs_ };
 		};
 		
-		friend constexpr inline BitBoard operator&(const BitBoard& lhs, const BitBoard& rhs) noexcept
+		friend inline BitBoard operator&(const BitBoard& lhs, const BitBoard& rhs) noexcept
 		{
 			return BitBoard{ lhs.bs_ & rhs.bs_ };
 		};
-		friend constexpr inline BitBoard operator|(const BitBoard& lhs, const BitBoard& rhs) noexcept
+		friend inline BitBoard operator|(const BitBoard& lhs, const BitBoard& rhs) noexcept
 		{
 			return BitBoard{ lhs.bs_ | rhs.bs_ };
 		};
-		friend constexpr inline BitBoard operator^(const BitBoard& lhs, const BitBoard& rhs) noexcept
+		friend inline BitBoard operator^(const BitBoard& lhs, const BitBoard& rhs) noexcept
 		{
 			return BitBoard{ lhs.bs_ ^ rhs.bs_ };
 		};
 
-		friend constexpr inline BitBoard& operator&=(BitBoard& lhs, const BitBoard& rhs) noexcept
+		friend inline BitBoard& operator&=(BitBoard& lhs, const BitBoard& rhs) noexcept
 		{
 			lhs.bs_ &= rhs.bs_;
 			return lhs;
 		};
-		friend constexpr inline BitBoard& operator|=(BitBoard& lhs, const BitBoard& rhs) noexcept
+		friend inline BitBoard& operator|=(BitBoard& lhs, const BitBoard& rhs) noexcept
 		{
 			lhs.bs_ |= rhs.bs_;
 			return lhs;
 		};
-		friend constexpr inline BitBoard& operator^=(BitBoard& lhs, const BitBoard& rhs) noexcept
+		friend inline BitBoard& operator^=(BitBoard& lhs, const BitBoard& rhs) noexcept
 		{
 			lhs.bs_ ^= rhs.bs_;
 			return lhs;
 		};
 
-		friend constexpr inline bool operator==(const BitBoard& lhs, const BitBoard& rhs) noexcept
+		friend inline bool operator==(const BitBoard& lhs, const BitBoard& rhs) noexcept
 		{
 			return lhs.bs_ == rhs.bs_;
 		};
-		friend constexpr inline bool operator!=(const BitBoard& lhs, const BitBoard& rhs) noexcept
+		friend inline bool operator!=(const BitBoard& lhs, const BitBoard& rhs) noexcept
 		{
 			return lhs.bs_ != rhs.bs_;
 		};
