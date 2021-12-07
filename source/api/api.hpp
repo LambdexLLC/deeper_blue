@@ -105,6 +105,12 @@ namespace lbx::api
 		*/
 		virtual bool submit_move(const chess::Move& _move) final;
 
+		/**
+		 * @brief Resigns from the game
+		 * @return True on good resign, false otherwise
+		*/
+		virtual bool resign() final;
+
 	public:
 
 		/**

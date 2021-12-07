@@ -283,6 +283,35 @@ namespace lbx::api
 		return false;
 	};
 
+	/**
+	 * @brief Resigns from the game
+	 * @return True on good resign, false otherwise
+	*/
+	bool LichessGameAPI::resign()
+	{
+		// Find our API state object
+		auto& _accountState = get_account_api_state();
+		for (auto& _game : _accountState.games | std::views::values)
+		{
+			if (_game->api == this)
+			{
+				const auto _gameID = _game->game_id();
+
+				// Try resign
+				const auto _moveResult = lichess::resign_game(_game->client(), _gameID);
+				if (_moveResult && _moveResult.value())
+				{
+					return true;
+				}
+				else
+				{
+					println("Failed to resing : {}", _moveResult.alternate());
+				};
+			};
+		};
+		return false;
+	};
+
 
 	/**
 	 * @brief Forwards lichess events to their associated APIs.

@@ -202,4 +202,43 @@ namespace lbx::api::lichess
 		};
 	};
 
+	// Resigns from the game
+	// https://lichess.org/api#operation/botGameResign
+	jc::maybe<bool, std::string> resign_game(http::Client& _client, std::string_view _gameID)
+	{
+		const auto _path = format("/api/bot/game/{}/resign", _gameID);
+		const auto _result = _client.Post(_path.c_str());
+		if (_result)
+		{
+			if (_result->status == 200 || _result->status == 201)
+			{
+				// Succesfull resign
+				return true;
+			}
+			else if (_result->status == 400)
+			{
+				// Bad resign
+				const auto _response = json::parse(_result->body, nullptr, false);
+				if (_response.is_discarded())
+				{
+					JCLIB_ABORT();
+					return std::string{};
+				};
+
+				// Get error message
+				return (std::string)_response.at("error");
+			}
+			else
+			{
+				JCLIB_ABORT();
+				return std::string{};
+			};
+		}
+		else
+		{
+			JCLIB_ABORT();
+			return std::string{};
+		};
+	};
+
 };

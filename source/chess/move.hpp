@@ -118,7 +118,7 @@ namespace std
 	{
 		auto format(const lbx::chess::Move& _move, auto& _ctx)
 		{
-			const auto _str = lbx::chess::to_string(_move);
+			const auto _str = _move.to_string();
 			return formatter<std::string, char>::format(_str, _ctx);
 		};
 	};

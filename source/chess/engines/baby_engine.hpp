@@ -1,5 +1,7 @@
 #pragma once
 
+#include "chess/move_tree.hpp"
+
 #include "chess/chess_engine.hpp"
 #include "chess/engines/random_engine.hpp"
 
@@ -12,28 +14,18 @@ namespace lbx::chess
 	{
 	private:
 
-		/**
-		 * @brief Gets the "material" value of a piece
-		 * @return Value
-		*/
-		int get_piece_value(Piece _piece) const;
+		std::vector<RatedMove> rank_possible_moves(const BoardWithState& _board, Color _player);
+		
+		void calculate_move_tree_node_responses(MoveTree::Node* _previous, size_t _depth);
+		void calculate_move_tree_node_responses(MoveTree::Node* _previous);
 
-		/**
-		 * @brief Gets the total piece value of a player's existing pieces
-		 * @param _board Board to get pieces from
-		 * @param _player Player to get value of
-		 * @return Total value
-		*/
-		int get_player_material(const PieceBoard& _board, Color _player) const;
+		MoveTree make_move_tree(const BoardWithState& _board, size_t _depth);
 
 
-		struct RankedMove
-		{
-			BoardWithState board;
-			int value;
-			Move move;
-		};
-		std::vector<RankedMove> find_best_moves(const BoardWithState& _board, Color _player);
+
+		using RatedLine = std::vector<RatedMove>;
+		std::vector<RatedLine> pick_best_from_tree(const MoveTree& _tree);
+
 
 	public:
 

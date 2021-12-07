@@ -77,6 +77,12 @@ namespace lbx::chess
 			_board[_move.to] = _promoPiece;
 		};
 	};
+	constexpr inline void apply_move(BoardWithState& _board, const Move& _move, const Color& _player)
+	{
+		apply_move(static_cast<PieceBoard&>(_board), _move, _player);
+		_board.turn = !_board.turn;
+	};
+
 
 	// Path along file, exclusive min and max, ie. checks squares between points
 	constexpr inline std::optional<PositionPair> find_piece_in_path(const PieceBoard& _board, File _file, Rank _minRank, Rank _maxRank)
@@ -214,14 +220,18 @@ namespace lbx::chess
 		const auto _pieceColor = get_color(_piece);
 
 		Position _squarePos{ 0 };
-		for (auto& _square : _board)
+
+		constexpr auto q = PositionPair{ Position{ 31 } };
+
+		for (_squarePos; _squarePos != Position{ 64 }; ++_squarePos)
 		{
+			auto& _square = _board[_squarePos];
+			const auto _squarePosPair = PositionPair{ _squarePos };
+			
 			if (_square != Piece::empty && _pieceColor != get_color(_square))
 			{
-				const auto _squarePosPair = PositionPair{ _squarePos };
-
 				// Found enemy piece
-				const auto _squarePiece = Piece(jc::to_underlying(_square) & ~0b1);
+				const auto _squarePiece = as_white(_board[_squarePosPair]);
 				switch (_squarePiece)
 				{
 				case Piece::bishop:
@@ -407,7 +417,6 @@ namespace lbx::chess
 					break;
 				}
 			};
-			_squarePos = _squarePos + 1;
 		};
 
 		return std::nullopt;
@@ -951,7 +960,6 @@ namespace lbx::chess
 
 		return MoveValidity::valid;
 	};
-
 
 
 };

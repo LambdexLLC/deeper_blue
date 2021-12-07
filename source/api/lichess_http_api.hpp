@@ -38,4 +38,8 @@ namespace lbx::api::lichess
 	// https://lichess.org/api#operation/challengeAi
 	jc::maybe<bool, std::string> challenge_ai(http::Client& _client, int _level);
 
+	// Resigns from the game
+	// https://lichess.org/api#operation/botGameResign
+	jc::maybe<bool, std::string> resign_game(http::Client& _client, std::string_view _gameID);
+
 };

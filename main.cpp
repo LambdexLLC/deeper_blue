@@ -1,6 +1,8 @@
 #include "chess/chess.hpp"
 
+#include "chess/engines/random_engine.hpp"
 #include "chess/engines/baby_engine.hpp"
+#include "chess/engines/neural_engine.hpp"
 
 #include "utility/io.hpp"
 #include "utility/json.hpp"
@@ -17,8 +19,54 @@
 #include <iterator>
 #include <algorithm>
 #include <iostream>
+#include <sstream>
 
 using namespace lbx;
+
+namespace lbx::chess
+{
+	inline chess::BoardWithState recreate_board_from_move_string(const std::string& _movesString,
+		chess::BoardWithState _initialBoardState = chess::make_standard_board())
+	{
+		auto& _board = _initialBoardState;
+
+		// Parse moves string
+		std::vector<chess::Move> _moves{};
+		std::array<char, 8> _buffer{ '\0' };
+		for (auto _moveStr : _movesString | std::views::split(' '))
+		{
+			std::ranges::copy(_moveStr, _buffer.begin());
+			const auto _bufferLen = std::ranges::distance(_moveStr);
+
+			chess::Move _move{};
+			chess::from_chars(_buffer.data(), _buffer.data() + _bufferLen, _move);
+			_moves.push_back(_move);
+		};
+
+		// Determine whose move it is
+		if ((_moves.size() % 2) == 0)
+		{
+			// Current turn is white
+			_board.turn = chess::Color::white;
+		}
+		else
+		{
+			// Current turn is black
+			_board.turn = chess::Color::black;
+		};
+
+		// Apply moves to board
+		bool _isBlacksTurn = false;
+		for (auto& _move : _moves)
+		{
+			chess::Color _player = (_isBlacksTurn) ? chess::Color::black : chess::Color::white;
+			chess::apply_move(_board, _move, _player);
+			_isBlacksTurn = !_isBlacksTurn;
+		};
+
+		return _board;
+	};
+};
 
 /**
  * @brief Interface implementation for interacting with a single chess game
@@ -31,12 +79,10 @@ private:
 	chess::Color my_color_ = chess::Color::white;
 	bool is_my_turn_ = false;
 
-	chess::ChessEngine_Baby engine_{};
-
 	void process_my_turn()
 	{
 		JCLIB_ASSERT(this->is_my_turn_);
-		const auto _moves = this->engine_.calculate_multiple_moves(this->board_, this->my_color_);
+		const auto _moves = this->engine_->calculate_multiple_moves(this->board_, this->my_color_);
 		for (auto& m : _moves)
 		{
 			if (this->submit_move(m))
@@ -69,13 +115,11 @@ private:
 		if ((_moves.size() % 2) == 0)
 		{
 			// Current turn is white
-			this->board_.turn = chess::Color::white;
 			this->is_my_turn_ = (this->my_color_ == chess::Color::white);
 		}
 		else
 		{
 			// Current turn is black
-			this->board_.turn = chess::Color::black;
 			this->is_my_turn_ = (this->my_color_ == chess::Color::black);
 		};
 
@@ -87,6 +131,7 @@ private:
 			chess::apply_move(this->board_, _move, _player);
 			_isBlacksTurn = !_isBlacksTurn;
 		};
+		
 	};
 
 public:
@@ -169,14 +214,20 @@ public:
 	
 	};
 
-};
 
+	GameAPI(const std::shared_ptr<chess::IChessEngine>& _engine) :
+		engine_{ _engine }
+	{};
+
+private:
+	std::shared_ptr<chess::IChessEngine> engine_{};
+};
 
 struct AccountAPI final : public lbx::api::LichessAccountAPI
 {
 public:
 
-	std::vector<std::unique_ptr<GameAPI>> games_{};
+	std::vector<std::unique_ptr<lbx::api::LichessGameAPI>> games_{};
 
 
 	/**
@@ -198,7 +249,11 @@ public:
 	{
 		lbx::println("game was started");
 		const std::string _gameID = _event.at("game").at("id");
-		this->games_.push_back(jc::make_unique<GameAPI>());
+		this->games_.push_back(jc::make_unique<GameAPI>(std::shared_ptr<chess::IChessEngine>
+			(
+				new chess::ChessEngine_Baby{}
+			)));
+
 		api::set_game_api(_gameID, this->games_.back().get());
 	};
 
@@ -217,13 +272,16 @@ public:
 		lbx::println("Currently playing {} games", _games.size());
 		for (auto& _game : _games)
 		{
-			this->games_.push_back(jc::make_unique<GameAPI>());
+			this->games_.push_back(jc::make_unique<GameAPI>(std::shared_ptr<chess::IChessEngine>
+				(
+					new chess::ChessEngine_Baby{}
+			)));
 			api::set_game_api(_game, this->games_.back().get());
 		};
 
 		if (_games.empty())
 		{
-			this->challenge_ai(1);
+			this->challenge_ai(2);
 		};
 	};
 
