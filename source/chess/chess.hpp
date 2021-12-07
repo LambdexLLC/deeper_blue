@@ -1,7 +1,7 @@
 #pragma once
 
 #include "move.hpp"
-#include "board.hpp"
+#include "board/board.hpp"
 
 #include <jclib/functional.h>
 

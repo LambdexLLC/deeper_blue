@@ -1,607 +1,486 @@
 current
+r     n 
+pbpp k  
+  n p   
         
+ qP  P  
+   P    
         
-        
-      P 
-  P R   
-kPB    P
-P  R    
-   K  Q 
+     K  
 
 
 possible:
 
 
+r     n 
+pbppk   
+  n p   
         
+ qP  P  
+   P    
         
-        
-      P 
-  P R   
-kPB    P
-P  R  Q 
-   K    
-
-
-
-        
-        
-        
-      P 
-  P R   
-kP     P
-P  R    
-B  K  Q 
-
-
-
-        
-        
-        
-    B P 
-  P R   
-kP     P
-P  R    
-   K  Q 
-
-
-
-        
-        
-        
-      P 
-  P R  P
-kPB     
-P  R    
-   K  Q 
-
-
-
-        
-        
-        
-      P 
-  PQR   
-kPB    P
-P  R    
-   K    
-
-
-
-        
-        
-        
-      P 
-  P R   
-kPB    P
-P KR    
-      Q 
-
-
-
-        
-        
-        
-      P 
-  P R   
-kPB   QP
-P  R    
-   K    
-
-
-
-        
-        
-      P 
-        
-  P R   
-kPB    P
-P  R    
-   K  Q 
-
-
-
-        
-        
-        
-B     P 
-  P R   
-kP     P
-P  R    
-   K  Q 
-
-
-
-        
-        
-        
-  Q   P 
-  P R   
-kPB    P
-P  R    
-   K    
-
-
-
-        
-        
- Q      
-      P 
-  P R   
-kPB    P
-P  R    
-   K    
+     K  
 
 
 
-        
-        
-        
-    R P 
-  P     
-kPB    P
-P  R    
-   K  Q 
-
-
-
-        
+r     n 
+pbpp    
+  n p k 
         
+ qP  P  
+   P    
         
-      P 
-  P R   
-kPB Q  P
-P  R    
-   K    
+     K  
 
 
 
+   r  n 
+pbpp k  
+  n p   
         
-      B 
+ qP  P  
+   P    
         
-      P 
-  P R   
-kP     P
-P  R    
-   K  Q 
+     K  
 
 
 
+r     n 
+pbpp k  
+    p   
+    n   
+ qP  P  
+   P    
         
-        
-        
-      P 
-  P R   
-kPB    P
-P  R Q  
-   K    
+     K  
 
 
 
-        
+r     n 
+ bpp k  
+p n p   
         
+ qP  P  
+   P    
         
-      P 
-  P R   
-kPB    P
-P  R    
-    K Q 
+     K  
 
 
 
+r b   n 
+p pp k  
+  n p   
         
+ qP  P  
+   P    
         
-        
-      P 
-  P R   
-kPB    P
-P  RK   
-      Q 
+     K  
 
 
 
-        
+r     n 
+pbpp k  
+    p   
         
+ qPn P  
+   P    
         
-      P 
-  P R   
-kPB    P
-P  R    
-  K   Q 
+     K  
 
 
 
+    r n 
+pbpp k  
+  n p   
         
+ qP  P  
+   P    
         
-        
-      P 
-  P R   
-kPB    P
-P  R    
-   KQ   
+     K  
 
 
 
-        
+  r   n 
+pbpp k  
+  n p   
         
+ qP  P  
+   P    
         
-      P 
-  P R   
-kPB    P
-P  R    
-   K   Q
+     K  
 
 
 
+r    kn 
+pbpp    
+  n p   
         
+ qP  P  
+   P    
         
-        
-      P 
-  P R   
-kPB    P
-P   R   
-   K  Q 
+     K  
 
 
 
+r     n 
+pbppnk  
+    p   
         
+ qP  P  
+   P    
         
-        
-      P 
-  P     
-kPB    P
-P  R    
-   KR Q 
+     K  
 
 
 
-        
+r     n 
+pbpp k  
+  n     
+    p   
+ qP  P  
+   P    
         
-        
-      P 
-  P R   
-kPB    P
-P  R   Q
-   K    
+     K  
 
 
 
-        
+r     n 
+pbp  k  
+  npp   
         
+ qP  P  
+   P    
         
-  P   P 
-    R   
-kPB    P
-P  R    
-   K  Q 
+     K  
 
 
 
-        
-        
+r     n 
+pbpp k  
+    p   
+n       
+ qP  P  
+   P    
         
-      P 
-  P R Q 
-kPB    P
-P  R    
-   K    
+     K  
 
 
 
+r     n 
+pbpp k  
+  n p   
+  q     
+  P  P  
+   P    
         
-Q       
-        
-      P 
-  P R   
-kPB    P
-P  R    
-   K    
+     K  
 
 
 
+r     n 
+pbpp    
+  n pk  
         
+ qP  P  
+   P    
         
-    R   
-      P 
-  P     
-kPB    P
-P  R    
-   K  Q 
+     K  
 
 
 
+r       
+pbppnk  
+  n p   
         
-    R   
+ qP  P  
+   P    
         
-      P 
-  P     
-kPB    P
-P  R    
-   K  Q 
+     K  
 
 
 
+r       
+pbpp k  
+  n p  n
         
+ qP  P  
+   P    
         
-        
-      P 
-  P R   
-kPB    P
-PR      
-   K  Q 
+     K  
 
 
 
-        
+r     n 
+pbpp k  
+ qn p   
         
+  P  P  
+   P    
         
-      P 
-  P     
-kPB R  P
-P  R    
-   K  Q 
+     K  
 
 
 
+r   k n 
+pbpp    
+  n p   
         
+ qP  P  
+   P    
         
-        
-      P 
-  PBR   
-kP     P
-P  R    
-   K  Q 
+     K  
 
 
 
+     rn 
+pbpp k  
+  n p   
         
+ qP  P  
+   P    
         
-        
-      P 
-  P  R  
-kPB    P
-P  R    
-   K  Q 
+     K  
 
 
 
-        
+ r    n 
+pbpp k  
+  n p   
         
+ qP  P  
+   P    
         
-      P 
-  P R   
-kPB    P
-P      R
-   K  Q 
+     K  
 
 
 
+r       
+pbpp k  
+  n pn  
         
+ qP  P  
+   P    
         
-        
-      P 
-  P    R
-kPB    P
-P  R    
-   K  Q 
+     K  
 
 
 
-        
-        
+r     n 
+pbp  k  
+  n p   
+   p    
+ qP  P  
+   P    
         
-      P 
-  P R   
-kPB    P
-P R     
-   K  Q 
+     K  
 
 
 
+rn    n 
+pbpp k  
+    p   
         
+ qP  P  
+   P    
         
-        
-      P 
-  P R   
-kPB    P
-P  R    
-   K Q  
+     K  
 
 
 
-       B
-        
+r     n 
+ bpp k  
+  n p   
+p       
+ qP  P  
+   P    
         
-      P 
-  P R   
-kP     P
-P  R    
-   K  Q 
+     K  
 
 
 
+r     n 
+p pp k  
+b n p   
         
+ qP  P  
+   P    
         
-        
-      P 
-  PR    
-kPB    P
-P  R    
-   K  Q 
+     K  
 
 
 
-    R   
+r  n  n 
+pbpp k  
+    p   
         
+ qP  P  
+   P    
         
-      P 
-  P     
-kPB    P
-P  R    
-   K  Q 
+     K  
 
 
 
-        
+r     n 
+pbpp  k 
+  n p   
         
+ qP  P  
+   P    
         
-      P 
-  P     
-kPB    P
-P  RR   
-   K  Q 
+     K  
 
 
 
+r     n 
+pbpp k  
+  n p   
         
+  q  P  
+   P    
         
-        
-      P 
- BP R   
-kP     P
-P  R    
-   K  Q 
+     K  
 
 
 
+r     n 
+pbpp k  
+  nqp   
         
+  P  P  
+   P    
         
-        
-      P 
-  P R   
-kPB    P
-P     R 
-   K  Q 
+     K  
 
 
 
-        
+r     n 
+pbpp k  
+  n p   
         
+q P  P  
+   P    
         
-      P 
- PP R   
-k B    P
-P  R    
-   K  Q 
+     K  
 
 
 
+r     n 
+pbpp k  
+  n p   
         
+  P  P  
+  qP    
         
-        
-      P 
-  P R   
-kPB    P
-P    R  
-   K  Q 
+     K  
 
 
 
-        
+r     n 
+pbpp k  
+  n p   
+q       
+  P  P  
+   P    
         
-     B  
-      P 
-  P R   
-kP     P
-P  R    
-   K  Q 
+     K  
 
 
 
+r     n 
+pbpp k  
+  n p   
         
+  P  P  
+q  P    
         
-        
-      P 
-  P   R 
-kPB    P
-P  R    
-   K  Q 
+     K  
 
 
 
-        
+r     n 
+pbpp k  
+  n p   
         
-   R    
-      P 
-  P R   
-kPB    P
-P       
-   K  Q 
+  P  P  
+   P    
+   q    
+     K  
 
 
 
+r     n 
+pbpp k  
+  n p   
         
+  P  P  
+   P    
         
-        
-      P 
-  P R   
-kP     P
-PB R    
-   K  Q 
+ q   K  
 
 
 
-        
-        
+r     n 
+pbpp k  
+  n p   
         
-      P 
-  PRR   
-kPB    P
-P       
-   K  Q 
+  P  P  
+   P    
+ q      
+     K  
 
 
 
+r     n 
+pbppqk  
+  n p   
         
+  P  P  
+   P    
         
-        
-      P 
-P P R   
-kPB    P
-   R    
-   K  Q 
+     K  
 
 
 
-   R    
-        
+r     n 
+pbpp k  
+  n p   
+ q      
+  P  P  
+   P    
         
-      P 
-  P R   
-kPB    P
-P       
-   K  Q 
+     K  
 
 
 
+r    qn 
+pbpp k  
+  n p   
         
+  P  P  
+   P    
         
-        
-      P 
-  P R   
-kPBR   P
-P       
-   K  Q 
+     K  
 
 
 
+r     n 
+pbpp k  
+  n p   
         
-   R    
+  P  P  
+ q P    
         
-      P 
-  P R   
-kPB    P
-P       
-   K  Q 
+     K  
 
 
 
-        
+r     n 
+pbpp k  
+  n p   
         
+  P  P  
+   P    
         
-   R  P 
-  P R   
-kPB    P
-P       
-   K  Q 
+    qK  
 
 

@@ -11,7 +11,7 @@
 */
 
 #include "move.hpp"
-#include "board.hpp"
+#include "board/board.hpp"
 
 #include <vector>
 
