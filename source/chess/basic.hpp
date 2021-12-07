@@ -2,6 +2,8 @@
 
 #include <jclib/type_traits.h>
 
+#include <iosfwd>
+
 #include <format>
 #include <string>
 #include <cstdint>
@@ -419,39 +421,52 @@ namespace lbx::chess
 	/**
 	 * @brief Converts a chess piece to its UTF8 codepoint
 	 * @param _piece Piece to convert, MUST NOT BE "Piece::empty"
-	 * @return UTF8 codepoint as a 16 bit unsigned integer, all
-	 * pieces are 2 bytes wide so this is simplest
+	 * @return UTF8 codepoint as a series of 3 bytes
 	*/
-	constexpr inline uint16_t to_utf8(const Piece& _piece)
+	constexpr inline std::array<uint8_t, 3> to_utf8(const Piece& _piece)
 	{
+		using type = std::array<uint8_t, 3>;
 		using enum Piece;
 		switch (_piece)
 		{
-		case pawn_white: return 0x2659;
-		case pawn_black: return 0x265F;
+		case pawn_white: return type{ 0xe2, 0x99, 0x99 };
+		case pawn_black: return type{ 0xe2, 0x99, 0x9f };
 		
-		case rook_white: return 0x2656;
-		case rook_black: return 0x265C;
+		case rook_white: return type{ 0xe2, 0x99, 0x96 };
+		case rook_black: return type{ 0xe2, 0x99, 0x9c };
 		
-		case knight_white: return 0x2658;
-		case knight_black: return 0x265E;
+		case knight_white: return type{ 0xe2, 0x99, 0x98 };
+		case knight_black: return type{ 0xe2, 0x99, 0x9e };
 		
-		case bishop_white: return 0x2657;
-		case bishop_black: return 0x265D;
+		case bishop_white: return type{ 0xe2, 0x99, 0x97 };
+		case bishop_black: return type{ 0xe2, 0x99, 0x9d };
 		
-		case queen_white: return 0x2655;
-		case queen_black: return 0x265B;
+		case queen_white: return type{ 0xe2, 0x99, 0x95 };
+		case queen_black: return type{ 0xe2, 0x99, 0x9b };
 		
-		case king_white: return 0x265B;
-		case king_black: return 0x265B;
+		case king_white: return type{ 0xe2, 0x99, 0x94 };
+		case king_black: return type{ 0xe2, 0x99, 0x9a };
 
 		case empty:
 			[[fallthrough]];
 		default:
 			JCLIB_ABORT();
-			return 0;
+			return type{};
 		};
 	};
+
+	/**
+	 * @brief Writes a piece to an output stream.
+	 * 
+	 * Converts the piece into its UTF-8 codepoint and writes it, if the piece is empty then
+	 * a single space is written to the output stream
+	 *
+	 * @param _ostr Output stream to write to
+	 * @param _piece Piece to write to the stream
+	 * 
+	 * @return Output stream
+	*/
+	std::ostream& operator<<(std::ostream& _ostr, const Piece& _piece);
 
 
 
