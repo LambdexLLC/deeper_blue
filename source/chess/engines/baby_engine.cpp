@@ -18,6 +18,7 @@
 
 namespace lbx::chess
 {
+	constexpr auto dc = [](const auto& v) { return std::chrono::duration_cast<std::chrono::duration<double>>(v); };
 
 	/**
 	 * @brief Checks if the given board is checkmate
@@ -104,12 +105,9 @@ namespace lbx::chess
 	{
 		const auto _intialBoard = _previous->move_.get_outcome_board();
 		auto _moves = this->rank_possible_moves(_intialBoard, _intialBoard.turn);
-		for (auto& m : _moves)
-		{
-			_previous->responses_.push_back(std::unique_ptr<MoveTree::Node>{
-				new MoveTree::Node{ _previous, m, {} }
-			});
-		};
+		auto& _prevResponses = _previous->responses_;
+		_prevResponses.resize(_moves.size());
+		std::ranges::copy(_moves, _prevResponses.begin());
 	};
 	void ChessEngine_Baby::calculate_move_tree_node_responses(MoveTree::Node* _previous, size_t _depth)
 	{
@@ -119,7 +117,7 @@ namespace lbx::chess
 			--_depth;
 			for (auto& r : _previous->responses_)
 			{
-				this->calculate_move_tree_node_responses(r.get(), _depth);
+				this->calculate_move_tree_node_responses(&r, _depth);
 			};
 		};
 	};
@@ -129,18 +127,21 @@ namespace lbx::chess
 		MoveTree _out{};
 		_out.initial_board_ = _board;
 
+		jc::timer _tm{};
+		_tm.start();
+
 		auto _moves = this->rank_possible_moves(_board, _board.turn);
-		for (auto& m : _moves)
-		{
-			_out.moves_.push_back(std::unique_ptr<MoveTree::Node>{ new MoveTree::Node { nullptr, m, {} } });
-		};
+		_out.moves_.resize(_moves.size());
+		std::ranges::copy(_moves, _out.moves_.begin());
+
+		println("finding possible moves = {}", dc(_tm.elapsed()));
 
 		if (_depth != 0)
 		{
 			--_depth;
 			for (auto& r : _out.moves_)
 			{
-				this->calculate_move_tree_node_responses(r.get(), _depth);
+				this->calculate_move_tree_node_responses(&r, _depth);
 			};
 		};
 
@@ -151,21 +152,21 @@ namespace lbx::chess
 	std::vector<ChessEngine_Baby::RatedLine> ChessEngine_Baby::pick_best_from_tree(const MoveTree& _tree)
 	{
 		using Node = MoveTree::Node;
-		Node* _at = {};
+		const Node* _at = {};
 
 		std::vector<RatedLine> _finalPicks{};
 		for (auto& r : _tree.moves_)
 		{
 			RatedLine _line{};
-			_at = r.get();
+			_at = &r;
 			_line.push_back(_at->move_);
 
 			while (true)
 			{
-				Node* _opponentResponse{};
+				const Node* _opponentResponse{};
 				if (auto& _rsrs = _at->responses_; !_rsrs.empty())
 				{
-					_opponentResponse = _rsrs.front().get();
+					_opponentResponse = &_rsrs.front();
 				}
 				else
 				{
@@ -175,7 +176,7 @@ namespace lbx::chess
 				if (auto& _rsrs = _opponentResponse->responses_; !_rsrs.empty())
 				{
 					_line.push_back(_opponentResponse->move_);
-					_at = _opponentResponse->responses_.front().get();
+					_at = &_opponentResponse->responses_.front();
 					_line.push_back(_at->move_);
 				}
 				else
@@ -198,6 +199,9 @@ namespace lbx::chess
 
 	std::vector<Move> ChessEngine_Baby::calculate_multiple_moves(const BoardWithState& _board, Color _player)
 	{
+		jc::timer _tm{};
+		_tm.start();
+
 		int _pieceCount = 0;
 		for (auto& p : _board)
 		{
@@ -207,25 +211,23 @@ namespace lbx::chess
 			};
 		};
 
-		size_t _treeDepth{};
-		if (_pieceCount > 6)
-		{
-			_treeDepth = 3;
-		}
-		else
-		{
-			_treeDepth = 5;
-		};
+		size_t _treeDepth = 3;
+
 
 		auto _moveTree = this->make_move_tree(_board, _treeDepth);
+		const auto _treeTime = _tm.elapsed();
+		_tm.start();
+
 		auto _lines = this->pick_best_from_tree(_moveTree);
-		
+		const auto _pickTime = _tm.elapsed();
+		_tm.start();
+
 		static int move_n = 0;
 
 		{
 			auto& _bestLine = _lines.front();
 			
-			std::string fp = SOURCE_ROOT "/game4/move_" + std::to_string(move_n++) + ".txt";
+			std::string fp = SOURCE_ROOT "/dump/game5/move_" + std::to_string(move_n++) + ".txt";
 			std::ofstream f{ fp };
 			
 			bool _myTurn = true;
@@ -256,7 +258,8 @@ namespace lbx::chess
 			f.flush();
 		}
 		
-	
+		const auto _logTime = _tm.elapsed();
+
 		// Grab the individual moves
 		std::vector<Move> _final(_lines.size());
 		auto it = _final.begin();
@@ -266,6 +269,8 @@ namespace lbx::chess
 			++it;
 		};
 		
+		println("tree = {} pick = {} log = {}", dc(_treeTime), dc(_pickTime), dc(_logTime));
+
 		return _final;
 	};
 

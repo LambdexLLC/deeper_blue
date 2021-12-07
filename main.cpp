@@ -16,10 +16,12 @@
 
 #include <random>
 #include <ranges>
+#include <fstream>
 #include <iterator>
 #include <algorithm>
 #include <iostream>
-#include <sstream>
+
+#include <thread>
 
 using namespace lbx;
 
@@ -75,6 +77,16 @@ struct GameAPI final : public lbx::api::LichessGameAPI
 {
 private:
 
+	void log_failed_my_move(const std::string& _errorMessage)
+	{
+		this->error_log_file_ << "Bot failed to move = " << _errorMessage << std::endl;
+	};
+	void log_failed_opponent_move(const std::string& _errorMessage)
+	{
+		this->error_log_file_ << "Opponent move failed move validation = " << _errorMessage << std::endl;
+	};
+
+	std::ofstream error_log_file_{ SOURCE_ROOT "/errlog.txt" };
 	chess::BoardWithState board_{};
 	chess::Color my_color_ = chess::Color::white;
 	bool is_my_turn_ = false;
@@ -85,10 +97,15 @@ private:
 		const auto _moves = this->engine_->calculate_multiple_moves(this->board_, this->my_color_);
 		for (auto& m : _moves)
 		{
-			if (this->submit_move(m))
+			std::string _errmsg{};
+			if (this->submit_move(m, &_errmsg))
 			{
 				this->is_my_turn_ = false;
 				break;
+			}
+			else
+			{
+				this->log_failed_my_move(_errmsg);
 			};
 		};
 	};
@@ -128,6 +145,10 @@ private:
 		for (auto& _move : _moves)
 		{
 			chess::Color _player = (_isBlacksTurn) ? chess::Color::black : chess::Color::white;
+			if (const auto v = chess::is_move_valid(this->board_, _move, _player); v != chess::MoveValidity::valid)
+			{
+				this->log_failed_opponent_move(_move.to_string() + " " + std::to_string((int)v));
+			};
 			chess::apply_move(this->board_, _move, _player);
 			_isBlacksTurn = !_isBlacksTurn;
 		};

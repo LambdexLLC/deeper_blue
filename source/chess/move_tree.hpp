@@ -190,13 +190,30 @@ namespace lbx::chess
 	{
 		struct Node
 		{
+			Node() = default;
+
+			Node(Node* _previous, const RatedMove& _move) :
+				previous_{ _previous }, move_{ _move }
+			{}
+			
+			Node(const RatedMove& _move) :
+				Node{ nullptr, _move }
+			{}
+			
+			Node& operator=(const RatedMove& _move)
+			{
+				this->move_ = _move;
+				return *this;
+			};
+
+
 			Node* previous_;
 			RatedMove move_;
-			std::vector<std::unique_ptr<Node>> responses_;
+			std::vector<Node> responses_;
 		};
 
 		BoardWithState initial_board_;
-		std::vector<std::unique_ptr<Node>> moves_;
+		std::vector<Node> moves_;
 	};
 
 

@@ -244,9 +244,10 @@ namespace lbx::api
 	/**
 	 * @brief Submits this as our move for the turn
 	 * @param _move Move to submit
+	 * @param _errmsg Optional error message output string, defaults to nullptr
 	 * @return True if move was valid, false otherwise
 	*/
-	bool LichessGameAPI::submit_move(const chess::Move& _move)
+	bool LichessGameAPI::submit_move(const chess::Move& _move, std::string* _errmsg)
 	{
 		// Find our API state object
 		auto& _accountState = get_account_api_state();
@@ -273,8 +274,16 @@ namespace lbx::api
 				}
 				else
 				{
-					// keep searching fool
-					println("Invalid Move : {}", _moveResult.alternate());
+					if (_errmsg)
+					{
+						// keep searching fool
+						*_errmsg = _moveResult.alternate();
+					}
+					else
+					{
+						// keep searching fool
+						println("Invalid Move : {}", _moveResult.alternate());
+					};
 				};
 			};
 		};

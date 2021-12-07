@@ -36,6 +36,20 @@ namespace lbx::chess
 		Piece promotion = Piece::empty;
 	};
 
+	constexpr inline bool operator==(const Move& lhs, const Move& rhs) noexcept
+	{
+		return
+			lhs.from == rhs.from &&
+			lhs.to == rhs.to &&
+			lhs.promotion == rhs.promotion;
+	};
+	constexpr inline bool operator!=(const Move& lhs, const Move& rhs) noexcept
+	{
+		return !(lhs == rhs);
+	};
+
+
+
 	inline std::from_chars_result from_chars(const char* _begin, const char* _end, Move& _value)
 	{
 		auto _result = from_chars(_begin, _end, _value.from);

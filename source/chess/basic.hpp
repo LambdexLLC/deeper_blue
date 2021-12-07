@@ -1,5 +1,6 @@
 #pragma once
 
+#include <jclib/concepts.h>
 #include <jclib/type_traits.h>
 
 #include <iosfwd>
@@ -36,18 +37,30 @@ namespace lbx::chess
 		return jc::to_underlying(lhs) <=> jc::to_underlying(rhs);
 	};
 
-	constexpr inline Rank operator+(Rank lhs, uint8_t rhs) noexcept
+	constexpr inline Rank operator+(Rank lhs, jc::cx_integer auto rhs) noexcept
 	{
 		const auto _out = Rank(jc::to_underlying(lhs) + rhs);
 		JCLIB_ASSERT(_out >= Rank::r1 && _out <= Rank::END);
 		return _out;
 	};
-	constexpr inline Rank operator-(Rank lhs, uint8_t rhs) noexcept
+	constexpr inline Rank& operator+=(Rank& lhs, jc::cx_integer auto rhs) noexcept
+	{
+		lhs = lhs + rhs;
+		return lhs;
+	};
+
+	constexpr inline Rank operator-(Rank lhs, jc::cx_integer auto rhs) noexcept
 	{
 		const auto _out = Rank(jc::to_underlying(lhs) - rhs);
 		JCLIB_ASSERT(_out >= Rank::r1 && _out <= Rank::END);
 		return _out;
 	};
+	constexpr inline Rank& operator-=(Rank& lhs, jc::cx_integer auto rhs) noexcept
+	{
+		lhs = lhs - rhs;
+		return lhs;
+	};
+
 	constexpr inline uint8_t operator-(Rank lhs, Rank rhs) noexcept
 	{
 		return jc::to_underlying(lhs) - jc::to_underlying(rhs);
@@ -83,17 +96,28 @@ namespace lbx::chess
 		return jc::to_underlying(lhs) <=> jc::to_underlying(rhs);
 	};
 
-	constexpr inline File operator+(File lhs, uint8_t rhs) noexcept
+	constexpr inline File operator+(File lhs, jc::cx_integer auto rhs) noexcept
 	{
 		const auto _out = File(jc::to_underlying(lhs) + rhs);
 		JCLIB_ASSERT(_out >= File::a && _out <= File::END);
 		return _out;
 	};
-	constexpr inline File operator-(File lhs, uint8_t rhs) noexcept
+	constexpr inline File& operator+=(File& lhs, jc::cx_integer auto rhs) noexcept
+	{
+		lhs = lhs + rhs;
+		return lhs;
+	};
+
+	constexpr inline File operator-(File lhs, jc::cx_integer auto rhs) noexcept
 	{
 		const auto _out = File(jc::to_underlying(lhs) - rhs);
 		JCLIB_ASSERT(_out >= File::a && _out <= File::END);
 		return _out;
+	};
+	constexpr inline File& operator-=(File& lhs, jc::cx_integer auto rhs) noexcept
+	{
+		lhs = lhs - rhs;
+		return lhs;
 	};
 
 	constexpr inline uint8_t operator-(File lhs, File rhs) noexcept

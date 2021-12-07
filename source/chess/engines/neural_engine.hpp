@@ -43,12 +43,23 @@ namespace lbx::chess
 
 		ChessEngine_Neural()
 		{
+			static std::random_device rnd{};
+			static std::mt19937 mt{ rnd() };
+			static std::uniform_int_distribution dist{ -1000000, 1000000 };
+
 			this->genes_.resize(chess::minimum_genes_to_describe_network(this->net_, 64));
-			std::ranges::fill(this->genes_, random_value);
+			for (auto& g : this->genes_)
+			{
+				g = rand<int>(mt, dist);
+			};
+
+			build_network_from_genetics(this->genes_, this->net_);
 		};
 		ChessEngine_Neural(std::vector<int> _genes) :
 			genes_{ std::move(_genes) }
-		{};
+		{
+			build_network_from_genetics(this->genes_, this->net_);
+		};
 
 		std::array<Neuron, 64> input_layer_{};
 		Network net_ = new_chess_network();
