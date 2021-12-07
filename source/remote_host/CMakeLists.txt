@@ -1,0 +1,4 @@
+# Trickle down!
+
+ADD_CMAKE_SUBDIRS_HERE()
+ADD_CPP_SOURCES_HERE(${PROJECT_NAME}-exe)

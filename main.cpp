@@ -1,5 +1,6 @@
-#include "chess/chess.hpp"
+#include "remote_host/remote_host.hpp"
 
+#include "chess/chess.hpp"
 #include "chess/engines/baby_engine.hpp"
 
 #include "utility/io.hpp"
@@ -221,7 +222,11 @@ public:
 			api::set_game_api(_game, this->games_.back().get());
 		};
 
-		this->challenge_ai(1);
+		// If we aren't playing any games, start one with the AI
+		if (_games.empty())
+		{
+			this->challenge_ai(1);
+		};
 	};
 
 };
@@ -239,6 +244,8 @@ int main()
 	AccountAPI _accountAPI{};
 	api::set_account_api(&_accountAPI);
 	
+	auto _host = remote::new_remote_host("0.0.0.0", 42069);
+
 	while (true)
 	{
 		api::forward_events();
