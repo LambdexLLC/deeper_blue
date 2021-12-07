@@ -101,9 +101,16 @@ namespace lbx::api
 		/**
 		 * @brief Submits this as our move for the turn
 		 * @param _move Move to submit
+		 * @param _errmsg Optional error message output string, defaults to nullptr
 		 * @return True if move was valid, false otherwise
 		*/
-		virtual bool submit_move(const chess::Move& _move) final;
+		virtual bool submit_move(const chess::Move& _move, std::string* _errmsg = nullptr) final;
+
+		/**
+		 * @brief Resigns from the game
+		 * @return True on good resign, false otherwise
+		*/
+		virtual bool resign() final;
 
 	public:
 

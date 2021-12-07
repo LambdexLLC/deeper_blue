@@ -29,7 +29,7 @@ namespace lbx::chess
 		 * ever work on a single game per instance.
 		 * @return True if stateless, false otherwise
 		*/
-		virtual bool is_stateless() const = 0;
+		virtual bool is_stateless() const { return false; };
 
 		/**
 		 * @brief Implement this method as the main engine "thinking" routine. Engine implementations

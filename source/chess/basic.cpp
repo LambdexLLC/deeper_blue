@@ -19,7 +19,9 @@ namespace lbx::chess
 	{
 		if (_piece == Piece::empty)
 		{
-			_ostr << ' ';
+			_ostr.put(0xe2);
+			_ostr.put(0x99);
+			_ostr.put(0xa4);
 		}
 		else
 		{

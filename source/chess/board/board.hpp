@@ -10,6 +10,7 @@
 #include <string>
 #include <optional>
 #include <format>
+#include <iosfwd>
 
 namespace lbx::chess
 {
@@ -19,7 +20,8 @@ namespace lbx::chess
 	class PieceBoard : public GenericBoard<Piece>
 	{
 	public:
-		std::optional<PositionPair> find(Piece _piece) const
+
+		constexpr std::optional<PositionPair> find(Piece _piece) const
 		{
 			Position p{};
 			for (auto _square : *this)
@@ -155,6 +157,24 @@ namespace lbx::chess
 		return _out;
 	};
 
+	std::ostream& operator<<(std::ostream& _ostr, const PieceBoard& _board);
+
+
+	static_assert([]() -> bool
+		{
+			auto _board = make_standard_board();
+			if (_board[(Rank::r8, File::d)] != Piece::queen_black)
+			{
+				return false;
+			};
+			if (_board[Position((Rank::r8, File::d))] != Piece::queen_black)
+			{
+				return false;
+			};
+
+
+			return true;
+		}());
 };
 
 namespace std

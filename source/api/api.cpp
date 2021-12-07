@@ -244,9 +244,10 @@ namespace lbx::api
 	/**
 	 * @brief Submits this as our move for the turn
 	 * @param _move Move to submit
+	 * @param _errmsg Optional error message output string, defaults to nullptr
 	 * @return True if move was valid, false otherwise
 	*/
-	bool LichessGameAPI::submit_move(const chess::Move& _move)
+	bool LichessGameAPI::submit_move(const chess::Move& _move, std::string* _errmsg)
 	{
 		// Find our API state object
 		auto& _accountState = get_account_api_state();
@@ -273,13 +274,50 @@ namespace lbx::api
 				}
 				else
 				{
-					// keep searching fool
-					println("Invalid Move : {}", _moveResult.alternate());
+					if (_errmsg)
+					{
+						// keep searching fool
+						*_errmsg = _moveResult.alternate();
+					}
+					else
+					{
+						// keep searching fool
+						println("Invalid Move : {}", _moveResult.alternate());
+					};
 				};
 			};
 		};
 
 		// Either no moves were valid or could not find API
+		return false;
+	};
+
+	/**
+	 * @brief Resigns from the game
+	 * @return True on good resign, false otherwise
+	*/
+	bool LichessGameAPI::resign()
+	{
+		// Find our API state object
+		auto& _accountState = get_account_api_state();
+		for (auto& _game : _accountState.games | std::views::values)
+		{
+			if (_game->api == this)
+			{
+				const auto _gameID = _game->game_id();
+
+				// Try resign
+				const auto _moveResult = lichess::resign_game(_game->client(), _gameID);
+				if (_moveResult && _moveResult.value())
+				{
+					return true;
+				}
+				else
+				{
+					println("Failed to resing : {}", _moveResult.alternate());
+				};
+			};
+		};
 		return false;
 	};
 

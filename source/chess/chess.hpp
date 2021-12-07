@@ -57,16 +57,90 @@ namespace lbx::chess
 		king_in_check,
 	};
 
+
+	struct CastleBehavior
+	{
+		// Checks if the move is a castle and can be performed
+		constexpr bool check(const BoardWithState& _board, const Move& _move) const
+		{
+			auto& b = (_board.*this->flag);
+			return this->king_move == _move && b;
+		};
+
+		// Apply the castle to a board, doesn't check for validity
+		constexpr void apply(BoardWithState& _board) const
+		{
+			auto& b = (_board.*this->flag);
+
+			JCLIB_ASSERT(b);
+
+			_board[this->rook_move.to] = _board[this->rook_move.from];
+			_board[this->rook_move.from] = Piece::empty;
+			_board[this->king_move.to] = _board[this->king_move.from];
+			_board[this->king_move.from] = Piece::empty;
+
+			b = false;
+		};
+
+		using BoardFlag = bool BoardWithState::*;
+
+		Move king_move;
+		Move rook_move;
+		BoardFlag flag;
+	};
+
 	/**
 	 * @brief Applies a move to a chess board without checking for validity
 	 * @param _board Board to apply move on
 	 * @param _move Move to apply
 	*/
-	constexpr inline void apply_move(PieceBoard& _board, const Move& _move, const Color& _player)
+	constexpr inline void apply_move(BoardWithState& _board, const Move& _move, const Color& _player)
 	{
+		// Castle movement definitions
+		constexpr auto _castleMoves = std::array
+		{
+			CastleBehavior
+			{
+				Move{ (Rank::r8, File::e), (Rank::r8, File::g) },
+				Move{ (Rank::r8, File::h), (Rank::r8, File::f) },
+				&BoardWithState::black_can_castle_kingside
+			},
+			CastleBehavior
+			{
+				Move{ (Rank::r8, File::e), (Rank::r8, File::c) },
+				Move{ (Rank::r8, File::a), (Rank::r8, File::d) },
+				&BoardWithState::black_can_castle_queenside
+			},
+			CastleBehavior
+			{
+				Move{ (Rank::r1, File::e), (Rank::r1, File::g) },
+				Move{ (Rank::r1, File::h), (Rank::r1, File::f) },
+				&BoardWithState::white_can_castle_kingside
+			},
+			CastleBehavior
+			{
+				Move{ (Rank::r1, File::e), (Rank::r1, File::c) },
+				Move{ (Rank::r1, File::a), (Rank::r1, File::d) },
+				&BoardWithState::white_can_castle_queenside
+			}
+		};
+
+		_board.turn = !_board.turn;
+
+		// Handle castling moves
+		for (auto& m : _castleMoves)
+		{
+			if (m.check(_board, _move))
+			{
+				m.apply(_board);
+				return;
+			};
+		};
+		
 		auto _piece = _board[_move.from];
 		_board[_move.to] = _piece;
 		_board[_move.from] = Piece::empty;
+
 		if (_move.promotion != Piece::empty)
 		{
 			auto _promoPiece = _board[_move.to];
@@ -76,25 +150,33 @@ namespace lbx::chess
 			};
 			_board[_move.to] = _promoPiece;
 		};
+
+	};
+
+
+	// Path along rank, exclusive min and max, ie. checks squares between points
+	constexpr inline std::optional<PositionPair> find_piece_in_path_rank(const PieceBoard& _board, const PositionPair& _from, const PositionPair& _to)
+	{
+		const int8_t _inc = (_from.rank() < _to.rank()) ? 1 : -1;
+		for (auto _rank = _from.rank(); _rank != _to.rank(); _rank = _rank + _inc)
+		{
+			const auto _at = (_rank, _from.file());
+			if (_board[_at] != Piece::empty && _at != _from)
+			{
+				return _at;
+			};
+		};
+		return std::nullopt;
 	};
 
 	// Path along file, exclusive min and max, ie. checks squares between points
-	constexpr inline std::optional<PositionPair> find_piece_in_path(const PieceBoard& _board, File _file, Rank _minRank, Rank _maxRank)
+	constexpr inline std::optional<PositionPair> find_piece_in_path_file(const PieceBoard& _board, const PositionPair& _from, const PositionPair& _to)
 	{
-		if (_maxRank - _minRank >= 2)
+		const int8_t _inc = (_from.file() < _to.file()) ? 1 : -1;
+		for (auto _file = _from.file(); _file != _to.file(); _file = _file + _inc)
 		{
-			_minRank = _minRank + 1;
-			_maxRank = _maxRank - 1;
-		}
-		else
-		{
-			return std::nullopt;
-		};
-
-		for (_minRank; _minRank <= _maxRank; _minRank = _minRank + 1)
-		{
-			const auto _at = (_minRank, _file);
-			if (_board[_at] != Piece::empty)
+			const auto _at = (_from.rank(), _file);
+			if (_board[_at] != Piece::empty && _at != _from)
 			{
 				return _at;
 			};
@@ -102,45 +184,84 @@ namespace lbx::chess
 		return std::nullopt;
 	};
 
-	// Path along rank, exclusive min and max, ie. checks squares between points
-	constexpr inline std::optional<PositionPair> find_piece_in_path(const PieceBoard& _board, Rank _rank, File _minFile, File _maxFile)
+	// Path along diagonal
+	constexpr inline std::optional<PositionPair> find_piece_in_path_diagonal(const PieceBoard& _board, PositionPair _from, PositionPair _to)
 	{
-		if (_maxFile - _minFile >= 2)
-		{
-			_minFile = _minFile + 1;
-			_maxFile = _maxFile - 1;
-		}
-		else
-		{
-			return std::nullopt;
-		};
+		const int8_t _fileInc = (_from.file() < _to.file()) ? 1 : -1;
+		const int8_t _rankInc = (_from.rank() < _to.rank()) ? 1 : -1;
 
-		for (_minFile; _minFile != _maxFile; _minFile = _minFile + 1)
+		auto _file = _from.file();
+		auto _rank = _from.rank();
+
+		for (_file, _rank;
+			_file != _to.file() && _rank != _to.rank();
+			_file += _fileInc, _rank += _rankInc)
 		{
-			const auto _at = (_rank, _minFile);
-			if (_board[_at] != Piece::empty)
+			const auto _at = (_rank, _file);
+			if (_board[_at] != Piece::empty && _at != _from)
 			{
 				return _at;
 			};
 		};
 		return std::nullopt;
 	};
+
+	enum class MovementClass
+	{
+		invalid,
+		file,
+		rank,
+		diagonal
+	};
+
+	constexpr inline MovementClass classify_movement(const PositionPair& _from, const PositionPair& _to)
+	{
+		if (_from.rank() == _to.rank() && _from.file() != _to.file())
+		{
+			// Movement along file
+			return MovementClass::file;
+		}
+		else if (_from.file() == _to.file() && _from.rank() != _to.rank())
+		{
+			// Movement along rank
+			return MovementClass::rank;
+		}
+		else if (distance(_from.file(), _to.file()) == distance(_from.rank(), _to.rank()))
+		{
+			// Movement along diagonal
+			return MovementClass::diagonal;
+		}
+		else
+		{
+			// Invalid
+			return MovementClass::invalid;
+		};
+	};
+
+	static_assert(classify_movement((Rank::r2, File::b), (Rank::r7, File::b)) == MovementClass::rank);
+	static_assert(classify_movement((Rank::r2, File::c), (Rank::r2, File::a)) == MovementClass::file);
+	static_assert(classify_movement((Rank::r1, File::a), (Rank::r4, File::d)) == MovementClass::diagonal);
+	static_assert(classify_movement((Rank::r1, File::a), (Rank::r4, File::b)) == MovementClass::invalid);
+
 
 	// Diagonal path, exclusive min and max, ie. checks squares between points
-	constexpr inline std::optional<PositionPair> find_piece_in_path(const PieceBoard& _board, Rank _minRank, Rank _maxRank, File _minFile, File _maxFile)
+	constexpr inline std::optional<PositionPair> find_piece_in_path(const PieceBoard& _board, const PositionPair& _from, const PositionPair& _to)
 	{
-		JCLIB_ASSERT((_maxRank - _minRank) == (_maxFile - _minFile));
-
-		for (uint8_t _offset = 0; _offset != (_maxFile - _minFile); ++_offset)
+		const auto _movement = classify_movement(_from, _to);
+		switch (_movement)
 		{
-			const auto _at = (_minRank + _offset, _minFile + _offset);
-			if (_board[_at] != Piece::empty &&
-				_at != (_minRank, _minFile))
-			{
-				return _at;
-			};
+		case MovementClass::diagonal:
+			return find_piece_in_path_diagonal(_board, _from, _to);
+		case MovementClass::file:
+			return find_piece_in_path_file(_board, _from, _to);
+		case MovementClass::rank:
+			return find_piece_in_path_rank(_board, _from, _to);
+		case MovementClass::invalid:
+			return std::nullopt;
+		default:
+			JCLIB_ABORT();
+			return std::nullopt;
 		};
-		return std::nullopt;
 	};
 
 
@@ -214,14 +335,18 @@ namespace lbx::chess
 		const auto _pieceColor = get_color(_piece);
 
 		Position _squarePos{ 0 };
-		for (auto& _square : _board)
+
+		constexpr auto q = PositionPair{ Position{ 31 } };
+
+		for (_squarePos; _squarePos != Position{ 64 }; ++_squarePos)
 		{
+			auto& _square = _board[_squarePos];
+			const auto _squarePosPair = PositionPair{ _squarePos };
+			
 			if (_square != Piece::empty && _pieceColor != get_color(_square))
 			{
-				const auto _squarePosPair = PositionPair{ _squarePos };
-
 				// Found enemy piece
-				const auto _squarePiece = Piece(jc::to_underlying(_square) & ~0b1);
+				const auto _squarePiece = as_white(_board[_squarePosPair]);
 				switch (_squarePiece)
 				{
 				case Piece::bishop:
@@ -232,10 +357,7 @@ namespace lbx::chess
 					if (_fileDist == _rankDist)
 					{
 						// Check for collision on path
-						const auto [_minFile, _maxFile] = std::minmax(_position.file(), _squarePosPair.file());
-						const auto [_minRank, _maxRank] = std::minmax(_position.rank(), _squarePosPair.rank());
-
-						auto _collidePos = find_piece_in_path(_board, _minRank, _maxRank, _minFile, _maxFile);
+						auto _collidePos = find_piece_in_path(_board, _squarePosPair, _position);
 						if (!_collidePos)
 						{
 							// Found threat!
@@ -252,10 +374,7 @@ namespace lbx::chess
 					if (_fileDist == _rankDist)
 					{
 						// Check for collision on path
-						const auto [_minFile, _maxFile] = std::minmax(_position.file(), _squarePosPair.file());
-						const auto [_minRank, _maxRank] = std::minmax(_position.rank(), _squarePosPair.rank());
-
-						auto _collidePos = find_piece_in_path(_board, _minRank, _maxRank, _minFile, _maxFile);
+						auto _collidePos = find_piece_in_path(_board, _squarePosPair, _position);
 						if (!_collidePos)
 						{
 							// Found threat!
@@ -265,8 +384,7 @@ namespace lbx::chess
 					else if (_squarePosPair.file() == _position.file())
 					{
 						// Check for collision on path
-						const auto [_min, _max] = std::minmax(_position.rank(), _squarePosPair.rank());
-						auto _collidePos = find_piece_in_path(_board, _position.file(), _min, _max);
+						auto _collidePos = find_piece_in_path(_board, _squarePosPair, _position);
 						if (!_collidePos)
 						{
 							// Found threat!
@@ -276,8 +394,7 @@ namespace lbx::chess
 					else if (_squarePosPair.rank() == _position.rank())
 					{
 						// Check for collision on path
-						const auto [_min, _max] = std::minmax(_position.file(), _squarePosPair.file());
-						auto _collidePos = find_piece_in_path(_board, _position.rank(), _min, _max);
+						auto _collidePos = find_piece_in_path(_board, _squarePosPair, _position);
 						if (!_collidePos)
 						{
 							// Found threat!
@@ -290,8 +407,7 @@ namespace lbx::chess
 					if (_squarePosPair.file() == _position.file())
 					{
 						// Check for collision on path
-						const auto [_min, _max] = std::minmax(_position.rank(), _squarePosPair.rank());
-						auto _collidePos = find_piece_in_path(_board, _position.file(), _min, _max);
+						auto _collidePos = find_piece_in_path(_board, _squarePosPair, _position);
 						if (!_collidePos)
 						{
 							// Found threat!
@@ -301,8 +417,7 @@ namespace lbx::chess
 					else if (_squarePosPair.rank() == _position.rank())
 					{
 						// Check for collision on path
-						const auto [_min, _max] = std::minmax(_position.file(), _squarePosPair.file());
-						auto _collidePos = find_piece_in_path(_board, _position.rank(), _min, _max);
+						auto _collidePos = find_piece_in_path(_board, _squarePosPair, _position);
 						if (!_collidePos)
 						{
 							// Found threat!
@@ -343,9 +458,10 @@ namespace lbx::chess
 
 						if (_squarePosPair.rank() == Rank::r2)
 						{
-							// Look for diagonal + 2 capture
+							// Look for diagonal + 2 capture, make sure to check for blocking pieces
 							if ((_squarePosPair.file() != File::h) &&
-								(_position == (_squarePosPair.rank() + 2, _squarePosPair.file() + 1)))
+								(_position == (_squarePosPair.rank() + 2, _squarePosPair.file() + 1)) &&
+								(_board[(_squarePosPair.rank() + 1, _squarePosPair.file())] == Piece::empty))
 							{
 								// Pawn would take
 								return _squarePosPair;
@@ -407,7 +523,6 @@ namespace lbx::chess
 					break;
 				}
 			};
-			_squarePos = _squarePos + 1;
 		};
 
 		return std::nullopt;
@@ -787,7 +902,7 @@ namespace lbx::chess
 						return MoveValidity::illegal_piece_movement;
 					};
 
-					if (_board[(_to.rank() - 1, _to.file())] != Piece::empty)
+					if (_board[(_from.rank() - 1, _to.file())] != Piece::empty)
 					{
 						// Piece in the way
 						return MoveValidity::other_piece_in_the_way;
@@ -855,7 +970,7 @@ namespace lbx::chess
 						return MoveValidity::illegal_piece_movement;
 					};
 
-					if (_board[(_to.rank() + 1, _to.file())] != Piece::empty)
+					if (_board[(_from.rank() + 1, _to.file())] != Piece::empty)
 					{
 						// Piece in the way
 						return MoveValidity::other_piece_in_the_way;
@@ -925,7 +1040,7 @@ namespace lbx::chess
 		};
 		
 		// Check if the king would be in check after applying the move
-		PieceBoard _checkTestBoard{ _board };
+		auto _checkTestBoard{ _board };
 		apply_move(_checkTestBoard, _move, _player);
 		
 		Piece _kingPiece{};
@@ -951,7 +1066,6 @@ namespace lbx::chess
 
 		return MoveValidity::valid;
 	};
-
 
 
 };

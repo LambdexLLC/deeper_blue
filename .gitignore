@@ -11,3 +11,6 @@ lib/jclib/
 
 # Environment ignore
 env/
+
+# Dump output directories
+dump/
