@@ -65,6 +65,28 @@ namespace lbx::chess
 		return _value;
 	};
 
+	/**
+	 * @brief Checks if the given board is checkmate
+	 * @param _board Board to check
+	 * @param _player Player to test for checkmate of
+	 * @return True if checkmate
+	*/
+	inline bool is_checkmate(const BoardWithState& _board, Color _player)
+	{
+		const auto _kingPos = *_board.find(Piece::king | _player);
+		if (is_piece_threatened(_board, _kingPos))
+		{
+			// Check if there are any possible moves
+			ChessEngine_Random _random{};
+			const auto _possibleMoves = _random.calculate_multiple_moves(_board, _player);
+			return _possibleMoves.empty();
+		}
+		else
+		{
+			return false;
+		};
+	};
+
 
 	std::vector<ChessEngine_Baby::RankedMove> ChessEngine_Baby::find_best_moves(const BoardWithState& _board, Color _player)
 	{
@@ -105,9 +127,15 @@ namespace lbx::chess
 		{
 			std::vector<int> _possibleOutcomes{};
 			auto _responseMoves = this->find_best_moves(m.board, m.board.turn);
-			
+
 			for (auto& _rm : _responseMoves)
 			{
+				// Test for checkmate
+				if (is_checkmate(_rm.board, _rm.board.turn))
+				{
+					__debugbreak();
+				};
+
 				auto _nextMoves = this->find_best_moves(_rm.board, _player);
 				if (_nextMoves.empty())
 				{

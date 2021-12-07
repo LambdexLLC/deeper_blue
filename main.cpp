@@ -221,7 +221,7 @@ public:
 			api::set_game_api(_game, this->games_.back().get());
 		};
 
-		this->challenge_ai(1);
+
 	};
 
 };
