@@ -417,6 +417,45 @@ namespace lbx::chess
 namespace lbx::chess
 {
 	/**
+	 * @brief Converts a chess piece to its UTF8 codepoint
+	 * @param _piece Piece to convert, MUST NOT BE "Piece::empty"
+	 * @return UTF8 codepoint as a 16 bit unsigned integer, all
+	 * pieces are 2 bytes wide so this is simplest
+	*/
+	constexpr inline uint16_t to_utf8(const Piece& _piece)
+	{
+		using enum Piece;
+		switch (_piece)
+		{
+		case pawn_white: return 0x2659;
+		case pawn_black: return 0x265F;
+		
+		case rook_white: return 0x2656;
+		case rook_black: return 0x265C;
+		
+		case knight_white: return 0x2658;
+		case knight_black: return 0x265E;
+		
+		case bishop_white: return 0x2657;
+		case bishop_black: return 0x265D;
+		
+		case queen_white: return 0x2655;
+		case queen_black: return 0x265B;
+		
+		case king_white: return 0x265B;
+		case king_black: return 0x265B;
+
+		case empty:
+			[[fallthrough]];
+		default:
+			JCLIB_ABORT();
+			return 0;
+		};
+	};
+
+
+
+	/**
 	 * @brief Gets the converted string form of a rank
 	 * @param _rank Rank to convert
 	 * @return String
