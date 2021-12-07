@@ -1,7 +1,8 @@
 #pragma once
 
-#include "generic/generic_board.hpp"
-#include "basic.hpp"
+#include "generic_board.hpp"
+
+#include "chess/basic.hpp"
 
 #include <jclib/config.h>
 
