@@ -134,7 +134,7 @@ namespace lbx::chess
 		_out.moves_.resize(_moves.size());
 		std::ranges::copy(_moves, _out.moves_.begin());
 
-		println("finding possible moves = {}", dc(_tm.elapsed()));
+		println("finding possible moves = {}", dc(_tm.elapsed()).count());
 
 		if (_depth != 0)
 		{
@@ -269,7 +269,7 @@ namespace lbx::chess
 			++it;
 		};
 		
-		println("tree = {} pick = {} log = {}", dc(_treeTime), dc(_pickTime), dc(_logTime));
+		println("tree = {} pick = {} log = {}", dc(_treeTime).count(), dc(_pickTime).count(), dc(_logTime).count());
 
 		return _final;
 	};
