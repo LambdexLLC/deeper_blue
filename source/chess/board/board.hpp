@@ -4,12 +4,13 @@
 
 #include "chess/basic.hpp"
 
+#include "utility/format.hpp"
+
 #include <jclib/config.h>
 
 #include <array>
 #include <string>
 #include <optional>
-#include <format>
 #include <iosfwd>
 
 namespace lbx::chess
@@ -177,7 +178,7 @@ namespace lbx::chess
 		}());
 };
 
-namespace std
+namespace fmt
 {
 	template <>
 	struct formatter<lbx::chess::PieceBoard, char> :

@@ -3,7 +3,6 @@
 #include "basic.hpp"
 
 #include <string>
-#include <format>
 #include <charconv>
 
 namespace lbx::chess
@@ -125,7 +124,7 @@ namespace lbx::chess
 };
 
 #pragma region MOVE_FORMATTER
-namespace std
+namespace fmt
 {
 	template <>
 	struct formatter<lbx::chess::Move> : public formatter<std::string, char>

@@ -2,6 +2,9 @@
 
 #include "chess/chess.hpp"
 
+#include <jclib/ranges.h>
+#include <jclib/functional.h>
+
 #include <random>
 #include <ranges>
 #include <algorithm>
@@ -18,6 +21,15 @@ namespace lbx::chess
 
 		// The set of moves this will randomly select from
 		std::vector<Move> _moves{};
+
+		// Loop through all non-empty squares (so pieces) and check for valid moves
+		for (auto& p : _board | std::views::filter(jc::unequals & Piece::empty))
+		{
+			if (chess::get_color(p) == _player)
+			{
+
+			};
+		};
 
 		// Probe until we find a "valid" move
 		while (true)

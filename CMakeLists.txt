@@ -9,7 +9,8 @@ project(deeper_blue VERSION 0.0.1)
 set(private_link 
     nlohmann_json
     httplib
-    jclib)
+    jclib
+    fmt)
 
 # Directories to be privately included
 set(private_include 

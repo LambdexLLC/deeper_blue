@@ -1,11 +1,12 @@
 #pragma once
 
+#include "utility/format.hpp"
+
 #include <jclib/concepts.h>
 #include <jclib/type_traits.h>
 
 #include <iosfwd>
 
-#include <format>
 #include <string>
 #include <cstdint>
 #include <compare>
@@ -208,6 +209,36 @@ namespace lbx::chess
 	constexpr inline Piece as_white(Piece _piece)
 	{
 		return Piece( jc::to_underlying(_piece) & ~0b1 );
+	};
+
+	/**
+	 * @brief Gets the black piece version of the given piece
+	 * @param _piece Piece to get black version of
+	 * @return Piece
+	*/
+	constexpr inline Piece as_black(Piece _piece)
+	{
+		return _piece | Color::black;
+	};
+
+	/**
+	 * @brief Checks if a piece is white, this is purely a convenience function
+	 * @param _piece Piece to check on
+	 * @return True if piece is white
+	*/
+	constexpr inline bool is_white(Piece _piece) noexcept
+	{
+		return get_color(_piece) == Color::white;
+	};
+	
+	/**
+	 * @brief Checks if a piece is black, this is purely a convenience function
+	 * @param _piece Piece to check on
+	 * @return True if piece is black
+	*/
+	constexpr inline bool is_black(Piece _piece) noexcept
+	{
+		return get_color(_piece) == Color::black;
 	};
 
 	/**
@@ -704,7 +735,7 @@ namespace lbx::chess
 */
 
 #pragma region BASIC_TYPE_FORMATTERS
-namespace std
+namespace fmt
 {
 	template <>
 	struct formatter<lbx::chess::Rank> : public formatter<std::string_view, char>
