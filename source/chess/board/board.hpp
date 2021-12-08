@@ -178,7 +178,7 @@ namespace lbx::chess
 		}());
 };
 
-namespace fmt
+namespace std
 {
 	template <>
 	struct formatter<lbx::chess::PieceBoard, char> :

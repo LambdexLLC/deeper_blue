@@ -93,6 +93,7 @@ namespace lbx::chess
 	 * @brief Applies a move to a chess board without checking for validity
 	 * @param _board Board to apply move on
 	 * @param _move Move to apply
+	 * @param _player Player making the move
 	*/
 	constexpr inline void apply_move(BoardWithState& _board, const Move& _move, const Color& _player)
 	{
@@ -152,6 +153,17 @@ namespace lbx::chess
 		};
 
 	};
+
+	/**
+	 * @brief Applies a move to a chess board without checking for validity
+	 * @param _board Board to apply move on
+	 * @param _move Move to apply
+	*/
+	constexpr inline auto apply_move(BoardWithState& _board, const Move& _move)
+	{
+		return apply_move(_board, _move, _board.turn);
+	};
+
 
 
 	// Path along rank, exclusive min and max, ie. checks squares between points

@@ -4,7 +4,6 @@ project(deeper_blue VERSION 0.0.1)
 
 
 
-
 # Libraries to be privately linked
 set(private_link 
     nlohmann_json

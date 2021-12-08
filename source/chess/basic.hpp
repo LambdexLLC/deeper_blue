@@ -155,7 +155,9 @@ namespace lbx::chess
 	};
 
 
-
+	/**
+	 * @brief Describes the state a chess square may be in
+	*/
 	enum class Piece : uint8_t
 	{
 		empty = 0,
@@ -293,6 +295,16 @@ namespace lbx::chess
 			return this->get();
 		};
 
+		/**
+		 * @brief Gets 1 + the maximum value a position may have
+		 * @return Position{ 64 };
+		*/
+		constexpr static Position end() noexcept
+		{
+			return Position{ 64 };
+		};
+
+
 		// Three-way-compare lets goo
 		constexpr auto operator<=>(const Position& rhs) const noexcept = default;
 		constexpr auto operator<=>(const value_type& rhs) const noexcept
@@ -400,6 +412,17 @@ namespace lbx::chess
 			return Position{ _val };
 		};
 
+		/**
+		 * @brief Gets 1 + the maximum value a position may have
+		 * @return Position{ 64 };
+		*/
+		constexpr static PositionPair end() noexcept
+		{
+			return PositionPair{ Position::end() };
+		};
+
+
+
 		constexpr auto operator<=>(const PositionPair& rhs) const noexcept = default;
 
 
@@ -425,7 +448,7 @@ namespace lbx::chess
 		 * @param _rank Rank of the position
 		 * @param _file File of the position
 		*/
-		constexpr explicit PositionPair(Rank _rank, File _file) :
+		constexpr explicit PositionPair(Rank _rank, File _file) noexcept :
 			file_{ jc::to_underlying(_file) },
 			rank_{ jc::to_underlying(_rank) }
 		{};
@@ -735,7 +758,7 @@ namespace lbx::chess
 */
 
 #pragma region BASIC_TYPE_FORMATTERS
-namespace fmt
+namespace std
 {
 	template <>
 	struct formatter<lbx::chess::Rank> : public formatter<std::string_view, char>

@@ -124,7 +124,7 @@ namespace lbx::chess
 };
 
 #pragma region MOVE_FORMATTER
-namespace fmt
+namespace std
 {
 	template <>
 	struct formatter<lbx::chess::Move> : public formatter<std::string, char>
