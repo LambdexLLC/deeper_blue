@@ -1,6 +1,7 @@
 #pragma once
 
 #include "generic_board.hpp"
+#include "bitboard.hpp"
 
 #include "chess/basic.hpp"
 
@@ -36,9 +37,49 @@ namespace lbx::chess
 			return std::nullopt;
 		};
 
+		/**
+		 * @brief Makes a bit board with each square set to true if a piece is present
+		 * @return Bit board
+		*/
+		constexpr BitBoard as_bits_with_pieces() const
+		{
+			BitBoard _out{};
+			Position p{};
+			for (auto& s : *this)
+			{
+				_out.set(p, s != Piece::empty);
+				++p;
+			};
+			return _out;
+		};
+
+		/**
+		 * @brief Makes a bit board with each square set to true if a piece of the player is present
+		 * @param _player Player to get pieces of
+		 * @return Bit board
+		*/
+		constexpr BitBoard as_bits_with_pieces(Color _player) const
+		{
+			BitBoard _out{};
+			Position p{};
+			for (auto& s : *this)
+			{
+				_out.set(p, s != Piece::empty && get_color(s) == _player);
+				++p;
+			};
+			return _out;
+		};
+
+
+
+
 		using GenericBoard::GenericBoard;
 		using GenericBoard::operator=;
 	};
+
+
+
+
 
 	/**
 	 * @brief Describes a board of pieces with game state

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "move.hpp"
+#include "piece_movement.hpp"
+
 #include "board/board.hpp"
 
 #include <jclib/functional.h>
