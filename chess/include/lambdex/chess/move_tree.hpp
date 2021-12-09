@@ -118,7 +118,6 @@ namespace lbx::chess
 			return this->get_rating() <=> rhs.get_rating();
 		};
 
-
 		/**
 		 * @brief Gets the move
 		 * @return Move value
@@ -128,28 +127,6 @@ namespace lbx::chess
 			return this->move_;
 		};
 
-		/**
-		 * @brief Gets the state of the board prior to playing this move
-		 * @return Board with state
-		*/
-		const BoardWithState& get_initial_board() const
-		{
-			return this->board_;
-		};
-
-		/**
-		 * @brief Gets the state of the board after making the held move
-		 * @return Outcome board state
-		*/
-		BoardWithState get_outcome_board() const
-		{
-			auto _out = this->get_initial_board();
-			const auto _move = this->get_move();
-			apply_move(_out, _move, _out.turn);
-			return _out;
-		};
-
-
 		explicit RatedMove() = default;
 
 		/**
@@ -158,14 +135,12 @@ namespace lbx::chess
 		 * @param _move Move that is being rated
 		 * @param _rating Rating for the board
 		*/
-		explicit RatedMove(BoardWithState _boardBeforeMove, Move _move, int _rating) :
-			board_{ std::move(_boardBeforeMove) },
+		explicit RatedMove(Move _move, int _rating) :
 			move_{ _move },
 			rating_{ _rating }
 		{};
 
 	private:
-		BoardWithState board_;
 		Move move_;
 		int rating_;
 	};
@@ -182,7 +157,7 @@ namespace lbx::chess
 		auto _board = _initialBoard;
 		apply_move(_board, _move, _board.turn);
 		const auto _rating = _rater.rate(_board, _initialBoard.turn);
-		return RatedMove{ _initialBoard, _move, _rating };
+		return RatedMove{ _move, _rating };
 	};
 
 

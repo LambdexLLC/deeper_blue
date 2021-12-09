@@ -99,7 +99,7 @@ namespace lbx::chess
 	};
 
 
-	void ChessEngine_Baby::calculate_move_tree_node_responses(MoveTree::Node* _previous)
+	void ChessEngine_Baby::calculate_move_tree_node_responses(const BoardWithState& _board, MoveTree::Node* _previous)
 	{
 		if (_previous->move_.get_rating() < -10000 || _previous->move_.get_rating() > 10000)
 		{
@@ -107,22 +107,23 @@ namespace lbx::chess
 		}
 		else
 		{
-			const auto _intialBoard = _previous->move_.get_outcome_board();
-			auto _moves = this->rank_possible_moves(_intialBoard, _intialBoard.turn);
+			auto _moves = this->rank_possible_moves(_board, _board.turn);
 			auto& _prevResponses = _previous->responses_;
 			_prevResponses.resize(_moves.size());
 			std::ranges::copy(_moves, _prevResponses.begin());
 		};
 	};
-	void ChessEngine_Baby::calculate_move_tree_node_responses(MoveTree::Node* _previous, size_t _depth)
+	void ChessEngine_Baby::calculate_move_tree_node_responses(const BoardWithState& _board, MoveTree::Node* _previous, size_t _depth)
 	{
-		this->calculate_move_tree_node_responses(_previous);
+		this->calculate_move_tree_node_responses(_board, _previous);
 		if (_depth != 0)
 		{
 			--_depth;
 			for (auto& r : _previous->responses_)
 			{
-				this->calculate_move_tree_node_responses(&r, _depth);
+				BoardWithState _newBoard{ _board };
+				apply_move(_newBoard, r.move_.get_move());
+				this->calculate_move_tree_node_responses(_newBoard, &r, _depth);
 			};
 		};
 	};
@@ -146,7 +147,9 @@ namespace lbx::chess
 			--_depth;
 			for (auto& r : _out.moves_)
 			{
-				this->calculate_move_tree_node_responses(&r, _depth);
+				BoardWithState _newBoard{ _board };
+				apply_move(_newBoard, r.move_.get_move());
+				this->calculate_move_tree_node_responses(_newBoard, &r, _depth);
 			};
 		};
 
@@ -301,6 +304,7 @@ namespace lbx::chess
 				writeln(f, "\t{} ({}) (final = {})", m.front().get_move(), m.front().get_rating(), m.back().get_rating());
 			};
 
+			BoardWithState _lineBoard{ _board };
 			for (auto& m : _bestLine)
 			{
 				if (_myTurn)
@@ -311,8 +315,10 @@ namespace lbx::chess
 				{
 					f << "\nopponent:\n";
 				};
-				
-				f << m.get_move().to_string() << '\n' << m.get_outcome_board();
+
+				apply_move(_lineBoard, m.get_move());
+				f << m.get_move().to_string() << '\n' << _lineBoard;
+
 				_myTurn = !_myTurn;
 			};
 
