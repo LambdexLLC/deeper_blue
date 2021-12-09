@@ -9,7 +9,8 @@ set(private_link
     nlohmann_json
     httplib
     jclib
-    fmt)
+    fmt
+    lbx::chess-lib)
 
 # Directories to be privately included
 set(private_include 
@@ -17,8 +18,11 @@ set(private_include
 
 
 
-
 include ("CMakeUtils.cmake")
+
+
+add_subdirectory("chess")
+
 add_executable(${PROJECT_NAME}-exe "main.cpp")
 
 target_compile_features(${PROJECT_NAME}-exe PUBLIC cxx_std_20)

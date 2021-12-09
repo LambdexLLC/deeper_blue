@@ -1,9 +1,13 @@
 #pragma once
+#ifndef LAMBDEX_CHESS_MOVE_HPP
+#define LAMBDEX_CHESS_MOVE_HPP
 
 #include "basic.hpp"
 
 #include <string>
+#include <format>
 #include <charconv>
+#include <string_view>
 
 namespace lbx::chess
 {
@@ -137,3 +141,5 @@ namespace std
 	};
 };
 #pragma endregion MOVE_FORMATTER
+
+#endif // LAMBDEX_CHESS_MOVE_HPP

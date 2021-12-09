@@ -5,10 +5,9 @@
 */
 
 #include "utility/random.hpp"
-
 #include "neural/network.hpp"
-#include "chess/chess_engine.hpp"
 
+#include <lambdex/chess/chess_engine.hpp>
 
 namespace lbx::chess
 {
@@ -36,9 +35,11 @@ namespace lbx::chess
 		/**
 		 * Calculates a move using the neural network
 		*/
-		Move calculate_move(const BoardWithState& _board, Color _player) final;
+		Move calculate_move(const BoardWithState& _board, Color _player);
 
 
+
+		void play_turn(IGameInterface& _game) final;
 
 
 		ChessEngine_Neural()

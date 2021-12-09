@@ -1,10 +1,8 @@
-#include "chess/board/bitboard.hpp"
-
 #include "baby_engine.hpp"
 
-#include "chess/chess.hpp"
-
 #include "utility/io.hpp"
+
+#include <lambdex/chess/chess.hpp>
 
 #include <jclib/timer.h>
 #include <jclib/ranges.h>
@@ -87,7 +85,7 @@ namespace lbx::chess
 			auto _rated = rate_move(_board, m, _rater);
 			if (_rated.get_rating() < -10000)
 			{
-				continue;
+				_rankedMoves.push_back(_rated);
 			}
 			else
 			{
@@ -103,11 +101,18 @@ namespace lbx::chess
 
 	void ChessEngine_Baby::calculate_move_tree_node_responses(MoveTree::Node* _previous)
 	{
-		const auto _intialBoard = _previous->move_.get_outcome_board();
-		auto _moves = this->rank_possible_moves(_intialBoard, _intialBoard.turn);
-		auto& _prevResponses = _previous->responses_;
-		_prevResponses.resize(_moves.size());
-		std::ranges::copy(_moves, _prevResponses.begin());
+		if (_previous->move_.get_rating() < -10000 || _previous->move_.get_rating() > 10000)
+		{
+			return;
+		}
+		else
+		{
+			const auto _intialBoard = _previous->move_.get_outcome_board();
+			auto _moves = this->rank_possible_moves(_intialBoard, _intialBoard.turn);
+			auto& _prevResponses = _previous->responses_;
+			_prevResponses.resize(_moves.size());
+			std::ranges::copy(_moves, _prevResponses.begin());
+		};
 	};
 	void ChessEngine_Baby::calculate_move_tree_node_responses(MoveTree::Node* _previous, size_t _depth)
 	{
@@ -148,6 +153,43 @@ namespace lbx::chess
 		return _out;
 	};
 
+	const MoveTree::Node* ChessEngine_Baby::pick_best_from_tree(const MoveTree::Node& _node, RatedLine& _line)
+	{
+		// Add the current move to the line
+		_line.push_back(_node.move_);
+
+		// Look at opponent's responses to this move
+		std::vector<std::pair<RatedLine, const MoveTree::Node*>> _responseLines(_node.responses_.size());
+		auto _responseIt = _responseLines.begin();
+		for (auto& m : _node.responses_)
+		{
+			// Get their best response
+			RatedLine _responseLine{};
+			this->pick_best_from_tree(m, _responseLine);
+			_responseIt->second = &m;
+			_responseIt->first = std::move(_responseLine);
+			++_responseIt;
+		};
+
+		// Determine our best response to their best response
+		if (!_responseLines.empty())
+		{
+			// Determine which of thier responses is their best
+			std::ranges::sort(_responseLines, [](const auto& lhs, const auto& rhs) -> bool
+				{
+					return lhs.first.front() > rhs.first.front();
+				});
+			auto& _theirBest = _responseLines.front();
+
+			// Determine our best response to it
+			
+		}
+		else
+		{
+			// This move is as good as it gets, return null
+			return nullptr;
+		};
+	};
 
 	std::vector<ChessEngine_Baby::RatedLine> ChessEngine_Baby::pick_best_from_tree(const MoveTree& _tree)
 	{
@@ -166,7 +208,26 @@ namespace lbx::chess
 				const Node* _opponentResponse{};
 				if (auto& _rsrs = _at->responses_; !_rsrs.empty())
 				{
-					_opponentResponse = &_rsrs.front();
+					// Build up look-ahead rating for opponent response
+					std::vector<std::pair<const Node*, int>> _responseToResponseRatings{};
+					for (auto& _rsrsrs : _rsrs)
+					{
+						if (!_rsrsrs.responses_.empty())
+						{
+							_responseToResponseRatings.push_back(std::pair<const Node*, int>{ &_rsrsrs, -_rsrsrs.responses_.front().move_.get_rating()});
+						}
+						else
+						{
+							_responseToResponseRatings.push_back({ &_rsrsrs, _rsrsrs.move_.get_rating() });
+						};
+					};
+
+					// Sort look-ahead responses
+					std::ranges::sort(_responseToResponseRatings, [](auto& lhs, auto& rhs)
+						{
+							return lhs.second > rhs.second;
+						});
+					_opponentResponse = _responseToResponseRatings.front().first;
 				}
 				else
 				{
@@ -213,7 +274,6 @@ namespace lbx::chess
 
 		size_t _treeDepth = 3;
 
-
 		auto _moveTree = this->make_move_tree(_board, _treeDepth);
 		const auto _treeTime = _tm.elapsed();
 		_tm.start();
@@ -224,20 +284,21 @@ namespace lbx::chess
 
 		static int move_n = 0;
 
+		if (_lines.empty())
+		{
+			return {};
+		};
+
 		{
 			auto& _bestLine = _lines.front();
-			
-			std::string fp = SOURCE_ROOT "/dump/game6/move_" + std::to_string(move_n++) + ".txt";
-			std::ofstream f{ fp };
+			std::ofstream f = this->logger_.start_logging_move();
 			
 			bool _myTurn = true;
 			f << "\ninitial:\n" << _board << '\n';
-
-			auto _possibleMoves = this->rank_possible_moves(_board, _player);
 			f << "possible moves:\n";
-			for (auto& m : _possibleMoves)
+			for (auto& m : _lines)
 			{
-				writeln(f, "\t{} ({})", m.get_move(), m.get_rating());
+				writeln(f, "\t{} ({}) (final = {})", m.front().get_move(), m.front().get_rating(), m.back().get_rating());
 			};
 
 			for (auto& m : _bestLine)
@@ -250,8 +311,8 @@ namespace lbx::chess
 				{
 					f << "\nopponent:\n";
 				};
-
-				f << m.get_outcome_board();
+				
+				f << m.get_move().to_string() << '\n' << m.get_outcome_board();
 				_myTurn = !_myTurn;
 			};
 
@@ -272,6 +333,20 @@ namespace lbx::chess
 		println("tree = {} pick = {} log = {}", dc(_treeTime).count(), dc(_pickTime).count(), dc(_logTime).count());
 
 		return _final;
+	};
+
+
+	void ChessEngine_Baby::play_turn(IGameInterface& _game)
+	{
+		const auto _moves = this->calculate_multiple_moves(_game.get_board(), _game.get_color());
+		for (auto& m : _moves)
+		{
+			if (_game.submit_move(m))
+			{
+				return;
+			};
+		};
+		_game.resign();
 	};
 
 };

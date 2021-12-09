@@ -1,4 +1,6 @@
 #pragma once
+#ifndef LAMBDEX_CHESS_PIECE_MOVEMENT_HPP
+#define LAMBDEX_CHESS_PIECE_MOVEMENT_HPP
 
 /*
 	Provides functions for examining piece movement
@@ -6,7 +8,7 @@
 
 #include "basic.hpp"
 
-#include "board/bitboard.hpp"
+#include "board/bit_board.hpp"
 
 namespace lbx::chess
 {
@@ -315,3 +317,5 @@ namespace lbx::chess
 	};
 
 };
+
+#endif // LAMBDEX_CHESS_PIECE_MOVEMENT_HPP

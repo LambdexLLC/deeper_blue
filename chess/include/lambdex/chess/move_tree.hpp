@@ -1,7 +1,11 @@
 #pragma once
+#ifndef LAMBDEX_CHESS_MOVE_TREE_HPP
+#define LAMBDEX_CHESS_MOVE_TREE_HPP
 
 #include "basic.hpp"
 #include "chess.hpp"
+
+#include <jclib/concepts.h>
 
 #include <vector>
 #include <memory>
@@ -10,16 +14,16 @@ namespace lbx::chess
 {
 	/**
 	 * @brief Defines a board rater type
-	 * 
+	 *
 	 * The concept is fufilled by types that can have an "rate" function
 	 * defined that takes a chess board and a player and returns an
 	 * integer representation of the "rating" of the board's position from
 	 * the POV of the given player.
-	 * 
+	 *
 	 * See below to see what that means:
 	*/
 	template <typename T>
-	concept cx_board_rater = requires(const T& _rater, const BoardWithState& _board, Color _player)
+	concept cx_board_rater = requires(const T & _rater, const BoardWithState & _board, Color _player)
 	{
 		{ _rater.rate(_board, _player) } -> jc::cx_same_as<int>;
 	};
@@ -101,7 +105,7 @@ namespace lbx::chess
 	public:
 
 		/**
-		 * @brief Gets the rating for this move 
+		 * @brief Gets the rating for this move
 		 * @return Rating for the move
 		*/
 		constexpr int get_rating() const noexcept
@@ -195,11 +199,11 @@ namespace lbx::chess
 			Node(Node* _previous, const RatedMove& _move) :
 				previous_{ _previous }, move_{ _move }
 			{}
-			
+
 			Node(const RatedMove& _move) :
 				Node{ nullptr, _move }
 			{}
-			
+
 			Node& operator=(const RatedMove& _move)
 			{
 				this->move_ = _move;
@@ -216,6 +220,6 @@ namespace lbx::chess
 		std::vector<Node> moves_;
 	};
 
-
-
 };
+
+#endif // LAMBDEX_CHESS_MOVE_TREE_HPP

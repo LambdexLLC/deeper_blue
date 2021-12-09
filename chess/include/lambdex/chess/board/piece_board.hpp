@@ -1,18 +1,19 @@
 #pragma once
+#ifndef LAMBDEX_CHESS_PIECE_BOARD_HPP
+#define LAMBDEX_CHESS_PIECE_BOARD_HPP
 
+#include "bit_board.hpp"
 #include "generic_board.hpp"
-#include "bitboard.hpp"
 
-#include "chess/basic.hpp"
-
-#include "utility/format.hpp"
+#include "lambdex/chess/basic.hpp"
 
 #include <jclib/config.h>
 
 #include <array>
 #include <string>
-#include <optional>
+#include <format>
 #include <iosfwd>
+#include <optional>
 
 namespace lbx::chess
 {
@@ -76,42 +77,6 @@ namespace lbx::chess
 		using GenericBoard::GenericBoard;
 		using GenericBoard::operator=;
 	};
-
-
-
-
-
-	/**
-	 * @brief Describes a board of pieces with game state
-	*/
-	class BoardWithState : public PieceBoard
-	{
-	public:
-
-		std::optional<Square> en_passant = std::nullopt;
-		bool black_can_castle_kingside = true;
-		bool black_can_castle_queenside = true;
-		bool white_can_castle_kingside = true;
-		bool white_can_castle_queenside = true;
-		Color turn = Color::white;
-
-
-		// Pull down special member functions
-
-		using PieceBoard::PieceBoard;
-		using PieceBoard::operator=;
-
-		constexpr BoardWithState(PieceBoard&& other) :
-			PieceBoard{ std::move(other) }
-		{};
-		constexpr BoardWithState(const PieceBoard& other) :
-			PieceBoard{ other }
-		{};
-
-	};
-
-
-
 
 	constexpr inline PieceBoard make_standard_board()
 	{
@@ -239,12 +204,6 @@ namespace std
 			return formatter<std::string, char>::format(_str, _ctx);
 		};
 	};
-
-	template <>
-	struct formatter<lbx::chess::BoardWithState, char> :
-		formatter<lbx::chess::PieceBoard, char>
-	{
-		using formatter<lbx::chess::PieceBoard, char>::formatter;
-		using formatter<lbx::chess::PieceBoard, char>::format;
-	};
 };
+
+#endif // LAMBDEX_CHESS_PIECE_BOARD_HPP

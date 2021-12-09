@@ -1,4 +1,4 @@
-#include "board.hpp"
+#include "lambdex/chess/board.hpp"
 
 #include <vector>
 #include <string>

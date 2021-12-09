@@ -1,11 +1,13 @@
 #pragma once
+#ifndef LAMBDEX_CHESS_BIT_BOARD_HPP
+#define LAMBDEX_CHESS_BIT_BOARD_HPP
 
 /*
 	Provides an 8x8 representation of a chess board with each square
 	represented by a bit (so board is 8 bytes wide).
 */
 
-#include "chess/basic.hpp"
+#include "lambdex/chess/basic.hpp"
 
 #include <span>
 #include <array>
@@ -285,3 +287,5 @@ namespace lbx::chess
 	static_assert(sizeof(BitBoard) == 8);
 
 };
+
+#endif // LAMBDEX_CHESS_BIT_BOARD_HPP

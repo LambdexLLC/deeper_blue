@@ -1,4 +1,4 @@
-#include "basic.hpp"
+#include "lambdex/chess/basic.hpp"
 
 #include <ostream>
 

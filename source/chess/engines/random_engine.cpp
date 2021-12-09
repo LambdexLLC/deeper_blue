@@ -1,6 +1,6 @@
 #include "random_engine.hpp"
 
-#include "chess/chess.hpp"
+#include <lambdex/chess/chess.hpp>
 
 #include <jclib/ranges.h>
 #include <jclib/functional.h>
@@ -16,45 +16,115 @@ namespace lbx::chess
 	*/
 	std::vector<Move> ChessEngine_Random::calculate_multiple_moves(const BoardWithState& _board, Color _player)
 	{
-		Position _from{};
-		Position _to{};
-
 		// The set of moves this will randomly select from
 		std::vector<Move> _moves{};
 
 		// Loop through all non-empty squares (so pieces) and check for valid moves
-		for (auto& p : _board | std::views::filter(jc::unequals & Piece::empty))
-		{
-			if (chess::get_color(p) == _player)
-			{
+		Position _from{};
 
-			};
-		};
-
-		// Probe until we find a "valid" move
-		while (true)
+		// Adds a move to the output move vector if it is valid
+		// @param _to Where the move is to
+		const auto add_if_valid = [&](PositionPair _to)
 		{
-			// Check if move is valid
 			Move _move{ _from, _to };
 			const auto _validity = chess::is_move_valid(_board, _move, _player);
 			if (_validity == MoveValidity::valid)
 			{
 				// Add to set of moves to attempt
 				_moves.push_back(_move);
-			};
-
-			// Increment position values
-			++_from;
-			if (_from.get() == 64)
+				return true;
+			}
+			else
 			{
-				_from = Position{};
-				++_to;
-				if (_to.get() == 64)
+				return false;
+			};
+		};
+
+		for (auto& s : _board)
+		{
+			if (s != Piece::empty && chess::get_color(s) == _player)
+			{
+				if (chess::as_white(s) == Piece::rook)
 				{
-					// Out of moves!
-					break;
+					PositionPair _pair{ _from };
+					for (File f = File::a; f != File::END; ++f)
+					{
+						add_if_valid((_pair.rank(), f));
+					};
+					for (Rank r = Rank::r1; r != Rank::END; ++r)
+					{
+						add_if_valid((r, _pair.file()));
+					};
+				}
+				else if (s == Piece::pawn_black)
+				{
+					PositionPair _pair{ _from };
+					
+					// Look ahead 2
+					bool _lookAhead2 = _pair.rank() == Rank::r7;
+
+					if (_pair.file() != File::a)
+					{
+						add_if_valid((_pair.rank() - 1, _pair.file() - 1));
+						if (_lookAhead2)
+						{
+							add_if_valid((_pair.rank() - 2, _pair.file() - 1));
+						};
+					};
+					if (_pair.file() != File::h)
+					{
+						add_if_valid((_pair.rank() - 1, _pair.file() + 1));
+						if (_lookAhead2)
+						{
+							add_if_valid((_pair.rank() - 2, _pair.file() + 1));
+						};
+					};
+
+					add_if_valid((_pair.rank() - 2, _pair.file()));
+					if (_lookAhead2)
+					{
+						add_if_valid((_pair.rank() - 2, _pair.file()));
+					};
+				}
+				else if (s == Piece::pawn_white)
+				{
+					PositionPair _pair{ _from };
+
+					// Look ahead 2
+					bool _lookAhead2 = _pair.rank() == Rank::r7;
+
+					if (_pair.file() != File::a)
+					{
+						add_if_valid((_pair.rank() + 1, _pair.file() - 1));
+						if (_lookAhead2)
+						{
+							add_if_valid((_pair.rank() + 2, _pair.file() - 1));
+						};
+					};
+					if (_pair.file() != File::h)
+					{
+						add_if_valid((_pair.rank() + 1, _pair.file() + 1));
+						if (_lookAhead2)
+						{
+							add_if_valid((_pair.rank() + 2, _pair.file() + 1));
+						};
+					};
+
+					add_if_valid((_pair.rank() + 2, _pair.file()));
+					if (_lookAhead2)
+					{
+						add_if_valid((_pair.rank() + 2, _pair.file()));
+					};
+				}
+				else
+				{
+					for (Position _to = Position{}; _to != Position::end(); ++_to)
+					{
+						add_if_valid(_to);
+					};
 				};
 			};
+			++_from;
 		};
 
 		// Randomize found moves
@@ -65,4 +135,19 @@ namespace lbx::chess
 		// Return randomized moves
 		return _moves;
 	};
+
+	void ChessEngine_Random::play_turn(IGameInterface& _game)
+	{
+		auto _moves = this->calculate_multiple_moves(_game.get_board(), _game.get_color());
+		for (auto& m : _moves)
+		{
+			const auto _good = _game.submit_move(m);
+			if (_good)
+			{
+				return;
+			};
+		};
+		_game.resign();
+	};
+
 };

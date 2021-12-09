@@ -1,14 +1,21 @@
 #pragma once
+#ifndef LAMBDEX_CHESS_CHESS_HPP
+#define LAMBDEX_CHESS_CHESS_HPP
+
+/*
+    Includes the various chess headers and defines major functions
+*/
 
 #include "move.hpp"
-#include "piece_movement.hpp"
-
-#include "board/board.hpp"
+#include "board.hpp"
+#include "basic.hpp"
+#include "chess_engine.hpp"
 
 #include <jclib/functional.h>
 
 #include <ranges>
 #include <numeric>
+#include <optional>
 #include <algorithm>
 
 namespace lbx::chess
@@ -139,7 +146,7 @@ namespace lbx::chess
 				return;
 			};
 		};
-		
+
 		auto _piece = _board[_move.from];
 		_board[_move.to] = _piece;
 		_board[_move.from] = Piece::empty;
@@ -289,7 +296,7 @@ namespace lbx::chess
 		 * how many of these positions are actually valid
 		*/
 		std::array<PositionPair, 8> pos;
-		
+
 		/**
 		 * @brief How many "good" positions are held by pos
 		*/
@@ -356,7 +363,7 @@ namespace lbx::chess
 		{
 			auto& _square = _board[_squarePos];
 			const auto _squarePosPair = PositionPair{ _squarePos };
-			
+
 			if (_square != Piece::empty && _pieceColor != get_color(_square))
 			{
 				// Found enemy piece
@@ -416,7 +423,7 @@ namespace lbx::chess
 						};
 					};
 				};
-					break;
+				break;
 				case Piece::rook:
 					if (_squarePosPair.file() == _position.file())
 					{
@@ -561,7 +568,7 @@ namespace lbx::chess
 
 			const auto _forwardDistance = distance(_from.rank(), _to.rank());
 			const auto _horizontalDistance = distance(_from.file(), _to.file());
-			
+
 			if (_forwardDistance != 0 && _horizontalDistance != 0)
 			{
 				// Cannot move diagonally
@@ -608,7 +615,7 @@ namespace lbx::chess
 
 			return MoveValidity::valid;
 		};
-		
+
 		constexpr inline MoveValidity validate_move_rook_white(const PieceBoard& _board, const Move& _move, const Color& _player)
 		{
 			return validate_move_rook_common(_board, _move, _player);
@@ -617,7 +624,7 @@ namespace lbx::chess
 		{
 			return validate_move_rook_common(_board, _move, _player);
 		};
-		
+
 		// validation for a bishop move, color independent
 		constexpr inline MoveValidity validate_move_bishop_common(const PieceBoard& _board, const Move& _move, const Color& _player)
 		{
@@ -635,7 +642,7 @@ namespace lbx::chess
 			else
 			{
 				// Check if there are any pieces in the way
-				
+
 				// How much to increment each axis each loop
 				const int8_t _incRank = (_from.rank() < _to.rank()) ? 1 : -1;
 				const int8_t _incFile = (_from.file() < _to.file()) ? 1 : -1;
@@ -659,7 +666,7 @@ namespace lbx::chess
 					_at = (_at.rank() + _incRank, _at.file() + _incFile);
 				};
 			};
-		
+
 			return MoveValidity::valid;
 		};
 
@@ -762,12 +769,12 @@ namespace lbx::chess
 				return MoveValidity::illegal_piece_movement;
 			};
 		};
-	
+
 		constexpr inline MoveValidity validate_move_king_common(const PieceBoard& _board, const Move& _move, const Color& _color)
 		{
 			const auto& _from = _move.from;
 			const auto& _to = _move.to;
-			
+
 			if (_to == (Rank::r4, File::h))
 			{
 				JCLIB_ASSERT(true);
@@ -804,7 +811,7 @@ namespace lbx::chess
 	constexpr inline MoveValidity is_move_valid(const BoardWithState& _board, const Move& _move, const Color& _player)
 	{
 		const auto _movingPiece = _board[_move.from];
-		
+
 		const auto& _from = _move.from;
 		const auto& _to = _move.to;
 
@@ -935,7 +942,7 @@ namespace lbx::chess
 				{
 					return MoveValidity::illegal_piece_movement;
 				};
-				
+
 				// Can only move forward one
 				if (_forwardDistance != 1)
 				{
@@ -948,12 +955,12 @@ namespace lbx::chess
 				return MoveValidity::illegal_piece_movement;
 			};
 		};
-			break;
+		break;
 		case Piece::pawn_white:
 		{
 			const auto _forwardDistance = sdistance(_to.rank(), _from.rank());
 			const auto _horizontalDistance = distance(_from.file(), _to.file());
-			
+
 			// Cannot move pawn backwards
 			if (_forwardDistance < 0)
 			{
@@ -1052,11 +1059,11 @@ namespace lbx::chess
 			JCLIB_ABORT();
 			break;
 		};
-		
+
 		// Check if the king would be in check after applying the move
 		auto _checkTestBoard{ _board };
 		apply_move(_checkTestBoard, _move, _player);
-		
+
 		Piece _kingPiece{};
 		if (_player == Color::white)
 		{
@@ -1083,3 +1090,6 @@ namespace lbx::chess
 
 
 };
+
+
+#endif // LAMBDEX_CHESS_CHESS_HPP

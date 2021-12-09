@@ -4,7 +4,7 @@
 	Defines a generic board container
 */
 
-#include "chess/basic.hpp"
+#include <lambdex/chess/basic.hpp>
 
 #include <jclib/concepts.h>
 

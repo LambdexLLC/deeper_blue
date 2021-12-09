@@ -1,5 +1,3 @@
-#include "chess/chess.hpp"
-
 #include "chess/engines/random_engine.hpp"
 #include "chess/engines/baby_engine.hpp"
 #include "chess/engines/neural_engine.hpp"
@@ -77,6 +75,85 @@ struct GameAPI final : public lbx::api::LichessGameAPI
 {
 private:
 
+	/**
+	 * @brief Interface passed to the game engine
+	*/
+	class Interface : public lbx::chess::IGameInterface
+	{
+	public:
+
+		/**
+		 * @brief Resigns from the game
+		*/
+		void resign() final
+		{
+			if (!this->api_->resign())
+			{
+				JCLIB_ABORT();
+			};
+		};
+
+		/**
+		 * @brief Offers a draw
+		 * @return True if the draw was accepted, false otherwise
+		*/
+		bool offer_draw() final
+		{
+			return false;
+		};
+
+		/**
+		 * @brief Submits a move for the player
+		 * @return True if the move was valid, false otherwise
+		*/
+		bool submit_move(lbx::chess::Move _move) final
+		{
+			JCLIB_ASSERT(this->api_->is_my_turn_);
+
+			std::string _errmsg{};
+			if (this->api_->submit_move(_move, &_errmsg))
+			{
+				this->api_->is_my_turn_ = false;
+				return true;
+			}
+			else
+			{
+				this->api_->log_failed_my_move(_errmsg);
+				return false;
+			};
+		};
+
+		/**
+		 * @brief Gets the current chess board
+		 * @return Chess board with state
+		*/
+		lbx::chess::BoardWithState get_board() final
+		{
+			return this->api_->board_;
+		};
+
+		/**
+		 * @brief Gets the color for the engine
+		 * @return Color of the engine
+		*/
+		lbx::chess::Color get_color() final
+		{
+			return this->api_->my_color_;
+		};
+
+
+		Interface(GameAPI* _api) :
+			api_{ _api }
+		{};
+
+		GameAPI* api_;
+	};
+	
+	// For now we will give it full access, this should be removed
+	// as functionality is moved into it
+	friend Interface;
+
+
 	void log_failed_my_move(const std::string& _errorMessage)
 	{
 		this->error_log_file_ << "Bot failed to move = " << _errorMessage << std::endl;
@@ -93,21 +170,8 @@ private:
 
 	void process_my_turn()
 	{
-		JCLIB_ASSERT(this->is_my_turn_);
-		const auto _moves = this->engine_->calculate_multiple_moves(this->board_, this->my_color_);
-		for (auto& m : _moves)
-		{
-			std::string _errmsg{};
-			if (this->submit_move(m, &_errmsg))
-			{
-				this->is_my_turn_ = false;
-				break;
-			}
-			else
-			{
-				this->log_failed_my_move(_errmsg);
-			};
-		};
+		Interface _interface{ this };
+		this->engine_->play_turn(_interface);
 	};
 
 	void recreate_board_from_move_string(const std::string& _movesString, chess::BoardWithState _initialBoardState = chess::make_standard_board())
@@ -164,9 +228,6 @@ public:
 	void on_game(const lbx::json& _event) final
 	{
 		// Determine my color
-		const auto _dmp = _event.dump(1, '\t', true);
-		println("{}", _dmp);
-
 		if (const auto _whiteJson = _event.at("white");
 			_whiteJson.is_object() &&
 			_whiteJson.contains("id") &&
@@ -189,9 +250,6 @@ public:
 		
 		// Recreate board state
 		this->recreate_board_from_move_string(_event.at("state").at("moves"));
-
-		// Dump board string
-		println("{}", this->board_);
 
 		// If it is our turn to play, make the move and submit
 		if (this->is_my_turn_)
@@ -268,7 +326,6 @@ public:
 	*/
 	void on_game_start(const lbx::json& _event) final
 	{
-		lbx::println("game was started");
 		const std::string _gameID = _event.at("game").at("id");
 		this->games_.push_back(jc::make_unique<GameAPI>(std::shared_ptr<chess::IChessEngine>
 			(
@@ -283,14 +340,12 @@ public:
 	*/
 	void on_game_finish(const lbx::json& _event) final
 	{
-		lbx::println("game was finished");
 	};
 
 	AccountAPI()
 	{
 		// Create a game API for each of the current games
 		const auto _games = this->get_current_games();
-		lbx::println("Currently playing {} games", _games.size());
 		for (auto& _game : _games)
 		{
 			this->games_.push_back(jc::make_unique<GameAPI>(std::shared_ptr<chess::IChessEngine>

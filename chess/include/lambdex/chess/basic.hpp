@@ -1,12 +1,12 @@
 #pragma once
-
-#include "utility/format.hpp"
+#ifndef LAMBDEX_CHESS_BASIC_HPP
+#define LAMBDEX_CHESS_BASIC_HPP
 
 #include <jclib/concepts.h>
 #include <jclib/type_traits.h>
 
 #include <iosfwd>
-
+#include <format>
 #include <string>
 #include <cstdint>
 #include <compare>
@@ -86,7 +86,7 @@ namespace lbx::chess
 	{
 		return (int8_t)lhs - (int8_t)rhs;
 	};
-	
+
 
 	/**
 	 * @brief Named board file values (column)
@@ -162,7 +162,7 @@ namespace lbx::chess
 	/**
 	 * @brief Enumerates the colors assigned to a piece or player
 	*/
-	enum class Color : bool 
+	enum class Color : bool
 	{
 		white = 0,
 		black = 1,
@@ -175,7 +175,7 @@ namespace lbx::chess
 	*/
 	constexpr inline Color operator!(Color c)
 	{
-		return Color( !jc::to_underlying(c) );
+		return Color(!jc::to_underlying(c));
 	};
 
 
@@ -186,26 +186,26 @@ namespace lbx::chess
 	{
 		empty = 0,
 
-		pawn		= 0b0010,
-		pawn_white  = pawn,
-		pawn_black	= 0b0011,
-		
+		pawn = 0b0010,
+		pawn_white = pawn,
+		pawn_black = 0b0011,
+
 		knight = 0b0100,
 		knight_white = knight,
 		knight_black = 0b0101,
-		
+
 		bishop = 0b0110,
 		bishop_white = bishop,
 		bishop_black = 0b0111,
-		
+
 		rook = 0b1000,
 		rook_white = rook,
 		rook_black = 0b1001,
-		
+
 		queen = 0b1010,
 		queen_white = queen,
 		queen_black = 0b1011,
-		
+
 		king = 0b1110,
 		king_white = king,
 		king_black = 0b1111,
@@ -234,7 +234,7 @@ namespace lbx::chess
 	*/
 	constexpr inline Piece as_white(Piece _piece)
 	{
-		return Piece( jc::to_underlying(_piece) & ~0b1 );
+		return Piece(jc::to_underlying(_piece) & ~0b1);
 	};
 
 	/**
@@ -256,7 +256,7 @@ namespace lbx::chess
 	{
 		return get_color(_piece) == Color::white;
 	};
-	
+
 	/**
 	 * @brief Checks if a piece is black, this is purely a convenience function
 	 * @param _piece Piece to check on
@@ -348,7 +348,7 @@ namespace lbx::chess
 			JCLIB_ASSERT(this->get() <= 64);
 			return *this;
 		};
-		
+
 		constexpr Position& operator++()
 		{
 			return (*this) += 1;
@@ -374,13 +374,13 @@ namespace lbx::chess
 			_out -= rhs;
 			return _out;
 		};
-		
+
 
 		/**
 		 * @brief Constructs the position as square "a1"
 		*/
 		constexpr Position() noexcept = default;
-		
+
 		/**
 		 * @brief Non-checking construction of position value
 		 * @param _position Square position value
@@ -422,7 +422,7 @@ namespace lbx::chess
 		{
 			return static_cast<Rank>(this->rank_);
 		};
-		
+
 		/**
 		 * @brief Allows implicit conversion to a position value
 		 * @return Position as an index into the board
@@ -476,7 +476,7 @@ namespace lbx::chess
 			file_{ jc::to_underlying(_file) },
 			rank_{ jc::to_underlying(_rank) }
 		{};
-		
+
 	private:
 		uint8_t file_ : 4, rank_ : 4;
 	};
@@ -497,16 +497,16 @@ namespace lbx::chess
 	static_assert(distance(Rank::r1, Rank::r5) == distance(Rank::r5, Rank::r1));
 	static_assert(distance(File::f, File::a) == distance(File::a, File::f));
 
-	static_assert((Position)PositionPair{ Rank::r1, File::a } == Position{ 0 });
-	
-	static_assert((Position)PositionPair{ Rank::r1, File::b } == Position{ 1 });
+	static_assert((Position)PositionPair { Rank::r1, File::a } == Position{ 0 });
+
+	static_assert((Position)PositionPair { Rank::r1, File::b } == Position{ 1 });
 	static_assert(PositionPair{ Rank::r1, File::b } == PositionPair{ Position{ 1 } });
-	
+
 	static_assert(PositionPair{ Rank::r8, File::h } == PositionPair{ Position{ 63 } });
-	static_assert((Position)PositionPair{ Rank::r8, File::h } == Position{ 63 });
+	static_assert((Position)PositionPair { Rank::r8, File::h } == Position{ 63 });
 
 	static_assert(PositionPair{ Rank::r1, File::h } == PositionPair{ Position{ 7 } });
-	static_assert((Position)PositionPair{ Rank::r1, File::h } == Position{ 7 });
+	static_assert((Position)PositionPair { Rank::r1, File::h } == Position{ 7 });
 
 	static_assert(PositionPair{ Rank::r8, File::a } == PositionPair{ Position{ 56 } });
 	static_assert((Position)PositionPair { Rank::r8, File::a } == Position{ 56 });
@@ -522,7 +522,7 @@ namespace lbx::chess
 	class PositionOffset
 	{
 	public:
-		
+
 		/**
 		 * @brief Type used to hold the offset
 		*/
@@ -544,7 +544,7 @@ namespace lbx::chess
 
 
 		constexpr PositionOffset() = default;
-		constexpr explicit PositionOffset(value_type _off):
+		constexpr explicit PositionOffset(value_type _off) :
 			value_{ _off }
 		{};
 
@@ -579,19 +579,19 @@ namespace lbx::chess
 		{
 		case pawn_white: return type{ 0xe2, 0x99, 0x99 };
 		case pawn_black: return type{ 0xe2, 0x99, 0x9f };
-		
+
 		case rook_white: return type{ 0xe2, 0x99, 0x96 };
 		case rook_black: return type{ 0xe2, 0x99, 0x9c };
-		
+
 		case knight_white: return type{ 0xe2, 0x99, 0x98 };
 		case knight_black: return type{ 0xe2, 0x99, 0x9e };
-		
+
 		case bishop_white: return type{ 0xe2, 0x99, 0x97 };
 		case bishop_black: return type{ 0xe2, 0x99, 0x9d };
-		
+
 		case queen_white: return type{ 0xe2, 0x99, 0x95 };
 		case queen_black: return type{ 0xe2, 0x99, 0x9b };
-		
+
 		case king_white: return type{ 0xe2, 0x99, 0x94 };
 		case king_black: return type{ 0xe2, 0x99, 0x9a };
 
@@ -605,13 +605,13 @@ namespace lbx::chess
 
 	/**
 	 * @brief Writes a piece to an output stream.
-	 * 
+	 *
 	 * Converts the piece into its UTF-8 codepoint and writes it, if the piece is empty then
 	 * a single space is written to the output stream
 	 *
 	 * @param _ostr Output stream to write to
 	 * @param _piece Piece to write to the stream
-	 * 
+	 *
 	 * @return Output stream
 	*/
 	std::ostream& operator<<(std::ostream& _ostr, const Piece& _piece);
@@ -770,7 +770,7 @@ namespace lbx::chess
 	constexpr inline std::string to_string(const PositionPair& _value)
 	{
 		std::string _out(2, '\0');
-		
+
 		// Convert each component and set their characters for the output string
 		const auto _file = to_string(_value.file());
 		const auto _rank = to_string(_value.rank());
@@ -868,3 +868,5 @@ namespace std
 	};
 };
 #pragma endregion BASIC_TYPE_FORMATTERS
+
+#endif // LAMBDEX_CHESS_BASIC_HPP

@@ -84,4 +84,16 @@ namespace lbx::chess
 		return _out;
 	};
 
+
+
+
+	void ChessEngine_Neural::play_turn(IGameInterface& _game)
+	{
+		const auto _move = this->calculate_move(_game.get_board(), _game.get_color());
+		if (!_game.submit_move(_move))
+		{
+			_game.resign();
+		};
+	};
+
 };

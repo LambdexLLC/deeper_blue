@@ -4,9 +4,9 @@
 	Contains all of the functionality needed to interact with the remote lichess chess API
 */
 
-#include "chess/move.hpp"
-
 #include "utility/json.hpp"
+
+#include <lambdex/chess/move.hpp>
 
 #include <jclib/memory.h>
 

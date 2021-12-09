@@ -1,6 +1,6 @@
 #pragma once
 
-#include "chess/chess_engine.hpp"
+#include <lambdex/chess/chess_engine.hpp>
 
 namespace lbx::chess
 {
@@ -12,17 +12,9 @@ namespace lbx::chess
 	public:
 
 		/**
-		 *	Always returns true, we need no state
-		*/
-		bool is_stateless() const final
-		{
-			return true;
-		};
-
-		/**
 		 *	Returns a random but (hopefully) valid move
 		*/
-		Move calculate_move(const BoardWithState& _board, Color _player) final
+		Move calculate_move(const BoardWithState& _board, Color _player)
 		{
 			return this->calculate_multiple_moves(_board, _player).front();
 		};
@@ -30,7 +22,10 @@ namespace lbx::chess
 		/**
 		 *  Returns all (supposedly) valid moves randomly shuffled
 		*/
-		std::vector<Move> calculate_multiple_moves(const BoardWithState& _board, Color _player) final;
+		std::vector<Move> calculate_multiple_moves(const BoardWithState& _board, Color _player);
+
+		
+		void play_turn(IGameInterface& _game) final;
 
 	};
 
