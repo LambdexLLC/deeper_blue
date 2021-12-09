@@ -50,6 +50,12 @@ namespace lbx::chess
 		return lhs;
 	};
 
+	constexpr inline Rank& operator++(Rank& rhs) noexcept
+	{
+		JCLIB_ASSERT(rhs != Rank::END);
+		return rhs += 1;
+	};
+
 	constexpr inline Rank operator-(Rank lhs, jc::cx_integer auto rhs) noexcept
 	{
 		const auto _out = Rank(jc::to_underlying(lhs) - rhs);
@@ -60,6 +66,12 @@ namespace lbx::chess
 	{
 		lhs = lhs - rhs;
 		return lhs;
+	};
+
+	constexpr inline Rank& operator--(Rank& rhs) noexcept
+	{
+		JCLIB_ASSERT(rhs != Rank::r1);
+		return rhs -= 1;
 	};
 
 	constexpr inline uint8_t operator-(Rank lhs, Rank rhs) noexcept
@@ -109,6 +121,12 @@ namespace lbx::chess
 		return lhs;
 	};
 
+	constexpr inline File& operator++(File& rhs) noexcept
+	{
+		JCLIB_ASSERT(rhs != File::END);
+		return rhs += 1;
+	};
+
 	constexpr inline File operator-(File lhs, jc::cx_integer auto rhs) noexcept
 	{
 		const auto _out = File(jc::to_underlying(lhs) - rhs);
@@ -119,6 +137,12 @@ namespace lbx::chess
 	{
 		lhs = lhs - rhs;
 		return lhs;
+	};
+
+	constexpr inline File& operator--(File& rhs) noexcept
+	{
+		JCLIB_ASSERT(rhs != File::a);
+		return rhs -= 1;
 	};
 
 	constexpr inline uint8_t operator-(File lhs, File rhs) noexcept
@@ -468,6 +492,7 @@ namespace lbx::chess
 		return PositionPair{ _rank, _file };
 	};
 
+
 #pragma region COMPILE_TIME_TESTS
 	static_assert(distance(Rank::r1, Rank::r5) == distance(Rank::r5, Rank::r1));
 	static_assert(distance(File::f, File::a) == distance(File::a, File::f));
@@ -486,6 +511,51 @@ namespace lbx::chess
 	static_assert(PositionPair{ Rank::r8, File::a } == PositionPair{ Position{ 56 } });
 	static_assert((Position)PositionPair { Rank::r8, File::a } == Position{ 56 });
 #pragma endregion COMPILE_TIME_TESTS
+};
+
+
+namespace lbx::chess
+{
+	/**
+	 * @brief Invariant containing an offset between two positions
+	*/
+	class PositionOffset
+	{
+	public:
+		
+		/**
+		 * @brief Type used to hold the offset
+		*/
+		using value_type = int8_t;
+
+		/**
+		 * @brief Gets the underlying value of the offset
+		 * @return Offset value
+		*/
+		constexpr value_type get() const noexcept
+		{
+			return this->value_;
+		};
+
+		constexpr auto operator<=>(const PositionOffset& rhs) const noexcept = default;
+
+
+
+
+
+		constexpr PositionOffset() = default;
+		constexpr explicit PositionOffset(value_type _off):
+			value_{ _off }
+		{};
+
+	private:
+
+		/**
+		 * @brief The held offset value
+		*/
+		value_type value_;
+	};
+
 };
 
 

@@ -7,7 +7,9 @@
 
 #include "chess/basic.hpp"
 
-#include <bitset>
+#include <span>
+#include <array>
+#include <ranges>
 #include <cstdint>
 
 namespace lbx::chess
@@ -18,15 +20,30 @@ namespace lbx::chess
 	class BitBoard
 	{
 	public:
+		using binary_type = uint64_t;
+		using size_type = uint8_t;
+
+	private:
 
 		/**
-		 * @brief Gets the state of a square
-		 * @param _pos Square to get state of
-		 * @return Binary state value
+		 * @brief Makes a mask for a specific bit
+		 * @param _bitPos Bit position to make mask for
+		 * @return Bit mask
 		*/
-		bool at(Square _pos) const noexcept
+		constexpr static binary_type make_bit_mask(size_type _bitPos) noexcept
 		{
-			return this->bs_.test(_pos);
+			return ((binary_type)0b1) << _bitPos;
+		};
+
+	public:
+
+		/**
+		 * @brief Gets the raw bit data for this board
+		 * @return Unsigned int containing binary data
+		*/
+		constexpr binary_type bits() const noexcept
+		{
+			return this->bits_;
 		};
 
 		/**
@@ -34,7 +51,17 @@ namespace lbx::chess
 		 * @param _pos Square to get state of
 		 * @return Binary state value
 		*/
-		auto at(Position _pos) const noexcept
+		constexpr bool at(size_type _pos) const noexcept
+		{
+			return this->bits() & this->make_bit_mask(_pos);
+		};
+
+		/**
+		 * @brief Gets the state of a square
+		 * @param _pos Square to get state of
+		 * @return Binary state value
+		*/
+		constexpr auto at(Position _pos) const noexcept
 		{
 			return this->at(_pos.get());
 		};
@@ -44,7 +71,7 @@ namespace lbx::chess
 		 * @param _pos Square to get state of
 		 * @return Binary state value
 		*/
-		bool operator[](Square _pos) const noexcept
+		constexpr bool operator[](size_type _pos) const noexcept
 		{
 			return this->at(_pos);
 		};
@@ -54,7 +81,7 @@ namespace lbx::chess
 		 * @param _pos Square to get state of
 		 * @return Binary state value
 		*/
-		auto operator[](Position _pos) const noexcept
+		constexpr auto operator[](Position _pos) const noexcept
 		{
 			return this->at(_pos);
 		};
@@ -64,10 +91,18 @@ namespace lbx::chess
 		 * @param _pos Position of the square to modify
 		 * @param _value State to set the square to
 		*/
-		void set(Square _pos, bool _value) noexcept
+		constexpr void set(size_type _pos, bool _value) noexcept
 		{
 			JCLIB_ASSERT(_pos < 64);
-			this->bs_.set(_pos, _value);
+			const auto _mask = this->make_bit_mask(_pos);
+			if (_value)
+			{
+				this->bits_ |= _mask;
+			}
+			else
+			{
+				this->bits_ &= ~_mask;
+			};
 		};
 		
 		/**
@@ -75,7 +110,7 @@ namespace lbx::chess
 		 * @param _pos Position of the square to modify
 		 * @param _value State to set the square to
 		*/
-		auto set(Position _pos, bool _value) noexcept
+		constexpr auto set(Position _pos, bool _value) noexcept
 		{
 			return this->set(_pos.get(), _value);
 		};
@@ -84,17 +119,18 @@ namespace lbx::chess
 		 * @brief Sets a square's state to "true"
 		 * @param _pos Position of the square to modify
 		*/
-		void set(Square _pos) noexcept
+		constexpr void set(size_type _pos) noexcept
 		{
 			JCLIB_ASSERT(_pos < 64);
-			this->set(_pos, true);
+			const auto _mask = this->make_bit_mask(_pos);
+			this->bits_ |= _mask;
 		};
 
 		/**
 		 * @brief Sets a square's state to "true"
 		 * @param _pos Position of the square to modify
 		*/
-		auto set(Position _pos) noexcept
+		constexpr auto set(Position _pos) noexcept
 		{
 			return this->set(_pos.get());
 		};
@@ -102,26 +138,27 @@ namespace lbx::chess
 		/**
 		 * @brief Sets all bits to "true"
 		*/
-		void reset_all()
+		constexpr void set_all()
 		{
-			this->bs_.set();
+			this->bits_ = static_cast<binary_type>(-1);
 		};
 
 		/**
 		 * @brief Sets a square's state to "false"
 		 * @param _pos Position of the square to modify
 		*/
-		void reset(Square _pos) noexcept
+		constexpr void reset(size_type _pos) noexcept
 		{
 			JCLIB_ASSERT(_pos < 64);
-			this->bs_.reset(_pos);
+			const auto _mask = this->make_bit_mask(_pos);
+			this->bits_ &= ~_mask;
 		};
 
 		/**
 		 * @brief Sets a square's state to "false"
 		 * @param _pos Position of the square to modify
 		*/
-		auto reset(Position _pos) noexcept
+		constexpr auto reset(Position _pos) noexcept
 		{
 			return this->reset(_pos.get());
 		};
@@ -129,109 +166,118 @@ namespace lbx::chess
 		/**
 		 * @brief Sets all bits to "false"
 		*/
-		void set_all()
+		constexpr void reset_all()
 		{
-			this->bs_.reset();
+			this->bits_ = 0;
 		};
 
 		/**
 		 * @brief Flips all bits using bitwise NOT
 		*/
-		void flip_bits()
+		constexpr void flip_bits()
 		{
-			this->bs_.flip();
+			this->bits_ = ~this->bits();
 		};
 
 		/**
 		 * @brief Checks if any bits are set to "true"
 		 * @return True if one or more bits are set, false otherwise
 		*/
-		bool any() const
+		constexpr bool any() const
 		{
-			return this->bs_.any();
+			return this->bits() != 0;
 		};
 
 		/**
 		 * @brief Checks if all bits are set to "true"
 		 * @return True if all set, false otherwise
 		*/
-		bool all() const
+		constexpr bool all() const
 		{
-			return this->bs_.all();
+			return this->bits() == static_cast<binary_type>(-1);
 		};
 
 		/**
 		 * @brief Checks if all bits are set to "false"
 		 * @return True if all reset, false otherwise
 		*/
-		bool none() const
+		constexpr bool none() const
 		{
-			return this->bs_.none();
+			return this->bits() == 0;
 		};
+
+
 
 #pragma region OPERATOR_OVERLOADS
 
-		friend inline BitBoard operator~(const BitBoard& rhs) noexcept
+	public:
+
+		friend constexpr inline BitBoard operator~(const BitBoard& rhs) noexcept
 		{
-			return BitBoard{ ~rhs.bs_ };
+			return BitBoard{ ~rhs.bits() };
 		};
 		
-		friend inline BitBoard operator&(const BitBoard& lhs, const BitBoard& rhs) noexcept
+		friend constexpr inline BitBoard operator&(const BitBoard& lhs, const BitBoard& rhs) noexcept
 		{
-			return BitBoard{ lhs.bs_ & rhs.bs_ };
+			return BitBoard{ lhs.bits() & rhs.bits() };
 		};
-		friend inline BitBoard operator|(const BitBoard& lhs, const BitBoard& rhs) noexcept
+		friend constexpr inline BitBoard operator|(const BitBoard& lhs, const BitBoard& rhs) noexcept
 		{
-			return BitBoard{ lhs.bs_ | rhs.bs_ };
+			return BitBoard{ lhs.bits() | rhs.bits() };
 		};
-		friend inline BitBoard operator^(const BitBoard& lhs, const BitBoard& rhs) noexcept
+		friend constexpr inline BitBoard operator^(const BitBoard& lhs, const BitBoard& rhs) noexcept
 		{
-			return BitBoard{ lhs.bs_ ^ rhs.bs_ };
-		};
-
-		friend inline BitBoard& operator&=(BitBoard& lhs, const BitBoard& rhs) noexcept
-		{
-			lhs.bs_ &= rhs.bs_;
-			return lhs;
-		};
-		friend inline BitBoard& operator|=(BitBoard& lhs, const BitBoard& rhs) noexcept
-		{
-			lhs.bs_ |= rhs.bs_;
-			return lhs;
-		};
-		friend inline BitBoard& operator^=(BitBoard& lhs, const BitBoard& rhs) noexcept
-		{
-			lhs.bs_ ^= rhs.bs_;
-			return lhs;
+			return BitBoard{ lhs.bits() ^ rhs.bits() };
 		};
 
-		friend inline bool operator==(const BitBoard& lhs, const BitBoard& rhs) noexcept
+		friend constexpr inline BitBoard& operator&=(BitBoard& lhs, const BitBoard& rhs) noexcept
 		{
-			return lhs.bs_ == rhs.bs_;
+			lhs.bits_ &= rhs.bits();
+			return lhs;
 		};
-		friend inline bool operator!=(const BitBoard& lhs, const BitBoard& rhs) noexcept
+		friend constexpr inline BitBoard& operator|=(BitBoard& lhs, const BitBoard& rhs) noexcept
 		{
-			return lhs.bs_ != rhs.bs_;
+			lhs.bits_ |= rhs.bits();
+			return lhs;
+		};
+		friend constexpr inline BitBoard& operator^=(BitBoard& lhs, const BitBoard& rhs) noexcept
+		{
+			lhs.bits_ ^= rhs.bits();
+			return lhs;
+		};
+
+		friend constexpr inline bool operator==(const BitBoard& lhs, const BitBoard& rhs) noexcept
+		{
+			return lhs.bits() == rhs.bits();
+		};
+		friend constexpr inline bool operator!=(const BitBoard& lhs, const BitBoard& rhs) noexcept
+		{
+			return lhs.bits() != rhs.bits();
 		};
 
 #pragma endregion OPERATOR_OVERLOADS
 
-
 		constexpr BitBoard() = default;
-		
-		constexpr BitBoard(std::bitset<64>&& _bits) noexcept :
-			bs_{ std::move(_bits) }
+		constexpr explicit BitBoard(binary_type _bits) :
+			bits_{ _bits }
 		{};
-		constexpr BitBoard(const std::bitset<64>& _bits) :
-			bs_{ _bits }
-		{};
+
+		constexpr explicit BitBoard(std::span<const uint8_t, 8> _bytes)
+		{
+			binary_type bn = 0;
+			for (auto& b : _bytes)
+			{
+				this->bits_ |= (static_cast<binary_type>(b) << bn);
+				bn += 8;
+			};
+		};
 
 	private:
 
 		/**
-		 * @brief Bitset containing the squares' states
+		 * @brief Binary storage
 		*/
-		std::bitset<64> bs_;
+		binary_type bits_{ 0 };
 
 	};
 

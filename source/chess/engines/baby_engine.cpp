@@ -227,7 +227,7 @@ namespace lbx::chess
 		{
 			auto& _bestLine = _lines.front();
 			
-			std::string fp = SOURCE_ROOT "/dump/game5/move_" + std::to_string(move_n++) + ".txt";
+			std::string fp = SOURCE_ROOT "/dump/game6/move_" + std::to_string(move_n++) + ".txt";
 			std::ofstream f{ fp };
 			
 			bool _myTurn = true;
