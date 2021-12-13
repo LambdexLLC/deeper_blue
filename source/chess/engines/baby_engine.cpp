@@ -61,14 +61,15 @@ namespace lbx::chess
 			const auto _playerName = (_player == Color::white) ? "white" : "black";
 			const auto _notPlayerName = (_player == Color::white) ? "black" : "white";
 
-			if (is_checkmate(_state, !_player))
-			{
-				_base += 1000000;
-			}
-			else if (is_checkmate(_state, _player))
+			if (is_checkmate(_state, _player))
 			{
 				_base -= 1000000;
+			}
+			else if (is_checkmate(_state, !_player))
+			{
+				_base += 1000000;
 			};
+
 			return _base;
 		};
 	};
@@ -265,17 +266,12 @@ namespace lbx::chess
 	{
 		jc::timer _tm{};
 		_tm.start();
+		
+		// Get number of pieces, this can be used to help tune the search depth
+		auto _pieceCount = _board.count_pieces();
 
-		int _pieceCount = 0;
-		for (auto& p : _board)
-		{
-			if (p != Piece::empty)
-			{
-				++_pieceCount;
-			};
-		};
-
-		size_t _treeDepth = 3;
+		// How many turns to search down
+		size_t _treeDepth = 4;
 
 		auto _moveTree = this->make_move_tree(_board, _treeDepth);
 		const auto _treeTime = _tm.elapsed();

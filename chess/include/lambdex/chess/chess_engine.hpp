@@ -12,8 +12,7 @@
 
 */
 
-#include "move.hpp"
-#include "board.hpp"
+#include "move_tree.hpp"
 #include "game_interface.hpp"
 
 #include <vector>
@@ -150,14 +149,30 @@ namespace lbx::chess
 		Reason reason_;
 	};
 
+	/**
+	 * @brief Structure for storing statistics about a chess match
+	*/
+	struct MatchStats
+	{
+		/**
+		 * @brief The series of moves black played in the match, rated
+		*/
+		std::vector<RatedMove> moves_black;
+
+		/**
+		 * @brief The series of moves white played in the match, rated
+		*/
+		std::vector<RatedMove> moves_white;
+	};
 
 	/**
 	 * @brief Plays through a standard chess match between two engines
 	 * @param _white White player engine
 	 * @param _black Black player engine
+	 * @param _stats Optional match stats output parameter, defaults to nullptr
 	 * @return Match verdict
 	*/
-	MatchVerdict play_standard_match(IChessEngine& _white, IChessEngine& _black);
+	MatchVerdict play_standard_match(IChessEngine& _white, IChessEngine& _black, MatchStats* _stats = nullptr);
 
 };
 

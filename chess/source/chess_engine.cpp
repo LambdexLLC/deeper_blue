@@ -18,6 +18,11 @@ namespace lbx::chess
 			BoardWithState board;
 
 			/**
+			 * @brief The most recent move played, rated
+			*/
+			RatedMove last_move;
+
+			/**
 			 * @brief If an illegal move was played, this will contain which player made the illegal move
 			*/
 			std::optional<Color> illegal_move_played{ std::nullopt };
@@ -73,6 +78,9 @@ namespace lbx::chess
 				}
 				else
 				{
+					// Update last move
+					this->state_->last_move = rate_move(_board, _move);
+					
 					// Apply move
 					chess::apply_move(_board, _move);
 				};
@@ -121,9 +129,10 @@ namespace lbx::chess
 	 * @brief Plays through a standard chess match between two engines
 	 * @param _white White player engine
 	 * @param _black Black player engine
+	 * @param _stats Optional match stats output parameter, defaults to nullptr
 	 * @return Match verdict
 	*/
-	MatchVerdict play_standard_match(IChessEngine& _white, IChessEngine& _black)
+	MatchVerdict play_standard_match(IChessEngine& _white, IChessEngine& _black, MatchStats* _stats)
 	{
 		// Create a new game state with standard board
 		LocalGameState _state{};
@@ -149,6 +158,11 @@ namespace lbx::chess
 			{
 				// Lost due to resigning
 				return MatchVerdict{ MatchVerdict::resigned, Color::black };
+			}
+			else if (_stats)
+			{
+				// Handle stats
+				_stats->moves_white.push_back(_state.last_move);
 			};
 
 			// Play black move
@@ -164,6 +178,11 @@ namespace lbx::chess
 			{
 				// Lost due to resigning
 				return MatchVerdict{ MatchVerdict::resigned, Color::white };
+			}
+			else if (_stats)
+			{
+				// Handle stats
+				_stats->moves_black.push_back(_state.last_move);
 			};
 		};
 

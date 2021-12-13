@@ -79,6 +79,25 @@ namespace lbx
 	};
 
 	/**
+	 * @brief Generates a random number using a random engine and distribution
+	 * @tparam T Value type to generate
+	 * @tparam EngineT Random number engine type to use, defaults to whatever the standard library provides
+	 * @tparam DistributionT Value distribution type to use
+	 * @param _engine Random number engine
+	 * @param _dist Value distribution
+	 * @return Random number
+	*/
+	template <typename T, typename DistributionT, typename EngineT = std::default_random_engine>
+	requires requires(EngineT& e, const DistributionT& d)
+	{
+		{ d(e) } -> jc::cx_convertible_to<T>;
+	}
+	constexpr inline T rand(const DistributionT& _dist)
+	{
+		return _dist(random_impl::rand_engine_data::engine);
+	};
+
+	/**
 	 * @brief Generates a random integer with uniform distribution
 	 * @tparam T Integer type to generate
 	 * @return Random integer between the max and min for the type

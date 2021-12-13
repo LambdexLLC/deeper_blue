@@ -71,13 +71,32 @@ namespace lbx::chess
 			return _out;
 		};
 
-
+		/**
+		 * @brief Gets the number of pieces on the board
+		 * @return Number of non-empty squares
+		*/
+		constexpr size_t count_pieces() const noexcept
+		{
+			size_t _count = 0;
+			for (auto& v : *this)
+			{
+				if (v != Piece::empty)
+				{
+					++_count;
+				};
+			};
+			return _count;
+		};
 
 
 		using GenericBoard::GenericBoard;
 		using GenericBoard::operator=;
 	};
 
+	/**
+	 * @brief Creates a chess board with pieces in the standard starting positions
+	 * @return Chess board with pieces
+	*/
 	constexpr inline PieceBoard make_standard_board()
 	{
 		constexpr auto default_line = std::array<Piece, 8>
