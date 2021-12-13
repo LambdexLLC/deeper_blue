@@ -5,6 +5,7 @@
 #include "basic.hpp"
 #include "chess.hpp"
 
+#include <jclib/memory.h>
 #include <jclib/concepts.h>
 
 #include <vector>
@@ -127,7 +128,7 @@ namespace lbx::chess
 			return this->move_;
 		};
 
-		explicit RatedMove() = default;
+		constexpr RatedMove() = default;
 
 		/**
 		 * @brief Constructs the rated move with the board it was rated on
@@ -135,7 +136,7 @@ namespace lbx::chess
 		 * @param _move Move that is being rated
 		 * @param _rating Rating for the board
 		*/
-		explicit RatedMove(Move _move, int _rating) :
+		constexpr explicit RatedMove(Move _move, int _rating) :
 			move_{ _move },
 			rating_{ _rating }
 		{};
@@ -164,34 +165,85 @@ namespace lbx::chess
 
 
 
-
+	/**
+	 * @brief Tree structure for holding many possible moves over time, ie. simulated games
+	*/
 	struct MoveTree
 	{
+	public:
+
+		/**
+		 * @brief Type used to represent each move in the tree
+		*/
 		struct Node
 		{
+		public:
+
+			/**
+			 * @brief Gets the previous node for this tree
+			 * @return Borrowing node pointer
+			*/
+			jc::borrow_ptr<Node> previous() const noexcept
+			{
+				return this->previous_;
+			};
+
+
+
+
+
+
+
+
 			Node() = default;
 
-			Node(Node* _previous, const RatedMove& _move) :
+			Node(jc::borrow_ptr<Node> _previous, const RatedMove& _move) :
 				previous_{ _previous }, move_{ _move }
 			{}
 
 			Node(const RatedMove& _move) :
 				Node{ nullptr, _move }
 			{}
-
 			Node& operator=(const RatedMove& _move)
 			{
 				this->move_ = _move;
 				return *this;
 			};
 
+		private:
 
-			Node* previous_;
+			/**
+			 * @brief The previous node in the tree
+			*/
+			jc::borrow_ptr<Node> previous_;
+		
+		public:
+
+			/**
+			 * @brief The move for this node in the tree
+			*/
 			RatedMove move_;
+
+			/**
+			 * @brief The moves that could be made in response to this move in the tree
+			*/
 			std::vector<Node> responses_;
 		};
 
+
+
+
+
+
+
+		/**
+		 * @brief The initial board state
+		*/
 		BoardWithState initial_board_;
+
+		/**
+		 * @brief Possible moves that can be made from the initial board state
+		*/
 		std::vector<Node> moves_;
 	};
 
