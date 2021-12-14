@@ -5,6 +5,7 @@
 #include "basic.hpp"
 #include "chess.hpp"
 
+#include <jclib/type.h>
 #include <jclib/memory.h>
 #include <jclib/ranges.h>
 #include <jclib/concepts.h>
@@ -177,12 +178,12 @@ namespace lbx::chess
 		public:
 
 			/**
-			 * @brief Gets the previous node for this tree
-			 * @return Borrowing node pointer
+			 * @brief Checks if this node is not null
+			 * @return True if not null, false otherwise
 			*/
-			jc::borrow_ptr<Node> previous() const noexcept
+			bool good() const
 			{
-				return this->previous_;
+				return this->get_move().from.good();
 			};
 
 			/**
@@ -226,7 +227,7 @@ namespace lbx::chess
 			*/
 			bool has_responses() const
 			{
-				return !this->responses_.empty();
+				return this->responses_ != nullptr;
 			};
 
 			/**
@@ -235,7 +236,12 @@ namespace lbx::chess
 			*/
 			std::span<Node> responses() noexcept
 			{
-				return this->responses_;
+				size_t _count = 0;
+				for (auto p = this->responses_.get(); p->good(); ++p)
+				{
+					++_count;
+				};
+				return std::span{ this->responses_.get(), _count };
 			};
 
 			/**
@@ -244,7 +250,12 @@ namespace lbx::chess
 			*/
 			std::span<const Node> responses() const noexcept
 			{
-				return this->responses_;
+				size_t _count = 0;
+				for (auto p = this->responses_.get(); p->good(); ++p)
+				{
+					++_count;
+				};
+				return std::span{ this->responses_.get(), _count };
 			};
 
 			/**
@@ -259,21 +270,26 @@ namespace lbx::chess
 				>
 			void set_responses(const RangeT& _range)
 			{
-				this->responses_.resize(jc::ranges::distance(_range));
-				std::ranges::copy(_range, this->responses_.begin());
+				const auto _size = jc::ranges::distance(_range) + 1;
+				this->responses_ = std::unique_ptr<Node[]>( new Node[_size] );
+				this->responses_.get()[_size - 1] = jc::null;
+				std::ranges::copy(_range, this->responses_.get());
 			};
 
 
 
-
-			Node() = default;
-
-			Node(jc::borrow_ptr<Node> _previous, const RatedMove& _move) :
-				previous_{ _previous }, move_{ _move }
-			{}
+			// Null constructor
+			Node(jc::null_t) :
+				move_{ Move(PositionPair::end(), PositionPair::end()), 0 }
+			{};
+			
+			// Invokes null constructor
+			Node() :
+				Node(jc::null)
+			{};
 
 			Node(const RatedMove& _move) :
-				Node{ nullptr, _move }
+				move_{ _move }
 			{}
 			Node& operator=(const RatedMove& _move)
 			{
@@ -281,29 +297,23 @@ namespace lbx::chess
 				return *this;
 			};
 
+			Node(jc::borrow_ptr<Node> _previous, const RatedMove& _move) :
+				Node{ _move }
+			{}
+
 		private:
 
 			/**
-			 * @brief The previous node in the tree
+			 * @brief The moves that could be made in response to this move in the tree
 			*/
-			jc::borrow_ptr<Node> previous_;
-		
+			std::unique_ptr<Node[]> responses_;
+
 			/**
 			 * @brief The move for this node in the tree
 			*/
 			RatedMove move_;
 
-			/**
-			 * @brief The moves that could be made in response to this move in the tree
-			*/
-			std::vector<Node> responses_;
 		};
-
-
-
-
-
-
 
 		/**
 		 * @brief The initial board state

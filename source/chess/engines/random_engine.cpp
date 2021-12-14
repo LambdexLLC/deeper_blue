@@ -193,13 +193,8 @@ namespace lbx::chess
 				break;
 
 				default:
-				{
-					for (Position _to = Position{}; _to != Position::end(); ++_to)
-					{
-						add_if_valid(_to);
-					};
-				};
-				break;
+					JCLIB_ABORT();
+					break;
 				};
 			};
 			++_from;

@@ -115,7 +115,7 @@ namespace lbx::chess
 	void ChessEngine_Baby::calculate_move_tree_node_responses(const BoardWithState& _board, MoveTree::Node* _previous, size_t _depth)
 	{
 		this->calculate_move_tree_node_responses(_board, _previous);
-		if (_depth != 0)
+		if (_depth != 0 && _previous->has_responses())
 		{
 			--_depth;
 			for (auto& r : _previous->responses())
@@ -211,6 +211,7 @@ namespace lbx::chess
 				// Determine the opponent's best move
 				const Node* _opponentResponse{};
 				
+				if (_at->has_responses())
 				{
 					// Look through opponent's responses to our move
 					auto _rsrs = _at->responses();
@@ -244,6 +245,11 @@ namespace lbx::chess
 						// There are no possible responses to our move
 						break;
 					};
+				}
+				else
+				{
+					// There are no possible responses to our move
+					break;
 				};
 
 				// If the opponent has a response to our move, look into our responses to its
