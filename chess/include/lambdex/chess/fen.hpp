@@ -4,6 +4,7 @@
 
 #include "board/board_with_state.hpp"
 
+#include <string>
 #include <string_view>
 
 namespace lbx::chess
@@ -14,6 +15,13 @@ namespace lbx::chess
 	 * @return Board with state as specified by the fen string
 	*/
 	BoardWithState create_board_from_fen(const std::string_view _fen);
+
+	/**
+	 * @brief Makes the fen string to recreate a board
+	 * @param _board Board to get fen string of
+	 * @return Fen string
+	*/
+	std::string get_board_fen(const BoardWithState& _board);
 };
 
 #endif // LAMBDEX_CHESS_FEN_HPP

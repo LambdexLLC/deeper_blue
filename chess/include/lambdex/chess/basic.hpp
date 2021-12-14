@@ -348,7 +348,102 @@ namespace lbx::chess
 	*/
 	std::ostream& operator<<(std::ostream& _ostr, const Piece& _piece);
 
+	/**
+	 * @brief Gets the SAN character for a piece
+	 * @param _piece Piece to get SAN for, MUST NOT BE EMPTY
+	 * @return SAN character
+	*/
+	constexpr inline char to_san(const Piece& _piece)
+	{
+		switch (_piece)
+		{
+		case Piece::king_black:
+			return 'k';
+		case Piece::queen_black:
+			return 'q';
+		case Piece::bishop_black:
+			return 'b';
+		case Piece::knight_black:
+			return 'n';
+		case Piece::rook_black:
+			return 'r';
+		case Piece::pawn_black:
+			return 'p';
 
+		case Piece::king_white:
+			return 'K';
+		case Piece::queen_white:
+			return 'Q';
+		case Piece::bishop_white:
+			return 'B';
+		case Piece::knight_white:
+			return 'N';
+		case Piece::rook_white:
+			return 'R';
+		case Piece::pawn_white:
+			return 'P';
+
+		default:
+			JCLIB_ABORT();
+			return '\0';
+		};
+	};
+
+	/**
+	 * @brief Converts a SAN character into its piece value
+	 * @param _san SAN character to convert
+	 * @param _piece Piece to write conversion into (on good convert)
+	 * @return True if SAN character was valid, false otherwise
+	*/
+	constexpr inline bool from_san(char _san, Piece& _piece)
+	{
+		switch (_san)
+		{
+		case 'r': // black rook
+			_piece = Piece::rook_black;
+			break;
+		case 'n': // black knight
+			_piece = Piece::knight_black;
+			break;
+		case 'b': // black bishop
+			_piece = Piece::bishop_black;
+			break;
+		case 'q': // black queen
+			_piece = Piece::queen_black;
+			break;
+		case 'k': // black king
+			_piece = Piece::king_black;
+			break;
+		case 'p': // black pawn
+			_piece = Piece::pawn_black;
+			break;
+
+		case 'R': // white rook
+			_piece = Piece::rook_white;
+			break;
+		case 'N': // white knight
+			_piece = Piece::knight_white;
+			break;
+		case 'B': // white bishop
+			_piece = Piece::bishop_white;
+			break;
+		case 'Q': // white queen
+			_piece = Piece::queen_white;
+			break;
+		case 'K': // white king
+			_piece = Piece::king_white;
+			break;
+		case 'P': // white pawn
+			_piece = Piece::pawn_white;
+			break;
+
+		default:
+			return false;
+		};
+
+		// Good convert
+		return true;
+	};
 
 	/**
 	 * @brief Gets the converted string form of a rank

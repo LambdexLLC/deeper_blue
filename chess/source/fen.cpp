@@ -2,6 +2,7 @@
 
 #include <jclib/algorithm.h>
 
+#include <sstream>
 #include <numeric>
 
 namespace lbx::chess
@@ -59,44 +60,6 @@ namespace lbx::chess
 					Piece _piece = Piece::empty;
 					switch (c)
 					{
-					case 'r': // black rook
-						_piece = Piece::rook_black;
-						break;
-					case 'n': // black knight
-						_piece = Piece::knight_black;
-						break;
-					case 'b': // black bishop
-						_piece = Piece::bishop_black;
-						break;
-					case 'q': // black queen
-						_piece = Piece::queen_black;
-						break;
-					case 'k': // black king
-						_piece = Piece::king_black;
-						break;
-					case 'p': // black pawn
-						_piece = Piece::pawn_black;
-						break;
-
-					case 'R': // white rook
-						_piece = Piece::rook_white;
-						break;
-					case 'N': // white knight
-						_piece = Piece::knight_white;
-						break;
-					case 'B': // white bishop
-						_piece = Piece::bishop_white;
-						break;
-					case 'Q': // white queen
-						_piece = Piece::queen_white;
-						break;
-					case 'K': // white king
-						_piece = Piece::king_white;
-						break;
-					case 'P': // white pawn
-						_piece = Piece::pawn_white;
-						break;
-
 					case '1': [[fallthrough]];
 					case '2': [[fallthrough]];
 					case '3': [[fallthrough]];
@@ -111,7 +74,10 @@ namespace lbx::chess
 					};
 					continue;
 					default:
-						JCLIB_ABORT();
+						if (!from_san(c, _piece))
+						{
+							JCLIB_ABORT();
+						};
 						break;
 					};
 
@@ -200,4 +166,117 @@ namespace lbx::chess
 
 		return _board;
 	};
+	
+	/**
+	 * @brief Makes the fen string to recreate a board
+	 * @param _board Board to get fen string of
+	 * @return Fen string
+	*/
+	std::string get_board_fen(const BoardWithState& _board)
+	{
+		std::stringstream _out{};
+
+		// Create moves
+		{
+			Rank _rank = Rank::END;
+			for (size_t n = 0; n != 8; ++n)
+			{
+				--_rank;
+				uint8_t _emptyCount = 0;
+				for (File _file = File::a; _file != File::END; ++_file)
+				{
+					const auto _piece = _board[(_file, _rank)];
+					if (_piece == Piece::empty)
+					{
+						++_emptyCount;
+					}
+					else
+					{
+						if (_emptyCount != 0)
+						{
+							_out.put('0' + _emptyCount);
+						};
+						_emptyCount = 0;
+						_out << to_san(_piece);
+					};
+				};
+
+				if (_emptyCount != 0)
+				{
+					_out.put('0' + _emptyCount);
+				};
+
+				if (n != 7)
+				{
+					_out << '/';
+				};
+			};
+		}
+
+		// Set the current move's player
+		_out << ' ';
+		{
+			if (_board.turn == Color::white)
+			{
+				_out << 'w';
+			}
+			else
+			{
+				_out << 'b';
+			};
+		};
+
+		// Set the castling flags
+		_out << ' ';
+		
+		bool _addedCastleChar = false;
+		if (_board.white_can_castle_kingside)
+		{
+			_out << 'K';
+			_addedCastleChar = true;
+		};
+		if (_board.white_can_castle_queenside)
+		{
+			_out << 'Q';
+			_addedCastleChar = true;
+		};
+		if (_board.black_can_castle_kingside)
+		{
+			_out << 'k';
+			_addedCastleChar = true;
+		};
+		if (_board.black_can_castle_queenside)
+		{
+			_out << 'q';
+			_addedCastleChar = true;
+		};
+
+		// Set no castling moves possible if no castle chars set
+		if (!_addedCastleChar)
+		{
+			_out << '-';
+		};
+
+		// Set en passant possiblity
+		_out << ' ';
+		if (_board.has_en_passant())
+		{
+			_out << to_string(_board.get_en_passant());
+		}
+		else
+		{
+			_out << '-';
+		};
+
+		// Half move clock
+		_out << ' ';
+		_out << _board.half_move_counter;
+
+		// Full move clock
+		_out << ' ';
+		_out << _board.full_move_counter;
+
+		return _out.str();
+	};
+
 }

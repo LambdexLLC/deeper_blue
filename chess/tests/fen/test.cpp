@@ -11,6 +11,7 @@ int subtest_standard_board_fen()
 {
 	NEWTEST();
 
+	// Convert fen to board
 	const std::string _fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 	const auto _board = create_board_from_fen(_fen);
 	ASSERT
@@ -29,6 +30,11 @@ int subtest_standard_board_fen()
 		
 		"failed to parse standard board fen string"
 	);
+
+	// Convert back to fen
+	const auto _boardFen = get_board_fen(_board);
+	std::cout << _boardFen << '\n';
+	ASSERT(_boardFen == _fen, "conversion from standard layout board to fen string failed");
 
 	PASS();
 };
