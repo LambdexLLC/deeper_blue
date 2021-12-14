@@ -336,6 +336,8 @@ namespace lbx::api
 	*/
 	void set_account_api(jc::borrow_ptr<LichessAccountAPI> _api)
 	{
+		JCLIB_ASSERT(_api);
+
 		get_account_api_state().account_api = _api;
 	};
 
@@ -346,6 +348,8 @@ namespace lbx::api
 	*/
 	void set_game_api(std::string_view _gameID, jc::borrow_ptr<LichessGameAPI> _api)
 	{
+		JCLIB_ASSERT(_api);
+
 		auto& _accountState = get_account_api_state();
 		auto& _games = _accountState.games;
 
@@ -358,6 +362,7 @@ namespace lbx::api
 
 		// Set api
 		it->second->api = _api;
+
 	};
 
 };

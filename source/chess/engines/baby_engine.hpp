@@ -70,30 +70,32 @@ namespace lbx::chess
 				return std::ofstream{ _movePath };
 			};
 
-			Logger()
+			Logger(std::string _gameName)
 			{
-				const auto _gameFolderPrefix = format("{}/game_", dump_root_v);
-				for (int n = 0; n != 1000; ++n)
+				this->folder_ = format("{}/game_{}", dump_root_v, _gameName);
+				if (!fs::exists(this->folder_))
 				{
-					const auto _folder = format("{}{}", _gameFolderPrefix, n);
-					if (fs::exists(_folder))
+					fs::create_directory(this->folder_);
+				}
+				else
+				{
+					auto& n = this->move_number_;
+					for (n; n != 1000; ++n)
 					{
-						if (fs::is_empty(_folder))
+						const auto _moveDumpFileName = this->folder_ / format("move_{}", n);
+						if (!fs::exists(_moveDumpFileName))
 						{
-							// We can use this
-							this->folder_ = _folder;
+							// Found our move
 							break;
 						};
-					}
-					else
+					};
+
+					// Check we found a number
+					if (n == 1000)
 					{
-						// We can use this
-						fs::create_directory(_folder);
-						this->folder_ = _folder;
-						break;
+						JCLIB_ABORT();
 					};
 				};
-
 			};
 
 		private:
@@ -101,7 +103,7 @@ namespace lbx::chess
 			int move_number_ = 1;
 		};
 
-		Logger logger_{};
+		std::optional<Logger> logger_{};
 
 	};
 };

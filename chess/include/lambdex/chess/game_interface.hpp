@@ -48,6 +48,15 @@ namespace lbx::chess
 		*/
 		virtual Color get_color() = 0;
 
+		/**
+		 * @brief Optional method allowing the interface to provide the name of the game
+		 *
+		 * This is mostly for logging purposes.
+		 *
+		 * @return The name of the game, or an empty string if this is unimplemented (default behavior).
+		*/
+		virtual std::string get_game_name() { return std::string{}; };
+
 	protected:
 
 		// Disallow deletion through pointer to base
