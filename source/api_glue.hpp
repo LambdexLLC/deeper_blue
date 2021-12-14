@@ -24,25 +24,13 @@
 #include <fstream>
 #include <iterator>
 #include <algorithm>
-#include <iostream>
-
 #include <thread>
+#include <mutex>
+#include <queue>
+#include <iostream>
 
 namespace lbx::chess
 {
-	class IAPIDebugLogger
-	{
-	public:
-		
-		/**
-		 * @brief Invoked when a move sent by lichess fails the is_move_valid() check
-		*/
-		virtual void on_lichess_move_validation_failure() {};
-
-	protected:
-		~IAPIDebugLogger() = default;
-	};
-
 	/**
 	 * @brief Parses a string containing a series of moves into actual moves
 	 * @param _movesString String containing series of moves
@@ -308,9 +296,7 @@ namespace lbx
 		 * @brief Invoked when a chat message is sent
 		*/
 		void on_chat(const lbx::json& _event) final
-		{
-
-		};
+		{};
 
 		/**
 		 * @brief Creates the game API and assigns an engine to it to manage
@@ -334,7 +320,7 @@ namespace lbx
 		std::unique_ptr<chess::IChessEngine> engine_{};
 
 	};
-
+	
 	/**
 	 * @brief Implementation for the AccountAPI interface
 	*/
@@ -342,6 +328,7 @@ namespace lbx
 	{
 	protected:
 
+		
 		// Called when the object is initialized but no games are being played
 		void on_no_current_games();
 
