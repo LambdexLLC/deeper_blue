@@ -20,7 +20,7 @@ namespace lbx::chess
 	private:
 
 		std::vector<RatedMove> rank_possible_moves(const BoardWithState& _board, Color _player);
-		
+
 		void calculate_move_tree_node_responses(const BoardWithState& _board, MoveTree::Node* _previous, size_t _depth);
 		void calculate_move_tree_node_responses(const BoardWithState& _board, MoveTree::Node* _previous);
 
@@ -29,7 +29,7 @@ namespace lbx::chess
 
 
 		using RatedLine = std::vector<RatedMove>;
-		
+
 		const MoveTree::Node* pick_best_from_tree(const MoveTree::Node& _node, RatedLine& _line);
 		std::vector<RatedLine> pick_best_from_tree(const MoveTree& _tree);
 
@@ -44,6 +44,15 @@ namespace lbx::chess
 	public:
 
 		void play_turn(IGameInterface& _game) final;
+
+
+
+
+
+		ChessEngine_Baby(size_t _depth = 3, bool _doLogging = true) :
+			search_depth_{ _depth },
+			do_logging_{ _doLogging }
+		{};
 
 	private:
 
@@ -105,5 +114,11 @@ namespace lbx::chess
 
 		std::optional<Logger> logger_{};
 
+		bool do_logging_ = false;
+
+		/**
+		 * @brief How many turns to search down (2 = my turn, your turn)
+		*/
+		size_t search_depth_;
 	};
 };

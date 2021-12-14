@@ -20,19 +20,8 @@ namespace lbx::chess
 
 		inline Network new_chess_network()
 		{
-			Network _out{};
-			_out.layers.resize(4, Layer{});
-
-			// input layer is implied
-																							// 64
-			_out.layers[0].neurons.resize(32, Neuron{ std::vector<float>(64, 0.0f) });		// 128
-			_out.layers[1].neurons.resize(64, Neuron{ std::vector<float>(32, 0.0f) });		// 64
-			_out.layers[2].neurons.resize(32, Neuron{ std::vector<float>(64, 0.0f) });		// 32
-			_out.layers[3].neurons.resize(4, Neuron{ std::vector<float>(32, 0.0f) });		// 4
-			
-			// output layer, format is (from<0,1> to<2,3>)
-
-			return _out;
+			const auto _layers = std::array<size_t, 4>{ 32, 64, 32, 4 };
+			return define_network(64, _layers);
 		};
 
 		/**

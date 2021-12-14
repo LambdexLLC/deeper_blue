@@ -132,14 +132,9 @@ namespace lbx::chess
 		MoveTree _out{};
 		_out.initial_board_ = _board;
 
-		jc::timer _tm{};
-		_tm.start();
-
 		auto _moves = this->rank_possible_moves(_board, _board.turn);
 		_out.moves_.resize(_moves.size());
 		std::ranges::copy(_moves, _out.moves_.begin());
-
-		println("finding possible moves = {}", dc(_tm.elapsed()).count());
 
 		if (_depth != 0)
 		{
@@ -298,7 +293,7 @@ namespace lbx::chess
 		auto _pieceCount = _board.count_pieces();
 
 		// How many turns to search down
-		size_t _treeDepth = 3;
+		auto& _treeDepth = this->search_depth_;
 
 		auto _moveTree = this->make_move_tree(_board, _treeDepth);
 		const auto _treeTime = _tm.elapsed();
@@ -327,7 +322,7 @@ namespace lbx::chess
 		const auto _fullTurnTime = _turnTime.elapsed();
 
 		// Logging for the selected line to play
-		if (auto& _logger = this->logger_; _logger)
+		if (auto& _logger = this->logger_; _logger && this->do_logging_)
 		{
 			auto& _bestLine = _lines.front();
 			std::ofstream f = _logger->start_logging_move();
