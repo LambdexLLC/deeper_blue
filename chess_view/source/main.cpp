@@ -341,8 +341,16 @@ gl::unique_program load_board_shader_program()
 	return lbx::chess_view::load_simple_shader_program(_root / "vertex.glsl", _root / "fragment.glsl");
 };
 
-#include <queue>
-#include <jclib/timer.h>
+#include <fstream>
+#include <random>
+
+inline std::string read_text_file(const fs::path& _path)
+{
+	std::ifstream _file{ _path };
+	std::string _data(fs::file_size(_path), '\0');
+	_file.read(_data.data(), _data.size());
+	return _data;
+};
 
 int main()
 {
@@ -352,37 +360,111 @@ int main()
 	auto _shader = load_board_shader_program();
 	JCLIB_ASSERT(_shader);
 	gl::bind(_shader);
-	
-	using namespace lbx::chess;
-	std::queue<Move> _moves{};
-	_moves.push(Move((File::a, Rank::r2), (File::a, Rank::r4)));
-	_moves.push(Move((File::b, Rank::r2), (File::b, Rank::r4)));
-	_moves.push(Move((File::c, Rank::r2), (File::c, Rank::r4)));
 
-	using namespace std::chrono_literals;
-	jc::timer _moveTm{ 2s };
-	_moveTm.start();
-
-	auto _board = BoardWithState{ lbx::chess::make_standard_board() };
-	BoardArtist* _boardArtist{};
-	
 	{
-		auto _artist = jc::make_unique<BoardArtist>(_board, _state.window_);
-		_boardArtist = _artist.get();
+		auto _artist = jc::make_unique<BoardArtist>(lbx::chess::make_standard_board(), _state.window_);
 		_artist->configure_attributes(_shader);
 		_state.insert_artist(std::move(_artist));
 	};
 
+
+	int tex_w = 512, tex_h = 512;
+	GLuint tex_output;
+	glGenTextures(1, &tex_output);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tex_output);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, tex_w, tex_h, 0, GL_RGBA, GL_FLOAT,
+		NULL);
+	glBindImageTexture(0, tex_output, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+	
+	GLuint tex_input;
+	glGenTextures(1, &tex_input);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, tex_input);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, tex_w, tex_h, 0, GL_RGBA, GL_FLOAT,
+		NULL);
+	glBindImageTexture(1, tex_input, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
+
+	{
+		std::vector<float> _inputPixels(tex_w * tex_h * 4, 0.0f);
+		std::random_device _rnd{};
+		std::mt19937 _mt(_rnd());
+		std::uniform_real_distribution<float> _dist{ 0.0f, 1.0f };
+		for (auto& f : _inputPixels)
+		{
+			f = _dist(_mt);
+		};
+		glTextureSubImage2D(tex_input, 0, 0, 0, tex_w, tex_h, GL_RGBA, GL_FLOAT, _inputPixels.data());
+	}
+
+
+	int _work_group_count[3];
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &_work_group_count[0]);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &_work_group_count[1]);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &_work_group_count[2]);
+	printf("max global (total) work group counts x:%i y:%i z:%i\n",
+		_work_group_count[0], _work_group_count[1], _work_group_count[2]);
+
+	int _work_group_size[3]{};
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &_work_group_size[0]);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &_work_group_size[1]);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &_work_group_size[2]);
+	printf("max local (in one shader) work group sizes x:%i y:%i z:%i\n",
+		_work_group_size[0], _work_group_size[1], _work_group_size[2]);
+
+	gl::shader_id ray_shader{ glCreateShader(GL_COMPUTE_SHADER) };
+	gl::set_shader_source(ray_shader, read_text_file(SOURCE_ROOT "/assets/shaders/compute.glsl"));
+	if (!gl::compile(ray_shader))
+	{
+		std::cout << gl::get_info_log(ray_shader) << '\n';
+		return 2;
+	};
+
+	auto ray_program = gl::new_program();
+	gl::attach(ray_program, ray_shader);
+	if (!gl::link(ray_program))
+	{
+		std::cout << gl::get_info_log(ray_program) << '\n';
+		return 2;
+	};
+
 	while (_state.keep_running())
 	{
-		if (_moveTm.finished() && !_moves.empty())
-		{
-			apply_move(_board, _moves.front());
-			_boardArtist->set_board(_board);
-			_moves.pop();
-			_moveTm.start();
+		{ // launch compute shaders!
+			gl::bind(ray_program);
+			glDispatchCompute((GLuint)tex_w, (GLuint)tex_h, 1);
+			if (const auto _err = glGetError(); _err != GL_NO_ERROR)
+			{
+				__debugbreak();
+			};
 		};
 
+		// make sure writing to image has finished before read
+		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+		if (const auto _err = glGetError(); _err != GL_NO_ERROR)
+		{
+			__debugbreak();
+		};
+
+		std::vector<unsigned char> _texBuffer(tex_w * tex_h * 4);
+		glGetTextureImage(tex_output, 0, GL_RGBA, GL_UNSIGNED_BYTE, _texBuffer.size(), _texBuffer.data());
+		{
+			lodepng::encode(SOURCE_ROOT "/testdump.png", _texBuffer, tex_w, tex_h);
+		};
+		if (const auto _err = glGetError(); _err != GL_NO_ERROR)
+		{
+			__debugbreak();
+		};
+
+		break;
 		_state.update();
 	};
 
