@@ -7,7 +7,6 @@ out/
 
 # Ignore libraries
 lib/cpp-http/
-lib/jclib/
 
 # Environment ignore
 env/
