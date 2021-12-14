@@ -162,10 +162,6 @@ namespace lbx::chess
 		return RatedMove{ _move, _rating };
 	};
 
-
-
-
-
 	/**
 	 * @brief Tree structure for holding many possible moves over time, ie. simulated games
 	*/
