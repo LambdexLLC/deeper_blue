@@ -98,7 +98,7 @@ namespace lbx::chess
 
 		private:
 			fs::path folder_;
-			int move_number_ = 0;
+			int move_number_ = 1;
 		};
 
 		Logger logger_{};

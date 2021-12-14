@@ -138,4 +138,5 @@ namespace lbx::api
 	 * @param _api API to use
 	*/
 	void set_game_api(std::string_view _gameID, jc::borrow_ptr<LichessGameAPI> _api);
+
 };
