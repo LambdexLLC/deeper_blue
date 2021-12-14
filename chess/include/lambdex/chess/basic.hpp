@@ -348,7 +348,102 @@ namespace lbx::chess
 	*/
 	std::ostream& operator<<(std::ostream& _ostr, const Piece& _piece);
 
+	/**
+	 * @brief Converts a piece into its SAN characeter
+	 * @param _piece Piece to convert, MUST NOT BE EMPTY
+	 * @return SAN for the piece
+	*/
+	constexpr inline char to_san(const Piece& _piece)
+	{
+		switch (_piece)
+		{
+		case Piece::empty:
+			JCLIB_ABORT();
+			return '\0';
 
+		case Piece::king_black:
+			return 'k';
+		case Piece::queen_black:
+			return 'q';
+		case Piece::bishop_black:
+			return 'b';
+		case Piece::knight_black:
+			return 'n';
+		case Piece::rook_black:
+			return 'r';
+		case Piece::pawn_black:
+			return 'p';
+
+		case Piece::king_white:
+			return 'K';
+		case Piece::queen_white:
+			return 'Q';
+		case Piece::bishop_white:
+			return 'B';
+		case Piece::knight_white:
+			return 'N';
+		case Piece::rook_white:
+			return 'R';
+		case Piece::pawn_white:
+			return 'P';
+		};
+	};
+
+	/**
+	 * @brief Parses a piece from its SAN character
+	 * @param _san SAN character for a piece
+	 * @param _piece Piece to write to
+	 * @return True on good convert, false otherwise
+	*/
+	constexpr inline bool from_san(char _san, Piece& _piece)
+	{
+		switch (_san)
+		{
+		default:
+			return false;
+			break;
+
+		case 'k':
+			_piece = Piece::king_black;
+			break;
+		case 'q':
+			_piece = Piece::queen_black;
+			break;
+		case 'b':
+			_piece = Piece::bishop_black;
+			break;
+		case 'n':
+			_piece = Piece::knight_black;
+			break;
+		case 'r':
+			_piece = Piece::rook_black;
+			break;
+		case 'p':
+			_piece = Piece::pawn_black;
+			break;
+
+		case 'K':
+			_piece = Piece::king_white;
+			break;
+		case 'Q':
+			_piece = Piece::queen_white;
+			break;
+		case 'B':
+			_piece = Piece::bishop_white;
+			break;
+		case 'N':
+			_piece = Piece::knight_white;
+			break;
+		case 'R':
+			_piece = Piece::rook_white;
+			break;
+		case 'P':
+			_piece = Piece::pawn_white;
+			break;
+		};
+
+		return true;
+	};
 
 	/**
 	 * @brief Gets the converted string form of a rank
