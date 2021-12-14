@@ -60,6 +60,44 @@ namespace lbx::chess
 					Piece _piece = Piece::empty;
 					switch (c)
 					{
+					case 'r': // black rook
+						_piece = Piece::rook_black;
+						break;
+					case 'n': // black knight
+						_piece = Piece::knight_black;
+						break;
+					case 'b': // black bishop
+						_piece = Piece::bishop_black;
+						break;
+					case 'q': // black queen
+						_piece = Piece::queen_black;
+						break;
+					case 'k': // black king
+						_piece = Piece::king_black;
+						break;
+					case 'p': // black pawn
+						_piece = Piece::pawn_black;
+						break;
+
+					case 'R': // white rook
+						_piece = Piece::rook_white;
+						break;
+					case 'N': // white knight
+						_piece = Piece::knight_white;
+						break;
+					case 'B': // white bishop
+						_piece = Piece::bishop_white;
+						break;
+					case 'Q': // white queen
+						_piece = Piece::queen_white;
+						break;
+					case 'K': // white king
+						_piece = Piece::king_white;
+						break;
+					case 'P': // white pawn
+						_piece = Piece::pawn_white;
+						break;
+
 					case '1': [[fallthrough]];
 					case '2': [[fallthrough]];
 					case '3': [[fallthrough]];
@@ -76,7 +114,7 @@ namespace lbx::chess
 					default:
 						if (!from_san(c, _piece))
 						{
-							JCLIB_ABORT();
+						JCLIB_ABORT();
 						};
 						break;
 					};
