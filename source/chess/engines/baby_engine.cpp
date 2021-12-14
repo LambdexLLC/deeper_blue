@@ -298,7 +298,7 @@ namespace lbx::chess
 		auto _pieceCount = _board.count_pieces();
 
 		// How many turns to search down
-		size_t _treeDepth = 4;
+		size_t _treeDepth = 3;
 
 		auto _moveTree = this->make_move_tree(_board, _treeDepth);
 		const auto _treeTime = _tm.elapsed();
