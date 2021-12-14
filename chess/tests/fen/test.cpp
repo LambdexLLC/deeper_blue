@@ -36,7 +36,7 @@ int subtest_standard_board_fen()
 	std::cout << _boardFen << '\n';
 	ASSERT(_boardFen == _fen, "conversion from standard layout board to fen string failed");
 
-	PASS();
+  PASS();
 };
 
 int main()
