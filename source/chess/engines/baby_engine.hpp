@@ -45,6 +45,8 @@ namespace lbx::chess
 
 		void play_turn(IGameInterface& _game) final;
 
+		ChessEngine_Baby();
+
 	private:
 
 		/**

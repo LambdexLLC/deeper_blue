@@ -3,6 +3,7 @@
 #include "utility/io.hpp"
 
 #include <lambdex/chess/chess.hpp>
+#include <lambdex/chess/fen.hpp>
 
 #include <jclib/timer.h>
 #include <jclib/ranges.h>
@@ -296,7 +297,7 @@ namespace lbx::chess
 	{
 		jc::timer _tm{};
 		_tm.start();
-		
+
 		jc::timer _turnTime{};
 		_turnTime.start();
 
@@ -305,6 +306,24 @@ namespace lbx::chess
 
 		// How many turns to search down
 		size_t _treeDepth = 3;
+
+		if (_pieceCount <= 4)
+		{
+			_treeDepth = 6;
+		}
+		else if (_pieceCount <= 7)
+		{
+			_treeDepth = 5;
+		}
+		else if (_pieceCount <= 14)
+		{
+			_treeDepth = 4;
+		}
+		else
+		{
+			_treeDepth = 3;
+		};
+
 
 		auto _moveTree = this->make_move_tree(_board, _treeDepth);
 		const auto _treeTime = _tm.elapsed();
@@ -400,4 +419,7 @@ namespace lbx::chess
 		_game.resign();
 	};
 
+
+	ChessEngine_Baby::ChessEngine_Baby()
+	{};
 };

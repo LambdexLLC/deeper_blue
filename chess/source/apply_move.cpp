@@ -45,7 +45,7 @@ namespace lbx::chess
 	 * @param _move Move to apply
 	 * @param _player Player making the move
 	*/
-	void apply_move(BoardWithState& _board, const Move& _move, const Color& _player)
+	void apply_move(BoardWithState& _board, const Move& _move, Color _player)
 	{
 		// Castle movement definitions
 		constexpr auto _castleMoves = std::array

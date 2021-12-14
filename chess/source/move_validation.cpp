@@ -45,7 +45,7 @@ namespace lbx::chess
 			{
 				// TODO: Precompute this at compile time
 				BitBoard _out{};
-				for (File f = File::h; f != _file; --_file)
+				for (File f = File::h; f != _file; --f)
 				{
 					_out |= bits_in_file(f);
 					if (_file == File::a)
@@ -59,7 +59,7 @@ namespace lbx::chess
 			{
 				// TODO: Precompute this at compile time
 				BitBoard _out{};
-				for (File f = File::a; f != _file; ++_file)
+				for (File f = File::a; f != _file; ++f)
 				{
 					_out |= bits_in_file(f);
 				};
@@ -147,16 +147,13 @@ namespace lbx::chess
 
 			const auto _rookMoveBits = get_rook_movement_bits(_move.from);
 			
-			// Remove this piece from my pieces
-			auto _myPieces = _board.as_bits_with_pieces(_player);
-			_myPieces.reset(_move.from);
-
-			// Determine opponent pieces, remove dest piece
-			auto _opponentPieces = _board.as_bits_with_pieces(!_player);
-			_opponentPieces.reset(_move.to);
-			const auto _piecesInPath = (_myPieces | _opponentPieces) & _idealPath;
-
+			// Remove the from and to pos pieces from the set
+			auto _pieces = _board.as_bits_with_pieces();
+			_pieces.reset(_move.from);
+			_pieces.reset(_move.to);
+			
 			// Branch shouldn't result in instructions needing to be loaded
+			const auto _piecesInPath = _pieces & _idealPath;
 			if (_piecesInPath.none() && _rookMoveBits[_move.to])
 			{
 				return MoveValidity::valid;
@@ -235,11 +232,11 @@ namespace lbx::chess
 			auto& _to = _move.to;
 			auto& _from = _move.from;
 
-			const auto _forwardDistance = distance(_from.rank(), _to.rank());
-			const auto _horizontalDistance = distance(_from.file(), _to.file());
+			const auto _movementType = classify_movement(_from, _to);
 
-			if (_forwardDistance == _horizontalDistance)
+			switch (_movementType)
 			{
+			case MovementClass::diagonal:
 				// Diagonal movement, reuse bishop validator
 				if (_player == Color::white)
 				{
@@ -249,23 +246,17 @@ namespace lbx::chess
 				{
 					return validate_move_bishop_black(_board, _move, _player);
 				};
-			}
-			else if (_forwardDistance != 0 && _horizontalDistance != 0)
-			{
+				break;
+
+			case MovementClass::file: [[fallthrough]];
+			case MovementClass::rank:
+			
+				// Horizontal or vertical movement, reuse rook validator
+				return validate_move_rook_common(_board, _move, _player);
+			
+			default:
 				// Illegal move
 				return MoveValidity::illegal_piece_movement;
-			}
-			else
-			{
-				// Horizontal or vertical movement, reuse rook validator
-				if (_player == Color::white)
-				{
-					return validate_move_rook_white(_board, _move, _player);
-				}
-				else
-				{
-					return validate_move_rook_black(_board, _move, _player);
-				};
 			};
 
 			return MoveValidity::valid;
@@ -319,7 +310,7 @@ namespace lbx::chess
 			};
 		};
 
-		inline MoveValidity validate_move_king_common(const PieceBoard& _board, const Move& _move, const Color& _color)
+		inline MoveValidity validate_move_king_common(const BoardWithState& _board, const Move& _move, const Color& _color)
 		{
 			const auto& _from = _move.from;
 			const auto& _to = _move.to;
@@ -334,17 +325,47 @@ namespace lbx::chess
 
 			if (_horizontalDistance > 1 || _verticalDistance > 1)
 			{
+				// Check for castling
+				switch (_color)
+				{
+				case Color::white:
+				{
+					if (_to == (File::g, Rank::r1) && _board.white_can_castle_kingside)
+					{
+						return MoveValidity::valid;
+					}
+					else if (_to == (File::c, Rank::r1) && _board.white_can_castle_queenside)
+					{
+						return MoveValidity::valid;
+					};
+				};
+				break;
+				case Color::black:
+				{
+					if (_to == (File::g, Rank::r8) && _board.black_can_castle_kingside)
+					{
+						return MoveValidity::valid;
+					}
+					else if (_to == (File::c, Rank::r8) && _board.black_can_castle_queenside)
+					{
+						return MoveValidity::valid;
+					};
+				};
+				break;
+				};
+
+
 				// King can only move 1 square at a time
 				return MoveValidity::illegal_piece_movement;
 			};
 
 			return MoveValidity::valid;
 		};
-		inline MoveValidity validate_move_king_white(const PieceBoard& _board, const Move& _move, const Color& _color)
+		inline MoveValidity validate_move_king_white(const BoardWithState& _board, const Move& _move, const Color& _color)
 		{
 			return validate_move_king_common(_board, _move, _color);
 		};
-		inline MoveValidity validate_move_king_black(const PieceBoard& _board, const Move& _move, const Color& _color)
+		inline MoveValidity validate_move_king_black(const BoardWithState& _board, const Move& _move, const Color& _color)
 		{
 			return validate_move_king_common(_board, _move, _color);
 		};

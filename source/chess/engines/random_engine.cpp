@@ -80,8 +80,10 @@ namespace lbx::chess
 						PositionPair_Offset{  1,  1 },
 						PositionPair_Offset{  0,  1 },
 						PositionPair_Offset{ -1,  1 },
-						PositionPair_Offset{  0,  1 },
-						PositionPair_Offset{  0, -1 },
+
+						PositionPair_Offset{  1,  0 },
+						PositionPair_Offset{ -1,  0 },
+
 						PositionPair_Offset{  1, -1 },
 						PositionPair_Offset{  0, -1 },
 						PositionPair_Offset{ -1, -1 },
