@@ -295,7 +295,7 @@ namespace lbx::chess
 		auto _pieceCount = _board.count_pieces();
 
 		// How many turns to search down
-		size_t _treeDepth = 3;
+		size_t _treeDepth = 4;
 
 		auto _moveTree = this->make_move_tree(_board, _treeDepth);
 		const auto _treeTime = _tm.elapsed();
@@ -312,9 +312,10 @@ namespace lbx::chess
 		};
 
 		// Logging for the selected line to play
+		if (auto& _logger = this->logger_; _logger)
 		{
 			auto& _bestLine = _lines.front();
-			std::ofstream f = this->logger_.start_logging_move();
+			std::ofstream f = _logger->start_logging_move();
 			
 			bool _myTurn = true;
 			f << "\ninitial:\n" << _board << '\n';
@@ -364,6 +365,15 @@ namespace lbx::chess
 
 	void ChessEngine_Baby::play_turn(IGameInterface& _game)
 	{
+		if (!this->logger_)
+		{
+			const auto _name = _game.get_game_name();
+			if (!_name.empty())
+			{
+				this->logger_ = Logger{ _game.get_game_name() };
+			};
+		};
+
 		const auto _moves = this->calculate_multiple_moves(_game.get_board(), _game.get_color());
 		for (auto& m : _moves)
 		{

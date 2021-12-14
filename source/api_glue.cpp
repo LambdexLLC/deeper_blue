@@ -14,6 +14,23 @@ namespace lbx
 namespace lbx
 {
 	/**
+	 * @brief Assigns a chess engine to a game
+	 * @param _gameID ID of the game to assign the engine to
+	 * @param _engine Engine to assign to the game
+	*/
+	void AccountAPI::assign_to_game(const std::string& _gameID, std::unique_ptr<chess::IChessEngine> _engine)
+	{
+		// Create the API to manage the engine
+		auto _gameAPI = jc::make_unique<GameAPI>(_gameID, std::move(_engine));
+		
+		// Assign the API to the game
+		api::set_game_api(_gameID, _gameAPI.get());
+		
+		// Add the API to our container
+		this->games_.push_back(std::move(_gameAPI));
+	};
+
+	/**
 	 * @brief Invoked when a player challenges you
 	*/
 	void AccountAPI::on_challenge(const lbx::json& _event)
@@ -29,16 +46,11 @@ namespace lbx
 	*/
 	void AccountAPI::on_game_start(const lbx::json& _event)
 	{
+		// Get the ID of the game
 		const std::string _gameID = _event.at("game").at("id");
-#if true
-		this->games_.push_back(jc::make_unique<GameAPI>(std::shared_ptr<chess::IChessEngine>
-			(
-				new chess::ChessEngine_Baby{}
-		)));
-#else
-		this->games_.push_back(jc::make_unique<Neuron_GameAPI>());
-#endif
-		api::set_game_api(_gameID, this->games_.back().get());
+
+		// Assign a new engine to the game
+		this->assign_to_game(_gameID, jc::make_unique<chess::ChessEngine_Baby>());
 	};
 
 	/**
@@ -56,25 +68,13 @@ namespace lbx
 		};
 	};
 
-
-
-
 	AccountAPI::AccountAPI()
 	{
 		// Create a game API for each of the current games
 		const auto _games = this->get_current_games();
 		for (auto& _game : _games)
 		{
-#if true
-			this->games_.push_back(jc::make_unique<GameAPI>(std::shared_ptr<chess::IChessEngine>
-				(
-					new chess::ChessEngine_Baby{}
-			)));
-#else
-			this->games_.push_back(jc::make_unique<Neuron_GameAPI>());
-#endif
-
-			api::set_game_api(_game, this->games_.back().get());
+			this->assign_to_game(_game, jc::make_unique<chess::ChessEngine_Baby>());
 		};
 
 		if (_games.empty())
@@ -82,5 +82,4 @@ namespace lbx
 			this->on_no_current_games();
 		};
 	};
-
 };
