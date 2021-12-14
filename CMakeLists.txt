@@ -17,6 +17,9 @@ set(private_include
     "source")
 
 
+# Enable tests
+include (CTest)
+enable_testing()
 
 include ("CMakeUtils.cmake")
 
