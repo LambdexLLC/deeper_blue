@@ -6,6 +6,7 @@
 #include "chess.hpp"
 
 #include <jclib/memory.h>
+#include <jclib/ranges.h>
 #include <jclib/concepts.h>
 
 #include <vector>
@@ -188,9 +189,83 @@ namespace lbx::chess
 				return this->previous_;
 			};
 
+			/**
+			 * @brief Allow conversion to rated move
+			 * @return This node as a rated move
+			*/
+			operator RatedMove() const noexcept
+			{
+				return this->move_;
+			};
 
+			/**
+			 * @brief Gets the rating of the move for this node
+			 * @return Move rating value
+			*/
+			auto get_rating() const noexcept
+			{
+				return this->move_.get_rating();
+			};
 
+			/**
+			 * @brief Gets the move associated with this node
+			 * @return Chess move
+			*/
+			Move get_move() const noexcept
+			{
+				return this->move_.get_move();
+			};
 
+			/**
+			 * Three-way comparison based on ratings of node moves
+			*/
+			auto operator<=>(const Node& rhs) const noexcept
+			{
+				return this->get_rating() <=> rhs.get_rating();
+			};
+
+			/**
+			 * @brief Checks if there are moves assigned to this node as responses
+			 * @return True if one or more responses have been set, false otherwise
+			*/
+			bool has_responses() const
+			{
+				return !this->responses_.empty();
+			};
+
+			/**
+			 * @brief Gets a view into the responses to the move at this node
+			 * @return Responses view (span)
+			*/
+			std::span<Node> responses() noexcept
+			{
+				return this->responses_;
+			};
+
+			/**
+			 * @brief Gets a view into the responses to the move at this node
+			 * @return Responses view (span)
+			*/
+			std::span<const Node> responses() const noexcept
+			{
+				return this->responses_;
+			};
+
+			/**
+			 * @brief Sets the responses to this move
+			 * @tparam RangeT Type of the range containing responses
+			 * @param _range Range containing responses
+			*/
+			template <jc::cx_range RangeT> requires jc::cx_convertible_to
+				<
+					jc::ranges::const_reference_t<RangeT>, // from
+					Node								   // to
+				>
+			void set_responses(const RangeT& _range)
+			{
+				this->responses_.resize(jc::ranges::distance(_range));
+				std::ranges::copy(_range, this->responses_.begin());
+			};
 
 
 
@@ -217,8 +292,6 @@ namespace lbx::chess
 			*/
 			jc::borrow_ptr<Node> previous_;
 		
-		public:
-
 			/**
 			 * @brief The move for this node in the tree
 			*/

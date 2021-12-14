@@ -102,16 +102,14 @@ namespace lbx::chess
 
 	void ChessEngine_Baby::calculate_move_tree_node_responses(const BoardWithState& _board, MoveTree::Node* _previous)
 	{
-		if (_previous->move_.get_rating() < -10000 || _previous->move_.get_rating() > 10000)
+		if (_previous->get_rating() < -10000 || _previous->get_rating() > 10000)
 		{
 			return;
 		}
 		else
 		{
 			auto _moves = this->rank_possible_moves(_board, _board.turn);
-			auto& _prevResponses = _previous->responses_;
-			_prevResponses.resize(_moves.size());
-			std::ranges::copy(_moves, _prevResponses.begin());
+			_previous->set_responses(_moves);
 		};
 	};
 	void ChessEngine_Baby::calculate_move_tree_node_responses(const BoardWithState& _board, MoveTree::Node* _previous, size_t _depth)
@@ -120,10 +118,10 @@ namespace lbx::chess
 		if (_depth != 0)
 		{
 			--_depth;
-			for (auto& r : _previous->responses_)
+			for (auto& r : _previous->responses())
 			{
 				BoardWithState _newBoard{ _board };
-				apply_move(_newBoard, r.move_.get_move());
+				apply_move(_newBoard, r.get_move());
 				this->calculate_move_tree_node_responses(_newBoard, &r, _depth);
 			};
 		};
@@ -149,7 +147,7 @@ namespace lbx::chess
 			for (auto& r : _out.moves_)
 			{
 				BoardWithState _newBoard{ _board };
-				apply_move(_newBoard, r.move_.get_move());
+				apply_move(_newBoard, r.get_move());
 				this->calculate_move_tree_node_responses(_newBoard, &r, _depth);
 			};
 		};
@@ -160,12 +158,13 @@ namespace lbx::chess
 	const MoveTree::Node* ChessEngine_Baby::pick_best_from_tree(const MoveTree::Node& _node, RatedLine& _line)
 	{
 		// Add the current move to the line
-		_line.push_back(_node.move_);
+		_line.push_back(_node);
 
 		// Look at opponent's responses to this move
-		std::vector<std::pair<RatedLine, const MoveTree::Node*>> _responseLines(_node.responses_.size());
+		const auto _responses = _node.responses();
+		std::vector<std::pair<RatedLine, const MoveTree::Node*>> _responseLines(_responses.size());
 		auto _responseIt = _responseLines.begin();
-		for (auto& m : _node.responses_)
+		for (auto& m : _responses)
 		{
 			// Get their best response
 			RatedLine _responseLine{};
@@ -205,58 +204,83 @@ namespace lbx::chess
 		{
 			RatedLine _line{};
 			_at = &r;
-			_line.push_back(_at->move_);
+			_line.push_back(*_at);
 
 			while (true)
 			{
+				// Determine the opponent's best move
 				const Node* _opponentResponse{};
-				if (auto& _rsrs = _at->responses_; !_rsrs.empty())
+				
 				{
-					// Build up look-ahead rating for opponent response
-					std::vector<std::pair<const Node*, int>> _responseToResponseRatings{};
-					for (auto& _rsrsrs : _rsrs)
-					{
-						if (!_rsrsrs.responses_.empty())
-						{
-							_responseToResponseRatings.push_back(std::pair<const Node*, int>{ &_rsrsrs, -_rsrsrs.responses_.front().move_.get_rating()});
-						}
-						else
-						{
-							_responseToResponseRatings.push_back({ &_rsrsrs, _rsrsrs.move_.get_rating() });
-						};
-					};
+					// Look through opponent's responses to our move
+					auto _rsrs = _at->responses();
 
-					// Sort look-ahead responses
-					std::ranges::sort(_responseToResponseRatings, [](auto& lhs, auto& rhs)
+					// Only look if there are responses to our move possible
+					if (!_rsrs.empty())
+					{
+						// Build up look-ahead rating for opponent response
+						std::vector<std::pair<const Node*, int>> _responseToResponseRatings{};
+						for (auto& _rsrsrs : _rsrs)
 						{
-							return lhs.second > rhs.second;
-						});
-					_opponentResponse = _responseToResponseRatings.front().first;
-				}
-				else
-				{
-					break;
+							if (_rsrsrs.has_responses())
+							{
+								_responseToResponseRatings.push_back(std::pair<const Node*, int>{ &_rsrsrs, -_rsrsrs.responses().front().get_rating()});
+							}
+							else
+							{
+								_responseToResponseRatings.push_back({ &_rsrsrs, _rsrsrs.get_rating() });
+							};
+						};
+
+						// Sort look-ahead responses
+						std::ranges::sort(_responseToResponseRatings, [](auto& lhs, auto& rhs)
+							{
+								return lhs.second > rhs.second;
+							});
+						_opponentResponse = _responseToResponseRatings.front().first;
+					}
+					else
+					{
+						// There are no possible responses to our move
+						break;
+					};
 				};
 
-				if (auto& _rsrs = _opponentResponse->responses_; !_rsrs.empty())
+				// If the opponent has a response to our move, look into our responses to its
+				// response and determine the best
+				if (_opponentResponse)
 				{
-					_line.push_back(_opponentResponse->move_);
-					_at = &_opponentResponse->responses_.front();
-					_line.push_back(_at->move_);
-				}
-				else
-				{
-					break;
+					// Check that we can response to it
+					if (_opponentResponse->has_responses())
+					{
+						// Add their response to the line
+						_line.push_back(*_opponentResponse);
+						_at = &_opponentResponse->responses().front();
+						_line.push_back(*_at);
+					}
+					else
+					{
+						// Add their response to the line but invert the score so that
+						// it is still taken into account
+						RatedMove _invertedOpponentResponse{ _opponentResponse->get_move(), -_opponentResponse->get_rating() };
+						_line.push_back(_invertedOpponentResponse);
+						break;
+					};
 				};
 			};
 
+			// Add the line to the final set of lines to evaluate
 			_finalPicks.push_back(_line);
 		};
 
+		// Sort lines based on final outcome so that the first line in the container
+		// is the one with the best outcome for us
 		std::ranges::sort(_finalPicks, [](const RatedLine& lhs, const RatedLine& rhs)
 			{
 				return lhs.back() > rhs.back();
 			});
+
+		// Return our sorted lines
 		return _finalPicks;
 	};
 
@@ -271,7 +295,7 @@ namespace lbx::chess
 		auto _pieceCount = _board.count_pieces();
 
 		// How many turns to search down
-		size_t _treeDepth = 4;
+		size_t _treeDepth = 3;
 
 		auto _moveTree = this->make_move_tree(_board, _treeDepth);
 		const auto _treeTime = _tm.elapsed();
@@ -281,13 +305,13 @@ namespace lbx::chess
 		const auto _pickTime = _tm.elapsed();
 		_tm.start();
 
-		static int move_n = 0;
-
+		// If we did not find a line to play, go ahead and return nothing
 		if (_lines.empty())
 		{
 			return {};
 		};
 
+		// Logging for the selected line to play
 		{
 			auto& _bestLine = _lines.front();
 			std::ofstream f = this->logger_.start_logging_move();

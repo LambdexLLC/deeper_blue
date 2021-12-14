@@ -75,7 +75,6 @@ namespace lbx::chess
 
 namespace lbx
 {
-
 	/**
 	 * @brief Interface implementation for interacting with a single chess game
 	*/
@@ -309,7 +308,6 @@ namespace lbx
 	private:
 		std::shared_ptr<chess::IChessEngine> engine_{};
 	};
-
 
 	/**
 	 * @brief Interface implementation for interacting with a single chess game
@@ -549,7 +547,6 @@ namespace lbx
 
 		};
 
-
 		Neuron_GameAPI() :
 			engine_{}
 		{
@@ -571,74 +568,41 @@ namespace lbx
 		chess::ChessEngine_Neural engine_{};
 	};
 
-
-
+	/**
+	 * @brief Implementation for the AccountAPI interface
+	*/
 	struct AccountAPI final : public lbx::api::LichessAccountAPI
 	{
+	protected:
+
+		// Called when the object is initialized but no games are being played
+		void on_no_current_games();
+
 	public:
-
-		std::vector<std::unique_ptr<lbx::api::LichessGameAPI>> games_{};
-
 
 		/**
 		 * @brief Invoked when a player challenges you
 		*/
-		void on_challenge(const lbx::json& _event) final
-		{
-			const std::string_view _challengeID = _event.at("challenge").at("id");
-
-			// Of course we accept it
-			this->accept_challenge(_challengeID);
-		};
-
+		void on_challenge(const lbx::json& _event) final;
+		
 		/**
 		 * @brief Invoked when a game is started
-		 * https://lichess.org/api#operation/apiStreamEvent
 		*/
-		void on_game_start(const lbx::json& _event) final
-		{
-			const std::string _gameID = _event.at("game").at("id");
-#if true
-			this->games_.push_back(jc::make_unique<GameAPI>(std::shared_ptr<chess::IChessEngine>
-				(
-					new chess::ChessEngine_Baby{}
-			)));
-#else
-			this->games_.push_back(jc::make_unique<Neuron_GameAPI>());
-#endif
-			api::set_game_api(_gameID, this->games_.back().get());
-		};
+		void on_game_start(const lbx::json& _event) final;
 
 		/**
 		 * @brief Invoked when a game finishes
 		*/
-		void on_game_finish(const lbx::json& _event) final
-		{
-		};
+		void on_game_finish(const lbx::json& _event) final;
 
-		AccountAPI()
-		{
-			// Create a game API for each of the current games
-			const auto _games = this->get_current_games();
-			for (auto& _game : _games)
-			{
-#if true
-				this->games_.push_back(jc::make_unique<GameAPI>(std::shared_ptr<chess::IChessEngine>
-					(
-						new chess::ChessEngine_Baby{}
-				)));
-#else
-				this->games_.push_back(jc::make_unique<Neuron_GameAPI>());
-#endif
+		AccountAPI();
 
-				api::set_game_api(_game, this->games_.back().get());
-			};
+	private:
 
-			if (_games.empty())
-			{
-				this->challenge_ai(3);
-			};
-		};
+		/**
+		 * @brief Container for tracking the active set of games
+		*/
+		std::vector<std::unique_ptr<lbx::api::LichessGameAPI>> games_{};
 
 	};
 
