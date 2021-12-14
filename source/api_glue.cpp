@@ -6,7 +6,7 @@ namespace lbx
 	// Called when the object is initialized but no games are being played
 	void AccountAPI::on_no_current_games()
 	{
-		this->challenge_ai(2);
+		this->challenge_ai(3);
 	};
 };
 
@@ -28,6 +28,9 @@ namespace lbx
 		
 		// Add the API to our container
 		this->games_.push_back(std::move(_gameAPI));
+
+		// Log game link
+		println("Assigned engine to game https://lichess.org/{}", _gameID);
 	};
 
 	/**

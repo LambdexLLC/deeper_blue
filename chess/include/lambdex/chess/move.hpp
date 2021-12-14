@@ -3,7 +3,9 @@
 #define LAMBDEX_CHESS_MOVE_HPP
 
 #include "basic.hpp"
+#include "position.hpp"
 
+#include <array>
 #include <string>
 #include <format>
 #include <charconv>
@@ -52,6 +54,80 @@ namespace lbx::chess
 	};
 
 
+
+
+	/**
+	 * @brief Array of positions with pseudo-dynamic sizing using an end sentinal
+	*/
+	template <size_t MaxSize>
+	struct PositionArray
+	{
+	public:
+
+		constexpr auto begin()
+		{
+			return this->data_.begin();
+		};
+		constexpr auto begin() const
+		{
+			return this->data_.cbegin();
+		};
+		constexpr auto cbegin() const
+		{
+			return this->begin();
+		};
+
+		constexpr auto end()
+		{
+			return std::ranges::find(this->data_, PositionPair::end());
+		};
+		constexpr auto end() const
+		{
+			return std::ranges::find(this->data_, PositionPair::end());
+		};
+		constexpr auto cend() const
+		{
+			return this->end();
+		};
+
+		constexpr size_t size() const noexcept
+		{
+			return this->end() - this->begin();
+		};
+		constexpr static size_t max_size() noexcept
+		{
+			return MaxSize;
+		};
+
+		constexpr void push_back(PositionPair _pos) noexcept
+		{
+			auto _end = this->end();
+			JCLIB_ASSERT(_end != this->data_.end());
+			*_end = _pos;
+		};
+
+		constexpr PositionArray() :
+			data_{}
+		{
+			this->data_.fill(PositionPair::end());
+		};
+
+	private:
+
+		std::array<PositionPair, MaxSize> data_;
+	
+	};
+
+
+	
+
+
+
+};
+
+#pragma region STRING_CONVERSIONS
+namespace lbx::chess
+{
 
 	inline std::from_chars_result from_chars(const char* _begin, const char* _end, Move& _value)
 	{
@@ -126,7 +202,7 @@ namespace lbx::chess
 	};
 
 };
-
+#pragma endregion STRING_CONVERSIONS
 #pragma region MOVE_FORMATTER
 namespace std
 {

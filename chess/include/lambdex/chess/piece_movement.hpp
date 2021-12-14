@@ -6,7 +6,7 @@
 	Provides functions for examining piece movement
 */
 
-#include "basic.hpp"
+#include "move.hpp"
 
 #include "board/bit_board.hpp"
 

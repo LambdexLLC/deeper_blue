@@ -72,7 +72,7 @@ namespace lbx::chess
 
 			Logger(std::string _gameName)
 			{
-				this->folder_ = format("{}/game_{}", dump_root_v, _gameName);
+				this->folder_ = format("{}/{}", dump_root_v, _gameName);
 				if (!fs::exists(this->folder_))
 				{
 					fs::create_directory(this->folder_);
