@@ -1,5 +1,8 @@
 #include <lambdex/chess/apply_move.hpp>
 
+#include <numeric>
+#include <algorithm>
+
 namespace lbx::chess
 {
 	/**
@@ -73,6 +76,34 @@ namespace lbx::chess
 			}
 		};
 
+		// If this is a pawn moving two squares, set en passant
+		if (as_white(_board[_move.from]) == Piece::pawn && distance(_move.from.rank(), _move.to.rank()) == 2)
+		{
+			const auto _middleRank = Rank( std::midpoint(jc::to_underlying(_move.from.rank()), jc::to_underlying(_move.to.rank())) );
+			_board.set_en_passant(PositionPair(_move.from.file(), _middleRank));
+		}
+		else
+		{
+			// Otherwise clear en passant
+			_board.clear_en_passant();
+		};
+
+		// Increment half move counter
+		++_board.half_move_counter;
+
+		// Check for pawn advance or capture
+		if (_board[_move.to] != Piece::empty || as_white(_board[_move.from]) == Piece::pawn_white)
+		{
+			// Reset half move counter
+			_board.half_move_counter = 0;
+		};
+
+		// Increment full move counter every other turn
+		if (_board.turn == Color::black)
+		{
+			++_board.full_move_counter;
+		};
+
 		_board.turn = !_board.turn;
 
 		// Handle castling moves
@@ -85,13 +116,17 @@ namespace lbx::chess
 			};
 		};
 
+		// Move the piece
 		auto _piece = _board[_move.from];
 		_board[_move.to] = _piece;
+		
+		// Replace old piece with empty
 		_board[_move.from] = Piece::empty;
 
+		// Apply pawn promotion if there is one
 		if (_move.promotion != Piece::empty)
 		{
-			auto _promoPiece = _board[_move.to];
+			auto _promoPiece = _move.promotion;
 			if (_player == Color::black)
 			{
 				_promoPiece = _promoPiece | Color::black;

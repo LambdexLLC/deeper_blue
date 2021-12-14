@@ -1,5 +1,7 @@
 #include "api_glue.hpp"
 
+#include <lambdex/chess/fen.hpp>
+
 int main()
 {
 	using namespace lbx;

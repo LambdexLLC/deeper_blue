@@ -256,6 +256,12 @@ namespace lbx::chess
 		};
 
 
+		// Comparison operator overloads
+		
+		constexpr bool operator==(const GenericBoard& rhs) const noexcept = default;
+
+
+
 
 		// Special member functions
 
