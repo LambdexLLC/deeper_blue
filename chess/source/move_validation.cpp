@@ -1,8 +1,12 @@
 #include <lambdex/chess/move_validation.hpp>
+#include <lambdex/chess/piece_movement.hpp>
+
 #include <lambdex/chess/board/piece_board.hpp>
 
 #include <jclib/functional.h>
 #include <jclib/algorithm.h>
+
+#include <iostream>
 
 namespace lbx::chess
 {
@@ -11,6 +15,113 @@ namespace lbx::chess
 		/*
 			Functions below are for validating movement for particular pieces
 		*/
+		
+			constexpr inline BitBoard bits_below_rank(Rank _rank)
+			{
+				// TODO: Precompute this at compile time
+				BitBoard _out{};
+				for (Rank r = Rank::r1; r != _rank; ++r)
+				{
+					_out |= bits_in_rank(r);
+				};
+				return _out;
+			};
+			constexpr inline BitBoard bits_above_rank(Rank _rank)
+			{
+				// TODO: Precompute this at compile time
+				BitBoard _out{};
+				for (Rank r = Rank::r8; r != _rank; --r)
+				{
+					_out |= bits_in_rank(r);
+					if (_rank == Rank::r1)
+					{
+						break;
+					};
+				};
+				return _out;
+			};
+			
+			constexpr inline BitBoard bits_right_of_file(File _file)
+			{
+				// TODO: Precompute this at compile time
+				BitBoard _out{};
+				for (File f = File::h; f != _file; --_file)
+				{
+					_out |= bits_in_file(f);
+					if (_file == File::a)
+					{
+						break;
+					};
+				};
+				return _out;
+			};
+			constexpr inline BitBoard bits_left_of_file(File _file)
+			{
+				// TODO: Precompute this at compile time
+				BitBoard _out{};
+				for (File f = File::a; f != _file; ++_file)
+				{
+					_out |= bits_in_file(f);
+				};
+				return _out;
+			};
+
+			constexpr inline BitBoard bits_outside_range(File _file1, File _file2)
+			{
+				return	bits_left_of_file(std::min(_file1, _file2)) |
+						bits_right_of_file(std::max(_file1, _file2));
+			};
+			constexpr inline BitBoard bits_outside_range(Rank _rank1, Rank _rank2)
+			{
+				return	bits_below_rank(std::min(_rank1, _rank2)) |
+						bits_above_rank(std::max(_rank1, _rank2));
+			};
+
+			constexpr inline BitBoard bits_inside_range_inclusive(File _file1, File _file2)
+			{
+				return ~bits_outside_range(_file1, _file2);
+			};
+			constexpr inline BitBoard bits_inside_range_inclusive(Rank _rank1, Rank _rank2)
+			{
+				return ~bits_outside_range(_rank1, _rank2);
+			};
+
+			constexpr inline BitBoard bits_inside_range(File _file1, File _file2)
+			{
+				return bits_inside_range_inclusive(_file1, _file2) & ~(bits_in_file(_file1) | bits_in_file(_file2));
+			};
+			constexpr inline BitBoard bits_inside_range(Rank _rank1, Rank _rank2)
+			{
+				return bits_inside_range_inclusive(_rank1, _rank2) & ~(bits_in_rank(_rank1) | bits_in_rank(_rank2));
+			};
+
+			constexpr inline BitBoard bits_outside_range_inclusive(File _file1, File _file2)
+			{
+				return	bits_outside_range(_file1, _file2) |
+						bits_in_file(_file1) |
+						bits_in_file(_file2);
+			};
+			constexpr inline BitBoard bits_outside_range_inclusive(Rank _rank1, Rank _rank2)
+			{
+				return	bits_outside_range(_rank1, _rank2) |
+						bits_in_rank(_rank1) |
+						bits_in_rank(_rank2);
+			};
+
+			constexpr inline BitBoard make_bitboard_with_path(File _file, Rank _rank1, Rank _rank2)
+			{
+				// Mask allows only bits in the file within the range [_rank1, _rank2]
+				const auto _bitsWithinRange = bits_inside_range_inclusive(_rank1, _rank2);
+				return bits_in_file(_file) & _bitsWithinRange;
+			};
+			constexpr inline BitBoard make_bitboard_with_path(Rank _rank, File _file1, File _file2)
+			{
+				// Mask allows only bits in the file within the range [_file1, _file2]
+				const auto _bitsWithinRange = bits_inside_range_inclusive(_file1, _file2);
+				return bits_in_rank(_rank) & _bitsWithinRange;
+			};
+			
+
 
 		// validation for a rook move, color independent
 		inline MoveValidity validate_move_rook_common(const PieceBoard& _board, const Move& _move, const Color& _player)
@@ -18,54 +129,42 @@ namespace lbx::chess
 			auto& _to = _move.to;
 			auto& _from = _move.from;
 
-			const auto _forwardDistance = distance(_from.rank(), _to.rank());
-			const auto _horizontalDistance = distance(_from.file(), _to.file());
-
-			if (_forwardDistance != 0 && _horizontalDistance != 0)
+			// Make ideal path bitboard
+			BitBoard _idealPath{};
+			const auto _movementType = classify_movement(_move.from, _move.to);
+			switch (_movementType)
 			{
-				// Cannot move diagonally
+			case MovementClass::file:
+				_idealPath = make_bitboard_with_path(_move.from.rank(), _move.from.file(), _move.to.file());
+				break;
+			case MovementClass::rank:
+				_idealPath = make_bitboard_with_path(_move.from.file(), _move.from.rank(), _move.to.rank());
+				break;
+			default:
 				return MoveValidity::illegal_piece_movement;
-			}
-			else if (_forwardDistance != 0)
+				break;
+			};
+
+			const auto _rookMoveBits = get_rook_movement_bits(_move.from);
+			
+			// Remove this piece from my pieces
+			auto _myPieces = _board.as_bits_with_pieces(_player);
+			_myPieces.reset(_move.from);
+
+			// Determine opponent pieces, remove dest piece
+			auto _opponentPieces = _board.as_bits_with_pieces(!_player);
+			_opponentPieces.reset(_move.to);
+			const auto _piecesInPath = (_myPieces | _opponentPieces) & _idealPath;
+
+			// Branch shouldn't result in instructions needing to be loaded
+			if (_piecesInPath.none() && _rookMoveBits[_move.to])
 			{
-				// Check if there are any pieces in the way
-				const auto [_min, _max] = std::minmax(_from.rank(), _to.rank());
-				for (Rank _at = _min; _at != _max; _at = _at + 1)
-				{
-					// Ignore this rank and destination rank
-					if (_at != _to.rank() && _at != _from.rank())
-					{
-						// Check if a piece is in the way
-						const auto _lookingAt = (_at, _from.file());
-						if (_board[_lookingAt] != Piece::empty)
-						{
-							return MoveValidity::other_piece_in_the_way;
-						};
-					};
-				};
+				return MoveValidity::valid;
 			}
 			else
 			{
-				// Horizontal move
-
-				// Check if there are any pieces in the way
-				const auto [_min, _max] = std::minmax(_from.file(), _to.file());
-				for (File _at = _min; _at != _max; _at = _at + 1)
-				{
-					// Ignore this rank and destination rank
-					if (_at != _to.file() && _at != _from.file())
-					{
-						// Check if a piece is in the way
-						const auto _lookingAt = (_from.rank(), _at);
-						if (_board[_lookingAt] != Piece::empty)
-						{
-							return MoveValidity::other_piece_in_the_way;
-						};
-					};
-				};
+				return MoveValidity::other_piece_in_the_way;
 			};
-
-			return MoveValidity::valid;
 		};
 
 		inline MoveValidity validate_move_rook_white(const PieceBoard& _board, const Move& _move, const Color& _player)

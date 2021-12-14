@@ -53,7 +53,7 @@ namespace lbx
 		const std::string _gameID = _event.at("game").at("id");
 
 		// Assign a new engine to the game
-		this->assign_to_game(_gameID, jc::make_unique<chess::ChessEngine_Baby>((size_t)4));
+		this->assign_to_game(_gameID, jc::make_unique<chess::ChessEngine_Baby>());
 	};
 
 	/**
@@ -77,7 +77,7 @@ namespace lbx
 		const auto _games = this->get_current_games();
 		for (auto& _game : _games)
 		{
-			this->assign_to_game(_game, jc::make_unique<chess::ChessEngine_Baby>((size_t)4));
+			this->assign_to_game(_game, jc::make_unique<chess::ChessEngine_Baby>());
 		};
 
 		if (_games.empty())

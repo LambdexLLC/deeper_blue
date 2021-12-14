@@ -14,6 +14,7 @@
 #include <array>
 #include <ranges>
 #include <cstdint>
+#include <iosfwd>
 
 namespace lbx::chess
 {
@@ -288,5 +289,18 @@ namespace lbx::chess
 	static_assert(sizeof(BitBoard) == 8);
 
 };
+
+#pragma region STRING_CONVERSIONS
+namespace lbx::chess
+{
+	/**
+	 * @brief Writes a bit board to an output stream as a series of rows containing 1s and 0s
+	 * @param _ostr Output stream
+	 * @param _board Bit board to write
+	 * @return The output stream
+	*/
+	std::ostream& operator<<(std::ostream& _ostr, const BitBoard& _board);
+};
+#pragma endregion STRING_CONVERSIONS
 
 #endif // LAMBDEX_CHESS_BIT_BOARD_HPP
