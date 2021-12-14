@@ -8,6 +8,7 @@
 */
 
 #include "lambdex/chess/basic.hpp"
+#include "lambdex/chess/position.hpp"
 
 #include <span>
 #include <array>
