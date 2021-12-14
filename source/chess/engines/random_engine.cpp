@@ -44,7 +44,10 @@ namespace lbx::chess
 		{
 			if (s != Piece::empty && chess::get_color(s) == _player)
 			{
-				if (chess::as_white(s) == Piece::rook)
+				switch (s)
+				{
+				case Piece::rook_white: [[fallthrough]];
+				case Piece::rook_black:
 				{
 					PositionPair _pair{ _from };
 					for (File f = File::a; f != File::END; ++f)
@@ -55,11 +58,81 @@ namespace lbx::chess
 					{
 						add_if_valid((r, _pair.file()));
 					};
-				}
-				else if (s == Piece::pawn_black)
+				};
+				break;
+
+				case Piece::knight_white: [[fallthrough]];
+				case Piece::knight_black:
+				{
+					const auto _positions = get_possible_move_positions_knight(_board, _from);
+					for (auto& p : _positions)
+					{
+						add_if_valid(p);
+					};
+				};
+				break;
+
+				case Piece::king_white: [[fallthrough]];
+				case Piece::king_black:
+				{
+					constexpr auto _offsets = std::array
+					{
+						PositionPair_Offset{  1,  1 },
+						PositionPair_Offset{  0,  1 },
+						PositionPair_Offset{ -1,  1 },
+						PositionPair_Offset{  0,  1 },
+						PositionPair_Offset{  0, -1 },
+						PositionPair_Offset{  1, -1 },
+						PositionPair_Offset{  0, -1 },
+						PositionPair_Offset{ -1, -1 },
+					};
+					for (auto& o : _offsets)
+					{
+						const auto _unboundedDest = PositionPair_Unbounded{ _from } + o;
+						if (_unboundedDest.is_within_bounds())
+						{
+							add_if_valid(_unboundedDest);
+						};
+					};
+				};
+				break;
+
+				case Piece::bishop_white: [[fallthrough]];
+				case Piece::bishop_black:
+				{
+					// TODO: Improve this
+					
+					// Find all diagonal movements
+					for (Position _to = Position{}; _to != Position::end(); ++_to)
+					{
+						if (classify_movement(_from, _to) == MovementClass::diagonal)
+						{
+							add_if_valid(_to);
+						};
+					};
+				};
+				break;
+
+				case Piece::queen_white: [[fallthrough]];
+				case Piece::queen_black:
+				{
+					// TODO: Improve this
+
+					// Find all file, rank, or diagonal movements
+					for (Position _to = Position{}; _to != Position::end(); ++_to)
+					{
+						if (classify_movement(_from, _to) != MovementClass::invalid)
+						{
+							add_if_valid(_to);
+						};
+					};
+				};
+				break;
+
+				case Piece::pawn_black:
 				{
 					PositionPair _pair{ _from };
-					
+
 					// Look ahead 2
 					bool _lookAhead2 = _pair.rank() == Rank::r7;
 
@@ -85,8 +158,9 @@ namespace lbx::chess
 					{
 						add_if_valid((_pair.rank() - 2, _pair.file()));
 					};
-				}
-				else if (s == Piece::pawn_white)
+				};
+				break;
+				case Piece::pawn_white:
 				{
 					PositionPair _pair{ _from };
 
@@ -115,13 +189,17 @@ namespace lbx::chess
 					{
 						add_if_valid((_pair.rank() + 2, _pair.file()));
 					};
-				}
-				else
+				};
+				break;
+
+				default:
 				{
 					for (Position _to = Position{}; _to != Position::end(); ++_to)
 					{
 						add_if_valid(_to);
 					};
+				};
+				break;
 				};
 			};
 			++_from;

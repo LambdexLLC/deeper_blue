@@ -291,6 +291,9 @@ namespace lbx::chess
 		jc::timer _tm{};
 		_tm.start();
 		
+		jc::timer _turnTime{};
+		_turnTime.start();
+
 		// Get number of pieces, this can be used to help tune the search depth
 		auto _pieceCount = _board.count_pieces();
 
@@ -311,12 +314,31 @@ namespace lbx::chess
 			return {};
 		};
 
+		// Grab the individual moves
+		std::vector<Move> _final(_lines.size());
+		auto it = _final.begin();
+		for (auto& m : _lines)
+		{
+			*it = m.front().get_move();
+			++it;
+		};
+
+		// How long it took to play the turn
+		const auto _fullTurnTime = _turnTime.elapsed();
+
 		// Logging for the selected line to play
 		if (auto& _logger = this->logger_; _logger)
 		{
 			auto& _bestLine = _lines.front();
 			std::ofstream f = _logger->start_logging_move();
 			
+			f << "Stats:\n";
+			writeln(f, "full turn time  = {}s", dc(_fullTurnTime).count());
+			writeln(f, "tree build time = {}s", dc(_treeTime).count());
+			writeln(f, "pick time       = {}s", dc(_pickTime).count());
+
+			writeln(f, "\nLine:\n");
+
 			bool _myTurn = true;
 			f << "\ninitial:\n" << _board << '\n';
 			f << "possible moves:\n";
@@ -343,21 +365,8 @@ namespace lbx::chess
 				_myTurn = !_myTurn;
 			};
 
-			f.flush();
+			f.flush(); 
 		}
-		
-		const auto _logTime = _tm.elapsed();
-
-		// Grab the individual moves
-		std::vector<Move> _final(_lines.size());
-		auto it = _final.begin();
-		for (auto& m : _lines)
-		{
-			*it = m.front().get_move();
-			++it;
-		};
-		
-		println("tree = {} pick = {} log = {}", dc(_treeTime).count(), dc(_pickTime).count(), dc(_logTime).count());
 
 		return _final;
 	};

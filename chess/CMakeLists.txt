@@ -9,5 +9,4 @@ target_link_libraries(${PROJECT_NAME} PUBLIC jclib)
 
 add_library(lbx::chess-lib ALIAS lbx-chess-lib)
 
-
 ADD_CMAKE_SUBDIRS_HERE()

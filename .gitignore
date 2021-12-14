@@ -14,3 +14,4 @@ env/
 
 # Dump output directories
 dump/
+nnet_dump/

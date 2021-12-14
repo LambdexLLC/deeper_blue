@@ -7,6 +7,7 @@
 */
 
 #include "apply_move.hpp"
+#include "possible_moves.hpp"
 
 #include "board/piece_board.hpp"
 #include "board/board_with_state.hpp"
@@ -64,7 +65,7 @@ namespace lbx::chess
 	};
 
 	// Path along rank, exclusive min and max, ie. checks squares between points
-	constexpr inline std::optional<PositionPair> find_piece_in_path_rank(const PieceBoard& _board, const PositionPair& _from, const PositionPair& _to)
+	constexpr inline PositionPair find_piece_in_path_rank(const PieceBoard& _board, const PositionPair& _from, const PositionPair& _to)
 	{
 		const int8_t _inc = (_from.rank() < _to.rank()) ? 1 : -1;
 		for (auto _rank = _from.rank(); _rank != _to.rank(); _rank = _rank + _inc)
@@ -75,11 +76,11 @@ namespace lbx::chess
 				return _at;
 			};
 		};
-		return std::nullopt;
+		return PositionPair::end();
 	};
 
 	// Path along file, exclusive min and max, ie. checks squares between points
-	constexpr inline std::optional<PositionPair> find_piece_in_path_file(const PieceBoard& _board, const PositionPair& _from, const PositionPair& _to)
+	constexpr inline PositionPair find_piece_in_path_file(const PieceBoard& _board, const PositionPair& _from, const PositionPair& _to)
 	{
 		const int8_t _inc = (_from.file() < _to.file()) ? 1 : -1;
 		for (auto _file = _from.file(); _file != _to.file(); _file = _file + _inc)
@@ -90,11 +91,11 @@ namespace lbx::chess
 				return _at;
 			};
 		};
-		return std::nullopt;
+		return PositionPair::end();
 	};
 
 	// Path along diagonal
-	constexpr inline std::optional<PositionPair> find_piece_in_path_diagonal(const PieceBoard& _board, PositionPair _from, PositionPair _to)
+	constexpr inline PositionPair find_piece_in_path_diagonal(const PieceBoard& _board, PositionPair _from, PositionPair _to)
 	{
 		const int8_t _fileInc = (_from.file() < _to.file()) ? 1 : -1;
 		const int8_t _rankInc = (_from.rank() < _to.rank()) ? 1 : -1;
@@ -112,17 +113,21 @@ namespace lbx::chess
 				return _at;
 			};
 		};
-		return std::nullopt;
+		return PositionPair::end();
 	};
 
-	enum class MovementClass
+	/**
+	 * @brief Types of movement that a chess piece would make
+	*/
+	enum class MovementClass : uint8_t
 	{
-		invalid,
-		file,
-		rank,
-		diagonal
+		invalid  = 0b00,
+		file	 = 0b01,
+		rank	 = 0b10,
+		diagonal = 0b11
 	};
 
+	
 	constexpr inline MovementClass classify_movement(const PositionPair& _from, const PositionPair& _to)
 	{
 		if (_from.rank() == _to.rank() && _from.file() != _to.file())
@@ -152,11 +157,19 @@ namespace lbx::chess
 	static_assert(classify_movement((Rank::r1, File::a), (Rank::r4, File::d)) == MovementClass::diagonal);
 	static_assert(classify_movement((Rank::r1, File::a), (Rank::r4, File::b)) == MovementClass::invalid);
 
-	// Diagonal path, exclusive min and max, ie. checks squares between points
-	constexpr inline std::optional<PositionPair> find_piece_in_path(const PieceBoard& _board, const PositionPair& _from, const PositionPair& _to)
+	/**
+	 * @brief Checks if a piece is within the path of a horizontal, vertical, or diagonal movement
+	 * @param _board 
+	 * @param _from 
+	 * @param _to 
+	 * @param _moveClass Classification for this movement
+	 * 
+	 * @return The position of the piece within the path, or null position pair if nothing is in the path
+	*/
+	constexpr inline PositionPair find_piece_in_path(const PieceBoard& _board, const PositionPair& _from, const PositionPair& _to, MovementClass _moveClass)
 	{
-		const auto _movement = classify_movement(_from, _to);
-		switch (_movement)
+		JCLIB_ASSERT(_moveClass == classify_movement(_from, _to))
+		switch (_moveClass)
 		{
 		case MovementClass::diagonal:
 			return find_piece_in_path_diagonal(_board, _from, _to);
@@ -165,69 +178,25 @@ namespace lbx::chess
 		case MovementClass::rank:
 			return find_piece_in_path_rank(_board, _from, _to);
 		case MovementClass::invalid:
-			return std::nullopt;
+			return PositionPair::end();
 		default:
 			JCLIB_ABORT();
-			return std::nullopt;
+			return PositionPair::end();
 		};
 	};
-
+	
 	/**
-	 * @brief Struct for holding the possible moves a knight may make
+	 * @brief Checks if a piece is within the path of a horizontal, vertical, or diagonal movement
+	 * @param _board
+	 * @param _from
+	 * @param _to
+	 * @return The position of the piece within the path, or null position pair if nothing is in the path
 	*/
-	struct PossibleKnightMoves
+	constexpr inline PositionPair find_piece_in_path(const PieceBoard& _board, const PositionPair& _from, const PositionPair& _to)
 	{
-		/**
-		 * @brief Storage for all of the possible moves, get "count" to determine
-		 * how many of these positions are actually valid
-		*/
-		std::array<PositionPair, 8> pos;
-
-		/**
-		 * @brief How many "good" positions are held by pos
-		*/
-		size_t count;
+		return find_piece_in_path(_board, _from, _to, classify_movement(_from, _to));
 	};
 
-	/**
-	 * @brief Gets the possible moves a knight may make. Does not check for putting same-color king in check.
-	 * @param _board Chess board state
-	 * @param _knightPos Position of the knight to find moves for, must be a knight!
-	 * @return Possible moves struct
-	*/
-	constexpr inline PossibleKnightMoves get_knight_possible_moves(const PieceBoard& _board, PositionPair _knightPos)
-	{
-		JCLIB_ASSERT((jc::to_underlying(_board[_knightPos]) & ~0b1) == jc::to_underlying(Piece::knight));
-		const auto _knightColor = get_color(_board[_knightPos]);
-		const auto _rank = (int)_knightPos.rank();
-		const auto _file = (int)_knightPos.file();
-
-		std::array<std::pair<int, int>, 8> _unboundedMoves{};
-		_unboundedMoves[0] = { _rank + 1, _file + 2 };
-		_unboundedMoves[1] = { _rank + 2, _file + 1 };
-		_unboundedMoves[2] = { _rank - 1, _file - 2 };
-		_unboundedMoves[3] = { _rank - 2, _file - 1 };
-		_unboundedMoves[4] = { _rank + 1, _file - 2 };
-		_unboundedMoves[5] = { _rank + 2, _file - 1 };
-		_unboundedMoves[6] = { _rank - 1, _file + 2 };
-		_unboundedMoves[7] = { _rank - 2, _file + 1 };
-
-		PossibleKnightMoves _out{};
-		for (auto& _unbounded : _unboundedMoves)
-		{
-			if (_unbounded.first >= 0 && _unbounded.first <= 7 &&
-				_unbounded.second >= 0 && _unbounded.second <= 7)
-			{
-				auto _pos = (Rank(_unbounded.first), File(_unbounded.second));
-				if (_board[_pos] == Piece::empty || get_color(_board[_pos]) != _knightColor)
-				{
-					_out.pos[_out.count++] = _pos;
-				};
-			};
-		};
-
-		return _out;
-	};
 
 	/**
 	 * @brief Determines if a piece is being immediately threatened by an enemy piece

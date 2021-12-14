@@ -2,6 +2,7 @@
 #include <lambdex/chess/board/piece_board.hpp>
 
 #include <jclib/functional.h>
+#include <jclib/algorithm.h>
 
 namespace lbx::chess
 {
@@ -319,6 +320,8 @@ namespace lbx::chess
 				// Cannot move pieces sidewise
 				return MoveValidity::illegal_piece_movement;
 			};
+
+			return MoveValidity::valid;
 		};
 		inline MoveValidity validate_move_pawn_black(const BoardWithState& _board, const Move& _move, const Color& _color)
 		{
@@ -388,6 +391,8 @@ namespace lbx::chess
 				// Cannot move pieces sidewise
 				return MoveValidity::illegal_piece_movement;
 			};
+			
+			return MoveValidity::valid;
 		};
 	};
 
@@ -412,18 +417,16 @@ namespace lbx::chess
 			if (_square != Piece::empty && _pieceColor != get_color(_square))
 			{
 				// Found enemy piece
-				const auto _squarePiece = as_white(_board[_squarePosPair]);
+				const auto _squarePiece = as_white(_square);
 				switch (_squarePiece)
 				{
 				case Piece::bishop:
 				{
-					const auto _fileDist = distance(_squarePosPair.file(), _position.file());
-					const auto _rankDist = distance(_squarePosPair.rank(), _position.rank());
-
-					if (_fileDist == _rankDist)
+					const auto _movementType = classify_movement(_squarePosPair, _position);
+					if (_movementType == MovementClass::diagonal)
 					{
-						// Check for collision on path
-						auto _collidePos = find_piece_in_path(_board, _squarePosPair, _position);
+						// Determine if a piece is in the path
+						auto _collidePos = find_piece_in_path(_board, _squarePosPair, _position, _movementType);
 						if (!_collidePos)
 						{
 							// Found threat!
@@ -434,33 +437,11 @@ namespace lbx::chess
 				break;
 				case Piece::queen:
 				{
-					const auto _fileDist = distance(_squarePosPair.file(), _position.file());
-					const auto _rankDist = distance(_squarePosPair.rank(), _position.rank());
-
-					if (_fileDist == _rankDist)
+					const auto _movementType = classify_movement(_squarePosPair, _position);
+					if (_movementType != MovementClass::invalid)
 					{
-						// Check for collision on path
-						auto _collidePos = find_piece_in_path(_board, _squarePosPair, _position);
-						if (!_collidePos)
-						{
-							// Found threat!
-							return _squarePosPair;
-						};
-					}
-					else if (_squarePosPair.file() == _position.file())
-					{
-						// Check for collision on path
-						auto _collidePos = find_piece_in_path(_board, _squarePosPair, _position);
-						if (!_collidePos)
-						{
-							// Found threat!
-							return _squarePosPair;
-						};
-					}
-					else if (_squarePosPair.rank() == _position.rank())
-					{
-						// Check for collision on path
-						auto _collidePos = find_piece_in_path(_board, _squarePosPair, _position);
+						// Determine if a piece is in the path
+						auto _collidePos = find_piece_in_path(_board, _squarePosPair, _position, _movementType);
 						if (!_collidePos)
 						{
 							// Found threat!
@@ -470,36 +451,40 @@ namespace lbx::chess
 				};
 				break;
 				case Piece::rook:
-					if (_squarePosPair.file() == _position.file())
+				{
+					const auto _movementType = classify_movement(_squarePosPair, _position);
+					if (_movementType == MovementClass::rank || _movementType == MovementClass::file)
 					{
-						// Check for collision on path
-						auto _collidePos = find_piece_in_path(_board, _squarePosPair, _position);
-						if (!_collidePos)
-						{
-							// Found threat!
-							return _squarePosPair;
-						};
-					}
-					else if (_squarePosPair.rank() == _position.rank())
-					{
-						// Check for collision on path
-						auto _collidePos = find_piece_in_path(_board, _squarePosPair, _position);
+						// Determine if a piece is in the path
+						auto _collidePos = find_piece_in_path(_board, _squarePosPair, _position, _movementType);
 						if (!_collidePos)
 						{
 							// Found threat!
 							return _squarePosPair;
 						};
 					};
-					break;
+				};
+				break;
 				case Piece::knight:
 				{
-					const auto _possibleMoves = get_knight_possible_moves(_board, _squarePosPair);
-					for (auto m : std::views::counted(_possibleMoves.pos.begin(), _possibleMoves.count))
+					// The position offsets for where the knight can move
+					constexpr auto _offendingOffsets = std::array
 					{
-						if (m == _position)
-						{
-							return _squarePos;
-						};
+						PositionPair_Offset{ +2, +1 },
+						PositionPair_Offset{ +1, +2 },
+						PositionPair_Offset{ -2, -1 },
+						PositionPair_Offset{ -1, -2 },
+						PositionPair_Offset{ -2, +1 },
+						PositionPair_Offset{ -1, +2 },
+						PositionPair_Offset{ +2, -1 },
+						PositionPair_Offset{ +1, -2 }
+					};
+					
+					// Determine if the pieces are offset such that the knight can hit the piece
+					const auto _offset = _squarePosPair - _position;
+					if (jc::contains(_offendingOffsets, _offset))
+					{
+						return _squarePos;
 					};
 				};
 				break;
