@@ -309,19 +309,19 @@ namespace lbx::chess
 
 		if (_pieceCount <= 4)
 		{
-			_treeDepth = 6;
+			_treeDepth = 5;
 		}
 		else if (_pieceCount <= 7)
 		{
-			_treeDepth = 5;
-		}
-		else if (_pieceCount <= 14)
-		{
 			_treeDepth = 4;
+		}
+		else if (_pieceCount <= 12)
+		{
+			_treeDepth = 3;
 		}
 		else
 		{
-			_treeDepth = 4;
+			_treeDepth = 3;
 		};
 
 
