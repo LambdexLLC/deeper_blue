@@ -4,6 +4,7 @@ ADD_GIT_DEPENDENCY("${CMAKE_CURRENT_LIST_DIR}/glfw" glfw "https://github.com/glf
 ADD_GIT_DEPENDENCY("${CMAKE_CURRENT_LIST_DIR}/lua" lua::lua "https://github.com/JonathanCline/lua")
 ADD_GIT_DEPENDENCY("${CMAKE_CURRENT_LIST_DIR}/jcopengl" jclib::gl "https://github.com/JonathanCline/jcopengl")
 ADD_GIT_DEPENDENCY("${CMAKE_CURRENT_LIST_DIR}/glm" glm "https://github.com/g-truc/glm")
+ADD_GIT_DEPENDENCY("${CMAKE_CURRENT_LIST_DIR}/freetype" freetype "https://github.com/freetype/freetype")
 
 add_subdirectory("glad")
 
