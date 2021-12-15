@@ -321,7 +321,7 @@ namespace lbx::chess
 		}
 		else
 		{
-			_treeDepth = 3;
+			_treeDepth = 4;
 		};
 
 
