@@ -16,7 +16,8 @@ set(private_link
     lua::lua
     lodepng
     jclib::gl
-    glm)
+    glm
+    freetype)
 
 # Directories to be privately included
 set(private_include 

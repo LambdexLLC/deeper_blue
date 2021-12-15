@@ -340,17 +340,16 @@ gl::unique_program load_board_shader_program()
 	const fs::path _root = SOURCE_ROOT "/assets/shaders/board/";
 	return lbx::chess_view::load_simple_shader_program(_root / "vertex.glsl", _root / "fragment.glsl");
 };
-
-#include <fstream>
-#include <random>
-
-inline std::string read_text_file(const fs::path& _path)
+gl::unique_program load_text_shader_program()
 {
-	std::ifstream _file{ _path };
-	std::string _data(fs::file_size(_path), '\0');
-	_file.read(_data.data(), _data.size());
-	return _data;
+	const fs::path _root = SOURCE_ROOT "/assets/shaders/text/";
+	return lbx::chess_view::load_simple_shader_program(_root / "vertex.glsl", _root / "fragment.glsl");
 };
+
+
+
+
+
 
 int main()
 {
