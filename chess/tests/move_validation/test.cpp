@@ -1,4 +1,5 @@
 #include <lambdex/chess/chess.hpp>
+#include <lambdex/chess/possible_moves.hpp>
 #include <lambdex/chess/piece_movement.hpp>
 #include <lambdex/chess/move_validation.hpp>
 #include <lambdex/chess/fen.hpp>

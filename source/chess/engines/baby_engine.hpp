@@ -27,12 +27,7 @@ namespace lbx::chess
 		MoveTree make_move_tree(const BoardWithState& _board, size_t _depth);
 
 
-
-		using RatedLine = std::vector<RatedMove>;
 		
-		const MoveTree::Node* pick_best_from_tree(const MoveTree::Node& _node, RatedLine& _line);
-		std::vector<RatedLine> pick_best_from_tree(const MoveTree& _tree);
-
 
 		Move calculate_move(const BoardWithState& _board, Color _player)
 		{
@@ -42,6 +37,15 @@ namespace lbx::chess
 		std::vector<Move> calculate_multiple_moves(const BoardWithState& _board, Color _player);
 
 	public:
+
+		using RatedLine = std::vector<RatedMove>;
+
+		const MoveTree::Node* pick_best_from_tree(const MoveTree::Node& _node, RatedLine& _line);
+		std::vector<RatedLine> pick_best_from_tree(const MoveTree& _tree);
+
+
+
+
 
 		void play_turn(IGameInterface& _game) final;
 
