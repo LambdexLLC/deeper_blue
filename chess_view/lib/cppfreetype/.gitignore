@@ -1,0 +1,6 @@
+# Common IDE directories
+.vs/
+.vscode/
+
+# Output directories
+out/
