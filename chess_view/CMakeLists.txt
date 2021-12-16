@@ -17,7 +17,7 @@ set(private_link
     lodepng
     jclib::gl
     glm
-    freetype)
+    cppfreetype)
 
 # Directories to be privately included
 set(private_include 

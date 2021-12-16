@@ -1,3 +1,6 @@
+#include "text/text.hpp"
+#include "text/artist.hpp"
+
 #include "image.hpp"
 
 #include "gl.hpp"
@@ -7,8 +10,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <lambdex/chess/chess.hpp>
-
-#include <lodepng.h>
 
 struct BoardArtist : public lbx::chess_view::IArtist
 {
@@ -50,16 +51,18 @@ private:
 		auto& _width = this->square_width_;
 		auto& _height = this->square_height_;
 
+		const auto _zLevel = -0.1f;
+
 		auto& _baseVerts = base_verts_;
 		_baseVerts = std::array
 		{
-			BaseVertex{ 0.0f, 0.0f, 0.0f,		0.0f, 1.0f },
-			BaseVertex{ 0.0f, _height, 0.0f,	0.0f, 0.0f },
-			BaseVertex{ _width, _height, 0.0f,	1.0f, 0.0f },
+			BaseVertex{ 0.0f, 0.0f,		 _zLevel,		0.0f, 1.0f },
+			BaseVertex{ 0.0f, _height,	 _zLevel,	0.0f, 0.0f },
+			BaseVertex{ _width, _height, _zLevel,	1.0f, 0.0f },
 
-			BaseVertex{ 0.0f, 0.0f, 0.0f,		0.0f, 1.0f },
-			BaseVertex{ _width, _height, 0.0f,	1.0f, 0.0f },
-			BaseVertex{ _width, 0.0f, 0.0f,		1.0f, 1.0f },
+			BaseVertex{ 0.0f, 0.0f,		 _zLevel,		0.0f, 1.0f },
+			BaseVertex{ _width, _height, _zLevel,	1.0f, 0.0f },
+			BaseVertex{ _width, 0.0f,	 _zLevel,		1.0f, 1.0f },
 		};
 
 		if (this->vbo_)
@@ -272,8 +275,11 @@ public:
 
 	void draw(lbx::chess_view::GraphicsState& _state) final
 	{
+		gl::bind(this->program_);
+		
 		gl::bind(this->vao_);
 		gl::bind(this->piece_texture_, gl::texture_target::array2D);
+		
 		gl::set_uniform(this->program_, this->square_size_uni_, this->square_width_, this->square_height_);
 		gl::set_uniform(this->program_, this->projection_uni_, this->projection_.matrix());
 		gl::set_uniform(this->program_, this->model_uni_, this->model_matrix_);
@@ -346,9 +352,34 @@ gl::unique_program load_text_shader_program()
 	return lbx::chess_view::load_simple_shader_program(_root / "vertex.glsl", _root / "fragment.glsl");
 };
 
+void APIENTRY test_debug_callback
+(
+	GLenum source,
+	GLenum type,
+	GLuint id,
+	GLenum severity,
+	GLsizei length,
+	const GLchar* message,
+	const void* userParam
+)
+{
+	std::cout << std::string_view{ message, (size_t)length } << '\n';
 
-
-
+	switch (severity)
+	{
+	case GL_DEBUG_SEVERITY_NOTIFICATION:
+		break;
+	case GL_DEBUG_SEVERITY_LOW:
+		break;
+	case GL_DEBUG_SEVERITY_MEDIUM: [[fallthrough]];
+	case GL_DEBUG_SEVERITY_HIGH:
+		__debugbreak();
+		break;
+	default:
+		JCLIB_ABORT();
+		break;
+	};
+};
 
 
 int main()
@@ -356,19 +387,81 @@ int main()
 	lbx::chess_view::GraphicsState _state{};
 	if (!lbx::chess_view::init_graphics(_state)) { return -1; };
 
+
+	gl::enable_debug_output_synchronous();
+	gl::set_debug_callback(test_debug_callback, nullptr);
+
+
+
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+
 	auto _shader = load_board_shader_program();
 	JCLIB_ASSERT(_shader);
-	gl::bind(_shader);
+	auto _textShader = load_text_shader_program();
+	JCLIB_ASSERT(_textShader);
+
+
+	lbx::chess_view::WindowOrthoProjection _projection{ _state.window_.size_buffer() };
+	_projection.invoke(_state.window_);
+
 
 	{
-		auto _artist = jc::make_unique<BoardArtist>(lbx::chess::make_standard_board(), _state.window_);
+		using namespace lbx::chess;
+		auto _artist = jc::make_unique<BoardArtist>(make_standard_board(), _state.window_);
 		_artist->configure_attributes(_shader);
 		_state.insert_artist(std::move(_artist));
 	};
 
+
+
+
+	auto _fontSize = lbx::text::FontSize_Pixels{ 0, 64 };
+	
+	auto _hackFont = lbx::text::load_font_face_file(SOURCE_ROOT "/assets/fonts/Hack/Hack-Regular.ttf", _fontSize).value();
+	auto _arialFont = lbx::text::load_font_face_file("C:/Windows/Fonts/ariblk.ttf", _fontSize).value();
+
+	lbx::text::TextArtist _hackTextArtist{ _hackFont };
+	JCLIB_ASSERT(_hackTextArtist.init());
+	_hackTextArtist.configure_attributes(_textShader);
+
+
+	lbx::text::TextArtist _arialTextArtist{ _arialFont };
+	JCLIB_ASSERT(_arialTextArtist.init());
+	_arialTextArtist.configure_attributes(_textShader);
+
+
+	glm::mat4 _hackTextModelMat{ 1.0f };
+	glm::mat4 _arialTextModelMat{ 1.0f };
+	
+	_hackTextModelMat = glm::translate(_hackTextModelMat, glm::vec3{ 0.0f, 200.0f, 0.0f });
+	_arialTextModelMat = glm::translate(_arialTextModelMat, glm::vec3{ 0.0f, 400.0f, 0.0f });
+
+	const auto _modelUni = gl::get_program_resource_location(_textShader, gl::resource_type::uniform, "model").value();
+	
 	while (_state.keep_running())
 	{
-		_state.update();
+		{
+			const auto _mat = _projection.matrix();
+			const auto _uni = gl::get_program_resource_location(_textShader, gl::resource_type::uniform, "projection").value();
+			gl::set_uniform(_textShader, _uni, _mat);
+		};
+
+		_state.clear();
+		_state.draw();
+
+		{
+			gl::set_uniform(_textShader, _modelUni, _hackTextModelMat);
+			_hackTextArtist.draw();
+
+			gl::set_uniform(_textShader, _modelUni, _arialTextModelMat);
+			_arialTextArtist.draw();
+		};
+
+		_state.swap_buffers();
+		_state.pull_events();
 	};
 
 	return 0;

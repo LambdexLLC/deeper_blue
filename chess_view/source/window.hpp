@@ -1,8 +1,7 @@
 #pragma once
 
 #include "gl.hpp"
-
-#include <jclib/slot.h>
+#include "slot.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -49,30 +48,6 @@ namespace lbx::chess_view
 	 * @brief Listens for window size change events
 	*/
 	using WindowSizeListener = WindowSizeBuffer::listener_type;
-
-	/**
-	 * @brief Magic listener tied to a window size buffer
-	*/
-	class WindowOrthoProjection : public WindowSizeListener
-	{
-	public:
-
-		glm::mat4 matrix() const noexcept
-		{
-			return this->mat_;
-		};
-
-		void invoke(Window& _window, int _width, int _height) final
-		{
-			this->mat_ = glm::ortho(0.0f, static_cast<float>(_width), 0.0f, static_cast<float>(_height));
-		};
-
-		using WindowSizeListener::WindowSizeListener;
-
-	private:
-		glm::mat4 mat_{ 1.0f };
-	};
-
 
 	/**
 	 * @brief Small interface for interacting with a window
@@ -144,6 +119,36 @@ namespace lbx::chess_view
 		
 		GLFWWindowHandle window_;
 		std::shared_ptr<WindowSizeBuffer> size_buffer_{ new WindowSizeBuffer{} };
+	};
+
+
+	/**
+	 * @brief Magic listener tied to a window size buffer
+	*/
+	class WindowOrthoProjection : public WindowSizeListener
+	{
+	public:
+
+		glm::mat4 matrix() const noexcept
+		{
+			return this->mat_;
+		};
+
+		void invoke(Window& _window, int _width, int _height) final
+		{
+			this->mat_ = glm::ortho(0.0f, static_cast<float>(_width), 0.0f, static_cast<float>(_height));
+		};
+		void invoke(Window& _window)
+		{
+			int _width, _height;
+			glfwGetFramebufferSize(_window.get(), &_width, &_height);
+			this->invoke(_window, _width, _height);
+		};
+
+		using WindowSizeListener::WindowSizeListener;
+
+	private:
+		glm::mat4 mat_{ 1.0f };
 	};
 
 
