@@ -157,17 +157,8 @@ namespace lbx::api::lichess
 
 	// Challenges the AI to a game
 	// https://lichess.org/api#operation/challengeAi
-	jc::maybe<bool, std::string> challenge_ai(http::Client& _client, int _level)
+	inline jc::maybe<bool, std::string> challenge_ai(http::Client& _client, const http::Params& _params)
 	{
-		http::Params _params
-		{
-			{ "level", std::to_string(_level) },
-			{ "days", "1" },
-			{ "color", "random" },
-			{ "variant", "standard" },
-			{ "fen",  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" }
-		};
-		
 		const auto _result = _client.Post("/api/challenge/ai", _params);
 		if (_result)
 		{
@@ -200,6 +191,32 @@ namespace lbx::api::lichess
 			JCLIB_ABORT();
 			return std::string{};
 		};
+	};
+	
+	jc::maybe<bool, std::string> challenge_ai(http::Client& _client, int _level)
+	{
+		http::Params _params
+		{
+			{ "level", std::to_string(_level) },
+			{ "days", "1" },
+			{ "color", "random" },
+			{ "variant", "standard" },
+			{ "fen",  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" }
+		};
+		return challenge_ai(_client, _params);
+	};
+	jc::maybe<bool, std::string> challenge_ai_bullet(http::Client& _client, int _level)
+	{
+		http::Params _params
+		{
+			{ "level", std::to_string(_level) },
+			{ "clock.limit", "300" },
+			{ "clock.increment", "0" },
+			{ "color", "random" },
+			{ "variant", "standard" },
+			{ "fen",  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" }
+		};
+		return challenge_ai(_client, _params);
 	};
 
 	// Resigns from the game

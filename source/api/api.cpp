@@ -242,6 +242,17 @@ namespace lbx::api
 	};
 
 	/**
+	 * @brief Challenges the AI to a game of bullet chess.
+	 * @param _level Bot level, must be 1 up to 8
+	 * @return True on good challenge, false otherwise
+	*/
+	bool LichessAccountAPI::challenge_ai_bullet(int _level)
+	{
+		const auto _result = lichess::challenge_ai_bullet(get_account_api_state().client(), _level);
+		return _result.has_value() && _result.value();
+	};
+
+	/**
 	 * @brief Submits this as our move for the turn
 	 * @param _move Move to submit
 	 * @param _errmsg Optional error message output string, defaults to nullptr

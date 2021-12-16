@@ -1,5 +1,4 @@
 #include <lambdex/chess/chess.hpp>
-#include <lambdex/chess/possible_moves.hpp>
 #include <lambdex/chess/piece_movement.hpp>
 #include <lambdex/chess/move_validation.hpp>
 #include <lambdex/chess/fen.hpp>
@@ -11,6 +10,24 @@
 #include <format>
 
 using namespace lbx::chess;
+
+struct BoardWalker
+{
+	explicit operator bool() const noexcept
+	{
+		return this->at != Position::end();
+	};
+	PositionPair next() noexcept
+	{
+		PositionPair _out{ this->at };
+		++this->at;
+		return _out;
+	};
+
+	Position at{};
+};
+
+
 
 
 
@@ -69,11 +86,21 @@ int subtest_threatened()
 {
 	NEWTEST();
 
-	const auto _fen = "4k3/1R6/5Bp1/2QB3p/6P1/8/7P/5K2 b - - 4 35";
-	const auto _board = create_board_from_fen(_fen);
+	{
+		const auto _fen = "4k3/1R6/5Bp1/2QB3p/6P1/8/7P/5K2 b - - 4 35";
+		const auto _board = create_board_from_fen(_fen);
 
-	const auto _threatened = is_piece_threatened(_board, _board.find(Piece::king_black).value());
-	ASSERT(!_threatened, "king is not actually threatened here");
+		const auto _threatened = is_piece_threatened(_board, _board.find(Piece::king_black).value());
+		ASSERT(!_threatened, "king is not actually threatened here");
+	};
+
+	{
+		auto _board = create_board_from_fen("1n1k4/8/1pbpPbB1/p2p1N2/P2P4/5NP1/1P2K3/2R5 b - - 3 34");
+		JCLIB_ASSERT(is_piece_threatened(_board, (File::f, Rank::r6)).has_value() == false);
+		__debugbreak();
+	};
+
+	return 0;
 
 	PASS();
 };

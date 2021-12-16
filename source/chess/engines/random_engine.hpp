@@ -1,6 +1,7 @@
 #pragma once
 
 #include <lambdex/chess/chess_engine.hpp>
+#include <lambdex/utility/arena.hpp>
 
 namespace lbx::chess
 {
@@ -12,6 +13,11 @@ namespace lbx::chess
 	public:
 
 		/**
+		 *  Returns all (supposedly) valid moves randomly shuffled
+		*/
+		lbx::arena<Move> calculate_multiple_moves(const BoardWithState& _board, Color _player);
+
+		/**
 		 *	Returns a random but (hopefully) valid move
 		*/
 		Move calculate_move(const BoardWithState& _board, Color _player)
@@ -19,12 +25,6 @@ namespace lbx::chess
 			return this->calculate_multiple_moves(_board, _player).front();
 		};
 
-		/**
-		 *  Returns all (supposedly) valid moves randomly shuffled
-		*/
-		std::vector<Move> calculate_multiple_moves(const BoardWithState& _board, Color _player);
-
-		
 		void play_turn(IGameInterface& _game) final;
 
 	};
