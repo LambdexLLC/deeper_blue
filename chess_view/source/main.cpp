@@ -419,28 +419,15 @@ int main()
 
 
 	auto _fontSize = lbx::text::FontSize_Pixels{ 0, 64 };
-	
-	auto _hackFont = lbx::text::load_font_face_file(SOURCE_ROOT "/assets/fonts/Hack/Hack-Regular.ttf", _fontSize).value();
 	auto _arialFont = lbx::text::load_font_face_file("C:/Windows/Fonts/ariblk.ttf", _fontSize).value();
-
-	lbx::text::TextArtist _hackTextArtist{ _hackFont };
-	JCLIB_ASSERT(_hackTextArtist.init());
-	_hackTextArtist.configure_attributes(_textShader);
-
 
 	lbx::text::TextArtist _arialTextArtist{ _arialFont };
 	JCLIB_ASSERT(_arialTextArtist.init());
 	_arialTextArtist.configure_attributes(_textShader);
+	_arialTextArtist.position_ = glm::vec3{ 0.0f, 0.0f, 0.0f };
 
+	auto _block = _arialTextArtist.add_text("your mom is cool", 400.0f, 400.0f);
 
-	glm::mat4 _hackTextModelMat{ 1.0f };
-	glm::mat4 _arialTextModelMat{ 1.0f };
-	
-	_hackTextModelMat = glm::translate(_hackTextModelMat, glm::vec3{ 0.0f, 200.0f, 0.0f });
-	_arialTextModelMat = glm::translate(_arialTextModelMat, glm::vec3{ 0.0f, 400.0f, 0.0f });
-
-	const auto _modelUni = gl::get_program_resource_location(_textShader, gl::resource_type::uniform, "model").value();
-	
 	while (_state.keep_running())
 	{
 		{
@@ -452,16 +439,21 @@ int main()
 		_state.clear();
 		_state.draw();
 
-		{
-			gl::set_uniform(_textShader, _modelUni, _hackTextModelMat);
-			_hackTextArtist.draw();
-
-			gl::set_uniform(_textShader, _modelUni, _arialTextModelMat);
-			_arialTextArtist.draw();
-		};
+		_arialTextArtist.draw();
 
 		_state.swap_buffers();
 		_state.pull_events();
+
+		if (glfwGetKey(_state.window_, GLFW_KEY_ENTER) == GLFW_PRESS)
+		{
+			static bool _once = false;
+			if (!_once)
+			{
+				_arialTextArtist.append_text(_block, " NOT!");
+				_once = true;
+			};
+		};
+
 	};
 
 	return 0;
