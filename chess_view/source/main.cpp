@@ -10,6 +10,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <lambdex/chess/chess.hpp>
+//#include <lambdex/chess/>
 
 struct BoardArtist : public lbx::chess_view::IArtist
 {
@@ -352,51 +353,13 @@ gl::unique_program load_text_shader_program()
 	return lbx::chess_view::load_simple_shader_program(_root / "vertex.glsl", _root / "fragment.glsl");
 };
 
-void APIENTRY test_debug_callback
-(
-	GLenum source,
-	GLenum type,
-	GLuint id,
-	GLenum severity,
-	GLsizei length,
-	const GLchar* message,
-	const void* userParam
-)
-{
-	std::cout << std::string_view{ message, (size_t)length } << '\n';
 
-	switch (severity)
-	{
-	case GL_DEBUG_SEVERITY_NOTIFICATION:
-		break;
-	case GL_DEBUG_SEVERITY_LOW:
-		break;
-	case GL_DEBUG_SEVERITY_MEDIUM: [[fallthrough]];
-	case GL_DEBUG_SEVERITY_HIGH:
-		__debugbreak();
-		break;
-	default:
-		JCLIB_ABORT();
-		break;
-	};
-};
-
+#include <queue>
 
 int main()
 {
 	lbx::chess_view::GraphicsState _state{};
 	if (!lbx::chess_view::init_graphics(_state)) { return -1; };
-
-
-	gl::enable_debug_output_synchronous();
-	gl::set_debug_callback(test_debug_callback, nullptr);
-
-
-
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
 
 	auto _shader = load_board_shader_program();
 	JCLIB_ASSERT(_shader);
@@ -408,25 +371,41 @@ int main()
 	_projection.invoke(_state.window_);
 
 
+	lbx::chess::BoardWithState _board = lbx::chess::make_standard_board();
+	BoardArtist* _boardArtist{};
 	{
 		using namespace lbx::chess;
-		auto _artist = jc::make_unique<BoardArtist>(make_standard_board(), _state.window_);
+
+		auto _artist = jc::make_unique<BoardArtist>(_board, _state.window_);
+		
+		_boardArtist = _artist.get();
+
 		_artist->configure_attributes(_shader);
 		_state.insert_artist(std::move(_artist));
 	};
 
+	using namespace lbx;
 
 
+	auto _fontSize = text::FontSize_Pixels{ 0, 64 };
+	auto _arialFont = text::load_font_face_file("C:/Windows/Fonts/ariblk.ttf", _fontSize).value();
 
-	auto _fontSize = lbx::text::FontSize_Pixels{ 0, 64 };
-	auto _arialFont = lbx::text::load_font_face_file("C:/Windows/Fonts/ariblk.ttf", _fontSize).value();
-
-	lbx::text::TextArtist _arialTextArtist{ _arialFont };
+	text::TextArtist _arialTextArtist{ _arialFont };
 	JCLIB_ASSERT(_arialTextArtist.init());
 	_arialTextArtist.configure_attributes(_textShader);
-	_arialTextArtist.position_ = glm::vec3{ 0.0f, 0.0f, 0.0f };
 
-	auto _block = _arialTextArtist.add_text("your mom is cool", 400.0f, 400.0f);
+	auto _block = _arialTextArtist.add_text("", 400.0f, 400.0f);
+
+	std::queue<chess::Move> _moves{};
+	{
+		using namespace chess;
+		_moves.push(Move((File::a, Rank::r2), (File::a, Rank::r3)));
+		_moves.push(Move((File::a, Rank::r3), (File::a, Rank::r4)));
+		_moves.push(Move((File::a, Rank::r4), (File::a, Rank::r5)));
+		_moves.push(Move((File::a, Rank::r5), (File::a, Rank::r6)));
+	};
+
+	chess:: "c2c4 g8f6 d1a4 e7e6 a4b5 b7b6 h2h4 f8c5 b5c5 b6c5 b1c3 d7d6 e2e4 h7h5 e1e2 e8g8 a2a4 f6g4 c3d1 g7g6 g1f3 c8a6 e2e1 b8c6"
 
 	while (_state.keep_running())
 	{
@@ -446,11 +425,14 @@ int main()
 
 		if (glfwGetKey(_state.window_, GLFW_KEY_ENTER) == GLFW_PRESS)
 		{
-			static bool _once = false;
-			if (!_once)
+			if (!_moves.empty())
 			{
-				_arialTextArtist.append_text(_block, " NOT!");
-				_once = true;
+				const auto _move = _moves.front();
+				chess::apply_move(_board, _move, _board.turn);
+				const auto _str = _move.to_string();
+				_arialTextArtist.set_text(_block, _str);
+				_moves.pop();
+				_boardArtist->set_board(_board);
 			};
 		};
 
