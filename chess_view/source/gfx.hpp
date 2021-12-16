@@ -77,16 +77,6 @@ namespace lbx::chess_view
 		std::vector<std::unique_ptr<IArtist>> artists_{};
 	};
 
-	inline bool init_graphics(GraphicsState& _state)
-	{
-		if (!glfwInit()) { return false; };
 
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
-
-		_state.window_ = GLFWWindowHandle{ glfwCreateWindow(800, 600, "ChessView", nullptr, nullptr) };
-		glfwMakeContextCurrent(_state.window_);
-		if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) { return false; };
-		return true;
-	};
+	bool init_graphics(GraphicsState& _state);
 };
