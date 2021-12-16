@@ -64,6 +64,60 @@ namespace lbx::chess
 			this->en_passant_ = Position::end();
 		};
 
+		/**
+		 * @brief Checks if a player can castle queen and/or king side.
+		 * @param _player Player to check for.
+		 * @return True if player can castle, false otherwise.
+		*/
+		constexpr bool can_player_castle(Color _player) const noexcept
+		{
+			if (_player == Color::black)
+			{
+				return this->black_can_castle_kingside || this->black_can_castle_queenside;
+			}
+			else
+			{
+				return this->white_can_castle_kingside || this->white_can_castle_queenside;
+			};
+		};
+
+		/**
+		 * @brief Checks if a player can castle king side.
+		 * @param _player Player to check for.
+		 * @return True if player can castle kingside, false otherwise.
+		*/
+		constexpr bool can_player_castle_kingside(Color _player) const noexcept
+		{
+			if (_player == Color::black)
+			{
+				return this->black_can_castle_kingside;
+			}
+			else
+			{
+				return this->white_can_castle_kingside;
+			};
+		};
+
+		/**
+		 * @brief Checks if a player can castle queen side.
+		 * @param _player Player to check for.
+		 * @return True if player can castle queenside, false otherwise.
+		*/
+		constexpr bool can_player_castle_queenside(Color _player) const noexcept
+		{
+			if (_player == Color::black)
+			{
+				return this->black_can_castle_queenside;
+			}
+			else
+			{
+				return this->white_can_castle_queenside;
+			};
+		};
+
+
+
+
 
 		bool black_can_castle_kingside = true;
 		bool black_can_castle_queenside = true;

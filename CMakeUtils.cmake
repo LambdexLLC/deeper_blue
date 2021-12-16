@@ -17,27 +17,20 @@ find_package(Git QUIET)
 #
 function(ADD_GIT_DEPENDENCY_FN depPath depTarget depRepo)
 
-	# Ignore if target already exists
-	if (NOT TARGET ${depTarget})
+	# Add the cloned repo as a subdir if it has CMake support
+	if (EXISTS "${depPath}/CMakeLists.txt")
+
+		add_subdirectory("${depPath}")
+			
+		# Check that dependency target is now defined
+		if (NOT TARGET ${depTarget})
+			message(FATAL "Cloned dependency has a CMakeLists but the dependency target was not defined!")
+		endif()
+	
+	elseif(NOT TARGET ${depTarget}) # Ignore if target already exists
 	 
 		# Only preform branch if git dependencies are allowed
 		if (ENABLE_GIT_DEPENDENCIES)
-		
-			set(gitResult )
-
-			# Use branch optional parameter if it was provided
-			if (ARGC GREATER 3)
-				execute_process(COMMAND
-					${GIT_EXECUTABLE} clone -b "${ARGV3}" ${depRepo} ${depPath}
-					RESULTS_VARIABLE gitResult)
-			else()
-				execute_process(COMMAND
-					${GIT_EXECUTABLE} clone ${depRepo} ${depPath}
-					RESULTS_VARIABLE gitResult)
-			endif()
-
-			# Check result
-			
 
 			# Add the cloned repo as a subdir if it has CMake support
 			if (EXISTS "${depPath}/CMakeLists.txt")
@@ -48,6 +41,34 @@ function(ADD_GIT_DEPENDENCY_FN depPath depTarget depRepo)
 					message(FATAL "Cloned dependency has a CMakeLists but the dependency target was not defined!")
 				endif()
 				
+			else()
+
+				set(gitResult )
+
+				# Use branch optional parameter if it was provided
+				if (ARGC GREATER 3)
+					execute_process(COMMAND
+						${GIT_EXECUTABLE} clone -b "${ARGV3}" ${depRepo} ${depPath}
+						RESULTS_VARIABLE gitResult)
+				else()
+					execute_process(COMMAND
+						${GIT_EXECUTABLE} clone ${depRepo} ${depPath}
+						RESULTS_VARIABLE gitResult)
+				endif()
+
+				# Check result
+			
+
+				# Add the cloned repo as a subdir if it has CMake support
+				if (EXISTS "${depPath}/CMakeLists.txt")
+					add_subdirectory("${depPath}")
+			
+					# Check that dependency target is now defined
+					if (NOT TARGET ${depTarget})
+						message(FATAL "Cloned dependency has a CMakeLists but the dependency target was not defined!")
+					endif()
+				
+				endif()
 			endif()
 
 		endif()

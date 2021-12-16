@@ -19,80 +19,109 @@ namespace lbx::chess
 {
 	constexpr auto dc = [](const auto& v) { return std::chrono::duration_cast<std::chrono::duration<double>>(v); };
 
+	
 	/**
-	 * @brief Checks if the given board is checkmate
-	 * @param _board Board to check
-	 * @param _player Player to test for checkmate of
-	 * @return True if checkmate
+	 * @brief Rates a board based on if castling is possible for the players.
 	*/
-	inline bool is_checkmate(const BoardWithState& _board, Color _player)
+	struct BoardRater_CastleOpportunity
 	{
-		const auto _kingPosOpt = _board.find(Piece::king | _player);
-		if (!_kingPosOpt)
-		{
-			return true;
-		};
+	public:
 
-		const auto _kingPos = *_kingPosOpt;
-		if (is_piece_threatened(_board, _kingPos))
+		/**
+		 * @brief The rating value for being able to castle kingside.
+		*/
+		Rating kingside_value = 1;
+
+		/**
+		 * @brief The rating value for being able to castle queenside.
+		*/
+		Rating queenside_value = 1;
+
+		/**
+		 * @brief Rates a board based on if castling is possible for the players.
+		 * 
+		 * @param _board Board to rate.
+		 * @param _player Player whose POV to rate from.
+		 * 
+		 * @return Rating based on opportunity to castle.
+		*/
+		Rating rate(const BoardWithState& _board, Color _player) const
 		{
-			// Check if there are any possible moves
-			ChessEngine_Random _random{};
-			const auto _possibleMoves = _random.calculate_multiple_moves(_board, _player);
-			if (_possibleMoves.empty())
+			const auto _myPoints =
+				(this->queenside_value * _board.can_player_castle_queenside(_player)) +
+				(this->kingside_value * _board.can_player_castle_kingside(_player));
+			const auto _opponentPoints =
+				(this->queenside_value * _board.can_player_castle_queenside(!_player)) +
+				(this->kingside_value * _board.can_player_castle_kingside(!_player));
+			return _myPoints - _opponentPoints;
+		};
+	};
+	static_assert(cx_board_rater<BoardRater_CastleOpportunity>);
+
+	/**
+	 * @brief Rates a board based on if a player is in checkmate.
+	*/
+	struct BoardRater_Checkmate
+	{
+	public:
+
+		/**
+		 * @brief The rating value for putting the opponent in checkmate.
+		*/
+		Rating checkmate_value = 1000000;
+
+		/**
+		 * @brief Rates a board based on if any of the players are in checkmate.
+		 *
+		 * @param _board Board to rate.
+		 * @param _player Player whose POV to rate from.
+		 *
+		 * @return Rating based on checkmates.
+		*/
+		Rating rate(const BoardWithState& _board, Color _player) const
+		{
+			if (is_checkmate(_board, _player))
 			{
-				return true;
+				return -this->checkmate_value;
+			}
+			else if (is_checkmate(_board, !_player))
+			{
+				return this->checkmate_value;
 			}
 			else
 			{
-				return false;
+				return 0;
 			};
-		}
-		else
-		{
-			return false;
 		};
-	};
 
-	struct SmartRater
+	};
+	static_assert(cx_board_rater<BoardRater_Checkmate>);
+
+	struct BoardRater_Complete
 	{
-		int rate(const BoardWithState& _state, Color _player) const
+		int rate(const BoardWithState& _board, Color _player) const
 		{
-			auto _base = SimpleRater{}.rate(_state, _player);
-			const auto _playerName = (_player == Color::white) ? "white" : "black";
-			const auto _notPlayerName = (_player == Color::white) ? "black" : "white";
+			const auto _materialRating = chess::rate<BoardRater_Material>(_board, _player);
+			const auto _checkmateRating = chess::rate<BoardRater_Checkmate>(_board, _player);
+			const auto _castleOpportunityRating = chess::rate<BoardRater_CastleOpportunity>(_board, _player);
 
-			if (is_checkmate(_state, _player))
-			{
-				_base -= 1000000;
-			}
-			else if (is_checkmate(_state, !_player))
-			{
-				_base += 1000000;
-			};
-
-			return _base;
+			const auto _final = _materialRating + _checkmateRating + _castleOpportunityRating;
+			return _final;
 		};
 	};
+	static_assert(cx_board_rater<BoardRater_Complete>);
 
 	std::vector<RatedMove> ChessEngine_Baby::rank_possible_moves(const BoardWithState& _board, Color _player)
 	{
-		SmartRater _rater{};
-		std::vector<RatedMove> _rankedMoves{};
-
 		// Generate possible boards from 1 move
 		auto _randomMoves = this->random_fallback_.calculate_multiple_moves(_board, _player);
-		for (auto& m : _randomMoves)
+		std::vector<RatedMove> _rankedMoves(_randomMoves.size());
+		auto _it = _rankedMoves.begin();
+		
+		for (auto& m : std::span{ _randomMoves.data(), _randomMoves.size() })
 		{
-			auto _rated = rate_move(_board, m, _rater);
-			if (_rated.get_rating() < -10000)
-			{
-				_rankedMoves.push_back(_rated);
-			}
-			else
-			{
-				_rankedMoves.push_back(_rated);
-			};
+			*_it = rate_move<BoardRater_Complete>(_board, m);
+			++_it;
 		};
 
 		// Sort by value
@@ -133,14 +162,9 @@ namespace lbx::chess
 		MoveTree _out{};
 		_out.initial_board_ = _board;
 
-		jc::timer _tm{};
-		_tm.start();
-
 		auto _moves = this->rank_possible_moves(_board, _board.turn);
 		_out.moves_.resize(_moves.size());
 		std::ranges::copy(_moves, _out.moves_.begin());
-
-		println("finding possible moves = {}", dc(_tm.elapsed()).count());
 
 		if (_depth != 0)
 		{
@@ -336,19 +360,19 @@ namespace lbx::chess
 
 		if (_pieceCount <= 4)
 		{
-			_treeDepth = 5;
+			_treeDepth = 6;
 		}
 		else if (_pieceCount <= 7)
 		{
-			_treeDepth = 4;
+			_treeDepth = 5;
 		}
 		else if (_pieceCount <= 12)
 		{
-			_treeDepth = 3;
+			_treeDepth = 4;
 		}
 		else
 		{
-			_treeDepth = 3;
+			_treeDepth = 4;
 		};
 
 
@@ -383,38 +407,57 @@ namespace lbx::chess
 		{
 			auto& _bestLine = _lines.front();
 			std::ofstream f = _logger->start_logging_move();
-			
-			f << "Stats:\n";
-			writeln(f, "full turn time  = {}s", dc(_fullTurnTime).count());
-			writeln(f, "tree build time = {}s", dc(_treeTime).count());
-			writeln(f, "pick time       = {}s", dc(_pickTime).count());
-
-			writeln(f, "\nLine:\n");
-
-			bool _myTurn = true;
-			f << "\ninitial:\n" << _board << '\n';
-			f << "possible moves:\n";
-			for (auto& m : _lines)
+		
 			{
-				writeln(f, "\t{} ({}) (final = {})", m.front().get_move(), m.front().get_rating(), last_move_rating(m, _player));
-			};
+				f << "Stats:\n";
+				writeln(f, "full turn time  = {}s", dc(_fullTurnTime).count());
+				writeln(f, "tree build time = {}s", dc(_treeTime).count());
+				writeln(f, "pick time       = {}s", dc(_pickTime).count());
 
-			BoardWithState _lineBoard{ _board };
-			for (auto& m : _bestLine)
-			{
-				if (_myTurn)
+				writeln(f,
+R"(
+==================================================
+				Inputs and ideas
+==================================================
+)");
+
+				bool _myTurn = true;
+				writeln(f, "\ninitial : fen = {}\n", chess::get_board_fen(_board));
+				f << _board << '\n';
+				f << "possible moves:\n";
+				for (auto& m : _lines)
 				{
-					writeln(f, "\nme : {}\n", m.get_rating());
-				}
-				else
-				{
-					writeln(f, "\nopponent : {}\n", m.get_rating());
+					writeln(f, "\t{} ({}) (final = {})", m.front().get_move(), m.front().get_rating(), last_move_rating(m, _player));
 				};
 
-				apply_move(_lineBoard, m.get_move());
-				f << m.get_move().to_string() << " fen = " << chess::get_board_fen(_lineBoard) << '\n' << _lineBoard;
+				BoardWithState _lineBoard{ _board };
+				for (size_t n = 0; n != _lines.size() && n != 3; ++n)
+				{
+					writeln(f,
+R"(
+==================================================
+					Move line {}
+==================================================
+)", n);
 
-				_myTurn = !_myTurn;
+					_lineBoard = _board;
+					for (auto& m : _bestLine)
+					{
+						if (_myTurn)
+						{
+							writeln(f, "\nme : {}\n", m.get_rating());
+						}
+						else
+						{
+							writeln(f, "\nopponent : {}\n", m.get_rating());
+						};
+
+						apply_move(_lineBoard, m.get_move());
+						f << m.get_move().to_string() << " fen = " << chess::get_board_fen(_lineBoard) << '\n' << _lineBoard;
+
+						_myTurn = !_myTurn;
+					};
+				};
 			};
 
 			f.flush(); 

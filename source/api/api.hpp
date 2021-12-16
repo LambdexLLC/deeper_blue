@@ -55,6 +55,13 @@ namespace lbx::api
 		*/
 		virtual bool challenge_ai(int _level) final;
 
+		/**
+		 * @brief Challenges the AI to a game of bullet chess.
+		 * @param _level Bot level, must be 1 up to 8
+		 * @return True on good challenge, false otherwise
+		*/
+		virtual bool challenge_ai_bullet(int _level) final;
+
 	public:
 
 		/**

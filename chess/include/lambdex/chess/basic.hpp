@@ -268,6 +268,20 @@ namespace lbx::chess
 	};
 
 	/**
+	 * @brief Sets the color of a piece.
+	 * 
+	 * @param _piece Piece to set color of MUST NOT BE EMPTY.
+	 * 
+	 * @param _color Color to set it to.
+	 * @return The piece with correct color.
+	*/
+	constexpr inline Piece set_color(Piece _piece, Color _color) noexcept
+	{
+		JCLIB_ASSERT(_piece != Piece::empty);
+		return as_white(_piece) | _color;
+	};
+
+	/**
 	 * @brief Gets the color of a square on a chess board when giving its index
 	 * @param square Board square index
 	 * @return Color of the square

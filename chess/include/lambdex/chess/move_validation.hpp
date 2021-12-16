@@ -7,7 +7,7 @@
 */
 
 #include "apply_move.hpp"
-#include "possible_moves.hpp"
+#include "piece_movement.hpp"
 
 #include "board/piece_board.hpp"
 #include "board/board_with_state.hpp"

@@ -234,18 +234,6 @@ namespace lbx
 		{
 			const fs::path _moveStringsFilePath = SOURCE_ROOT "/dump/move_strings.txt";
 			
-			json _data = json::array();
-			if (fs::exists(_moveStringsFilePath))
-			{
-				_data = read_json_file(_moveStringsFilePath);
-			};
-
-			_data.push_back(_event.at("state").at("moves"));
-			std::ofstream _file{ _moveStringsFilePath };
-			_file << _data.dump(1, '\t');
-
-
-
 			// Determine my color
 			if (const auto _whiteJson = _event.at("white");
 				_whiteJson.is_object() &&

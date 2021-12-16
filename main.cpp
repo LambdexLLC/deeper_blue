@@ -2,6 +2,9 @@
 
 #include <lambdex/chess/fen.hpp>
 
+
+
+
 int main()
 {
 	using namespace lbx;
@@ -12,10 +15,9 @@ int main()
 		return 1;
 	};
 
-
-
 	AccountAPI _accountAPI{};
 	api::set_account_api(&_accountAPI);
+
 
 	while (true)
 	{
