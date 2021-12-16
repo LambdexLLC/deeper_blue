@@ -45,7 +45,7 @@ namespace lbx::chess
 	 * @param _move Move to apply
 	 * @param _player Player making the move
 	*/
-	void apply_move(BoardWithState& _board, const Move& _move, const Color& _player)
+	void apply_move(BoardWithState& _board, Move _move, const Color _player)
 	{
 		// Castle movement definitions
 		constexpr auto _castleMoves = std::array
@@ -117,11 +117,20 @@ namespace lbx::chess
 		};
 
 		// Move the piece
-		auto _piece = _board[_move.from];
+		const auto _piece = _board[_move.from];
 		_board[_move.to] = _piece;
 		
 		// Replace old piece with empty
 		_board[_move.from] = Piece::empty;
+
+		// If a pawn made it to the back rank and no promotion piece was specified, set
+		// the promotion piece to queen
+		if (as_white(_piece) == Piece::pawn_white &&
+			(_move.to.rank() == Rank::r1 || _move.to.rank() == Rank::r8) &&
+			_move.promotion == Piece::empty)
+		{
+			_move.promotion = Piece::queen;
+		};
 
 		// Apply pawn promotion if there is one
 		if (_move.promotion != Piece::empty)

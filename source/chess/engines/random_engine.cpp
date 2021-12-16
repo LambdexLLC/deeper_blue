@@ -80,8 +80,10 @@ namespace lbx::chess
 						PositionPair_Offset{  1,  1 },
 						PositionPair_Offset{  0,  1 },
 						PositionPair_Offset{ -1,  1 },
-						PositionPair_Offset{  0,  1 },
-						PositionPair_Offset{  0, -1 },
+
+						PositionPair_Offset{  1,  0 },
+						PositionPair_Offset{ -1,  0 },
+
 						PositionPair_Offset{  1, -1 },
 						PositionPair_Offset{  0, -1 },
 						PositionPair_Offset{ -1, -1 },
@@ -139,21 +141,13 @@ namespace lbx::chess
 					if (_pair.file() != File::a)
 					{
 						add_if_valid((_pair.rank() - 1, _pair.file() - 1));
-						if (_lookAhead2)
-						{
-							add_if_valid((_pair.rank() - 2, _pair.file() - 1));
-						};
 					};
 					if (_pair.file() != File::h)
 					{
 						add_if_valid((_pair.rank() - 1, _pair.file() + 1));
-						if (_lookAhead2)
-						{
-							add_if_valid((_pair.rank() - 2, _pair.file() + 1));
-						};
 					};
 
-					add_if_valid((_pair.rank() - 2, _pair.file()));
+					add_if_valid((_pair.rank() - 1, _pair.file()));
 					if (_lookAhead2)
 					{
 						add_if_valid((_pair.rank() - 2, _pair.file()));
@@ -170,21 +164,13 @@ namespace lbx::chess
 					if (_pair.file() != File::a)
 					{
 						add_if_valid((_pair.rank() + 1, _pair.file() - 1));
-						if (_lookAhead2)
-						{
-							add_if_valid((_pair.rank() + 2, _pair.file() - 1));
-						};
 					};
 					if (_pair.file() != File::h)
 					{
 						add_if_valid((_pair.rank() + 1, _pair.file() + 1));
-						if (_lookAhead2)
-						{
-							add_if_valid((_pair.rank() + 2, _pair.file() + 1));
-						};
 					};
 
-					add_if_valid((_pair.rank() + 2, _pair.file()));
+					add_if_valid((_pair.rank() + 1, _pair.file()));
 					if (_lookAhead2)
 					{
 						add_if_valid((_pair.rank() + 2, _pair.file()));

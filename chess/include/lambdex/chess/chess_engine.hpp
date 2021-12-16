@@ -12,9 +12,12 @@
 
 */
 
+#include "board/board_with_state.hpp"
+
 #include "move_tree.hpp"
 #include "game_interface.hpp"
 
+#include <string>
 #include <vector>
 
 namespace lbx::chess
@@ -82,7 +85,12 @@ namespace lbx::chess
 			/**
 			 * @brief Player played an illegal move and was disqualifed
 			*/
-			played_illegal_move
+			played_illegal_move,
+
+			/**
+			 * @brief The maximum number of moves that could be played for the match were played.
+			*/
+			max_moves_reached,
 		};
 
 		// Allow more natural access to the enum
@@ -103,7 +111,9 @@ namespace lbx::chess
 		*/
 		constexpr bool is_draw() const noexcept
 		{
-			return this->reason() == Reason::draw || this->reason() == Reason::stalemate;
+			return	this->reason() == Reason::draw ||
+					this->reason() == Reason::stalemate ||
+					this->reason() == Reason::max_moves_reached;
 		};
 
 		/**
@@ -166,13 +176,61 @@ namespace lbx::chess
 	};
 
 	/**
-	 * @brief Plays through a standard chess match between two engines
+	 * @brief Options used to define how a chess match can be played
+	*/
+	struct MatchOptions
+	{
+		/**
+		 * @brief Creates the default match options
+		 * 
+		 * @param _gameName optional name for the game, defaults to "local_game"
+		 * @return Match options
+		*/
+		static MatchOptions make_default(const std::string_view _gameName = "local_game")
+		{
+			MatchOptions _out{};
+			_out.initial_board = make_standard_board();
+			_out.game_name = std::string{ _gameName };
+			_out.max_moves_per_player = 0;
+			return _out;
+		};
+
+		/**
+		 * @brief Initial board state
+		*/
+		BoardWithState initial_board;
+
+
+		std::string game_name;
+
+		/**
+		 * @brief Defines the max moves to play for each player.
+		 * 
+		 * Set this to 0 for no max value.
+		*/
+		uint32_t max_moves_per_player;
+	};
+	
+	/**
+	 * @brief Plays through a standard chess match between two engines with default match options.
+	 * 
 	 * @param _white White player engine
 	 * @param _black Black player engine
 	 * @param _stats Optional match stats output parameter, defaults to nullptr
 	 * @return Match verdict
 	*/
 	MatchVerdict play_standard_match(IChessEngine& _white, IChessEngine& _black, MatchStats* _stats = nullptr);
+
+	/**
+	 * @brief Plays through a standard chess match between two engines.
+	 * 
+	 * @param _white White player engine
+	 * @param _black Black player engine
+	 * @param _options Match options object
+	 * @param _stats Optional match stats output parameter, defaults to nullptr
+	 * @return Match verdict
+	*/
+	MatchVerdict play_standard_match(IChessEngine& _white, IChessEngine& _black, MatchOptions _options, MatchStats* _stats = nullptr);
 
 };
 

@@ -31,6 +31,11 @@ namespace lbx::chess
 			 * @brief If a player resigned, this will contain which player is resigning
 			*/
 			std::optional<Color> player_resigned{ std::nullopt };
+
+			/**
+			 * @brief The name for the game
+			*/
+			std::string game_name{};
 		};
 
 		/**
@@ -106,6 +111,18 @@ namespace lbx::chess
 				return this->my_color_;
 			};
 
+			/**
+			 * @brief Optional method allowing the interface to provide the name of the game
+			 *
+			 * This is mostly for logging purposes.
+			 *
+			 * @return The name of the game, or an empty string if this is unimplemented (default behavior).
+			*/
+			std::string get_game_name() final
+			{
+				return this->state_->game_name;
+			};
+
 			// Constructs the interface for an engine playing a local game
 			LocalGameInterface(jc::reference_ptr<LocalGameState> _state, Color _myColor) :
 				state_{ _state }, my_color_{ _myColor }
@@ -126,17 +143,20 @@ namespace lbx::chess
 	};
 
 	/**
-	 * @brief Plays through a standard chess match between two engines
+	 * @brief Plays through a standard chess match between two engines.
+	 *
 	 * @param _white White player engine
 	 * @param _black Black player engine
+	 * @param _options Match options object
 	 * @param _stats Optional match stats output parameter, defaults to nullptr
 	 * @return Match verdict
 	*/
-	MatchVerdict play_standard_match(IChessEngine& _white, IChessEngine& _black, MatchStats* _stats)
+	MatchVerdict play_standard_match(IChessEngine& _white, IChessEngine& _black, MatchOptions _options, MatchStats* _stats)
 	{
 		// Create a new game state with standard board
 		LocalGameState _state{};
-		_state.board = make_standard_board();
+		_state.board = _options.initial_board;
+		_state.game_name = _options.game_name;
 
 		// Create our interfaces
 		LocalGameInterface _whiteInterface{ _state, Color::white };
@@ -145,9 +165,16 @@ namespace lbx::chess
 		// Play the game until finished
 		while (true)
 		{
+			// Check if we hit max moves
+			if (_options.max_moves_per_player != 0 && _state.board.full_move_counter >= _options.max_moves_per_player + 1)
+			{
+				// Draw due to max moves played
+				return MatchVerdict{ MatchVerdict::max_moves_reached };
+			};
+
 			// Play white move
 			_white.play_turn(_whiteInterface);
-			
+
 			// Check for flags set
 			if (_state.illegal_move_played)
 			{
@@ -184,10 +211,24 @@ namespace lbx::chess
 				// Handle stats
 				_stats->moves_black.push_back(_state.last_move);
 			};
+
 		};
 
 		// Return a draw as default outcome
 		JCLIB_ASSERT(false);
 		return MatchVerdict{ MatchVerdict::draw };
 	};
+
+	/**
+	 * @brief Plays through a standard chess match between two engines
+	 * @param _white White player engine
+	 * @param _black Black player engine
+	 * @param _stats Optional match stats output parameter, defaults to nullptr
+	 * @return Match verdict
+	*/
+	MatchVerdict play_standard_match(IChessEngine& _white, IChessEngine& _black, MatchStats* _stats)
+	{
+		return play_standard_match(_white, _black, MatchOptions::make_default(), _stats);
+	};
+
 };

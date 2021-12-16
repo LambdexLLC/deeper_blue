@@ -3,6 +3,7 @@
 #include "utility/io.hpp"
 
 #include <lambdex/chess/chess.hpp>
+#include <lambdex/chess/fen.hpp>
 
 #include <jclib/timer.h>
 #include <jclib/ranges.h>
@@ -194,6 +195,30 @@ namespace lbx::chess
 		};
 	};
 
+
+	/**
+	 * @brief Gets the rating of the last move in a line from the POV of a particular player.
+	 * 
+	 * @param _line Line to get move from.
+	 * @param _player Player to get rating of the move for, they must have played the first move in the line.
+	 * @return Move rating 
+	*/
+	inline int last_move_rating(const ChessEngine_Baby::RatedLine& _line, Color _player)
+	{
+		const auto _rawRating = _line.back().get_rating();
+		if ((_line.size() % 2) == 0)
+		{
+			return -_rawRating;
+		}
+		else
+		{
+			return _rawRating;
+		};
+	};
+
+
+
+
 	std::vector<ChessEngine_Baby::RatedLine> ChessEngine_Baby::pick_best_from_tree(const MoveTree& _tree)
 	{
 		using Node = MoveTree::Node;
@@ -266,10 +291,7 @@ namespace lbx::chess
 					}
 					else
 					{
-						// Add their response to the line but invert the score so that
-						// it is still taken into account
-						RatedMove _invertedOpponentResponse{ _opponentResponse->get_move(), -_opponentResponse->get_rating() };
-						_line.push_back(_invertedOpponentResponse);
+						_line.push_back(*_opponentResponse);
 						break;
 					};
 				};
@@ -279,11 +301,17 @@ namespace lbx::chess
 			_finalPicks.push_back(_line);
 		};
 
+		// My side's color
+		const auto _myColor = _tree.initial_board_.turn;
+
 		// Sort lines based on final outcome so that the first line in the container
 		// is the one with the best outcome for us
-		std::ranges::sort(_finalPicks, [](const RatedLine& lhs, const RatedLine& rhs)
+		std::ranges::sort(_finalPicks, [_myColor](const RatedLine& lhs, const RatedLine& rhs)
 			{
-				return lhs.back() > rhs.back();
+				// Make sure we get the rating of the last move from OUR POV
+				const auto _lhsRating = last_move_rating(lhs, _myColor);
+				const auto _rhsRating = last_move_rating(rhs, _myColor);
+				return _lhsRating > _rhsRating;
 			});
 
 		// Return our sorted lines
@@ -296,7 +324,7 @@ namespace lbx::chess
 	{
 		jc::timer _tm{};
 		_tm.start();
-		
+
 		jc::timer _turnTime{};
 		_turnTime.start();
 
@@ -305,6 +333,24 @@ namespace lbx::chess
 
 		// How many turns to search down
 		size_t _treeDepth = 3;
+
+		if (_pieceCount <= 4)
+		{
+			_treeDepth = 5;
+		}
+		else if (_pieceCount <= 7)
+		{
+			_treeDepth = 4;
+		}
+		else if (_pieceCount <= 12)
+		{
+			_treeDepth = 3;
+		}
+		else
+		{
+			_treeDepth = 3;
+		};
+
 
 		auto _moveTree = this->make_move_tree(_board, _treeDepth);
 		const auto _treeTime = _tm.elapsed();
@@ -350,7 +396,7 @@ namespace lbx::chess
 			f << "possible moves:\n";
 			for (auto& m : _lines)
 			{
-				writeln(f, "\t{} ({}) (final = {})", m.front().get_move(), m.front().get_rating(), m.back().get_rating());
+				writeln(f, "\t{} ({}) (final = {})", m.front().get_move(), m.front().get_rating(), last_move_rating(m, _player));
 			};
 
 			BoardWithState _lineBoard{ _board };
@@ -358,15 +404,15 @@ namespace lbx::chess
 			{
 				if (_myTurn)
 				{
-					f << "\nme:\n";
+					writeln(f, "\nme : {}\n", m.get_rating());
 				}
 				else
 				{
-					f << "\nopponent:\n";
+					writeln(f, "\nopponent : {}\n", m.get_rating());
 				};
 
 				apply_move(_lineBoard, m.get_move());
-				f << m.get_move().to_string() << '\n' << _lineBoard;
+				f << m.get_move().to_string() << " fen = " << chess::get_board_fen(_lineBoard) << '\n' << _lineBoard;
 
 				_myTurn = !_myTurn;
 			};
@@ -400,4 +446,7 @@ namespace lbx::chess
 		_game.resign();
 	};
 
+
+	ChessEngine_Baby::ChessEngine_Baby()
+	{};
 };
