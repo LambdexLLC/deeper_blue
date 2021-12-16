@@ -114,7 +114,7 @@ namespace lbx::text
 			const auto _it = this->find(_codepoint);
 			if (_it != this->end())
 			{
-				return std::distance(_it, this->begin());
+				return _it - this->begin();
 			}
 			else
 			{

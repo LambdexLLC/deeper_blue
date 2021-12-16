@@ -1,10 +1,25 @@
 #include "artist.hpp"
 
+#include <glm/gtc/matrix_transform.hpp>
+
 #include <iostream>
 
 #include <lodepng.h>
 
 namespace gl = jc::gl;
+
+namespace jc::gl
+{
+	// Uniform specialization to allow glm matrix upload
+	template <>
+	struct uniform_ftor<glm::mat4>
+	{
+		static void set(const program_id& _program, const uniform_location& _location, const glm::mat4& _mat, bool _transpose = false)
+		{
+			glProgramUniformMatrix4fv(_program.get(), _location.get(), 1, _transpose, &_mat[0][0]);
+		};
+	};
+};
 
 namespace lbx::text
 {
@@ -65,45 +80,11 @@ namespace lbx::text
 	};
 
 
-	void TextArtist::configure_attributes(gl::program_id _program)
+	void TextArtist::buffer_data()
 	{
-		this->shader_ = _program;
-
-		gl::bind(this->vao_);
-
-		gl::vertex_binding_index _baseBindingIdx{ 1 };
-		gl::bind_vertex_buffer(_baseBindingIdx, this->vbo_, 0, sizeof(Vertex));
-		gl::set_vertex_divisor(_baseBindingIdx, 0);
-
-		gl::vertex_attribute_index _basePos = gl::get_program_resource_location(_program, gl::resource_type::program_input, "in_pos").value();
-		gl::enable_attribute_array(_basePos);
-		gl::set_attribute_binding(_basePos, _baseBindingIdx);
-
-		gl::vertex_attribute_index _baseUVs = gl::get_program_resource_location(_program, gl::resource_type::program_input, "in_uvs").value();
-		gl::enable_attribute_array(_baseUVs);
-		gl::set_attribute_binding(_baseUVs, _baseBindingIdx);
-
-		gl::set_attribute_format(_basePos, gl::typecode::gl_float, 2, false, 0);
-		gl::set_attribute_format(_baseUVs, gl::typecode::gl_float, 3, false, sizeof(float) * 2);
-
-	};
-
-	bool TextArtist::init()
-	{
-		auto& _texture = this->texture_;
-		auto& _font = *this->font_;
 		auto& _vao = this->vao_;
 		auto& _vbo = this->vbo_;
-
-		// Create and upload the image
-		_texture = new_font_face_texture_sheet(_font);
-		gl::bind(_texture, gl::texture_target::array2D);
-
-		_vao = gl::new_vao();
-		gl::bind(_vao);
-
-		_vbo = gl::new_vbo();
-		gl::bind(_vbo, gl::vbo_target::array);
+		auto& _font = *this->font_;
 
 		int _penX = 0;
 		int _penY = 0;
@@ -122,7 +103,6 @@ namespace lbx::text
 		{
 			const LoadedGlyph& _glyph = _font.glyphs_.at(_index);
 
-			
 			std::array<Vertex, 4> _rectVerts{};
 			auto& _ll = _rectVerts[0];
 			auto& _lr = _rectVerts[1];
@@ -189,14 +169,107 @@ namespace lbx::text
 
 		};
 
-		const std::string_view _someText = "your mom";
-		for (auto& c : _someText)
+		for (auto& _block : this->blocks_ | std::views::values)
 		{
-			add_rect(_font.find(c) - _font.glyphs_.begin());
+			_penX = (int)std::round(_block.x * 64.0f);
+			_penY = (int)std::round(_block.y * 64.0f);
+			for (auto& c : _block.text)
+			{
+				add_rect(_font.glyph_index(c));
+			};
 		};
 
 		gl::buffer_data(_vbo, _verts);
 		this->vertices_ = _verts.size();
+	};
+
+	TextArtist::TextBlockID TextArtist::add_text(const std::string_view _text, float _x, float _y)
+	{
+		const auto _id = ++this->block_counter_;
+
+		TextBlock _block{ std::string{ _text }, _x, _y };
+		this->blocks_.insert_or_assign(_id, std::move(_block));
+
+		// Recalculate and buffer data
+		this->buffer_data();
+
+		return _id;
+	};
+
+	void TextArtist::set_text(TextBlockID _textBlock, const std::string_view _text)
+	{
+		this->blocks_.at(_textBlock).text = _text;
+
+		// Recalculate and buffer data
+		this->buffer_data();
+	};
+
+	void TextArtist::append_text(TextBlockID _textBlock, const std::string_view _appendText)
+	{
+		this->blocks_.at(_textBlock).text.append(_appendText);
+
+		// Recalculate and buffer data
+		this->buffer_data();
+	};
+
+
+
+	void TextArtist::set_model_uniform()
+	{
+		// Apply transforms
+		glm::mat4 _mat{ 1.0f };
+		_mat = glm::translate(_mat, this->position_);
+		_mat = glm::scale(_mat, this->scale_);
+		_mat *= static_cast<glm::mat4>(this->rotation_);
+
+		// Upload to shader
+		gl::set_uniform(this->shader_, this->model_uni_, _mat);
+	};
+
+
+	void TextArtist::configure_attributes(gl::program_id _program)
+	{
+		this->shader_ = _program;
+
+		gl::bind(this->vao_);
+
+		gl::vertex_binding_index _baseBindingIdx{ 1 };
+		gl::bind_vertex_buffer(_baseBindingIdx, this->vbo_, 0, sizeof(Vertex));
+		gl::set_vertex_divisor(_baseBindingIdx, 0);
+
+		gl::vertex_attribute_index _basePos = gl::get_program_resource_location(_program, gl::resource_type::program_input, "in_pos").value();
+		gl::enable_attribute_array(_basePos);
+		gl::set_attribute_binding(_basePos, _baseBindingIdx);
+
+		gl::vertex_attribute_index _baseUVs = gl::get_program_resource_location(_program, gl::resource_type::program_input, "in_uvs").value();
+		gl::enable_attribute_array(_baseUVs);
+		gl::set_attribute_binding(_baseUVs, _baseBindingIdx);
+
+		gl::set_attribute_format(_basePos, gl::typecode::gl_float, 2, false, 0);
+		gl::set_attribute_format(_baseUVs, gl::typecode::gl_float, 3, false, sizeof(float) * 2);
+
+		this->model_uni_ = gl::get_program_resource_location(_program, gl::resource_type::uniform, "model").value_or(gl::resource_location{});
+	};
+
+	bool TextArtist::init()
+	{
+		auto& _texture = this->texture_;
+		auto& _font = *this->font_;
+		auto& _vao = this->vao_;
+		auto& _vbo = this->vbo_;
+
+		// Create and upload the image
+		_texture = new_font_face_texture_sheet(_font);
+		gl::bind(_texture, gl::texture_target::array2D);
+
+		_vao = gl::new_vao();
+		gl::bind(_vao);
+
+		_vbo = gl::new_vbo();
+		gl::bind(_vbo, gl::vbo_target::array);
+
+		// Calculate and buffer vertex data
+		this->buffer_data();
 
 		return true;
 	};
@@ -206,6 +279,10 @@ namespace lbx::text
 		gl::bind(this->shader_);
 		gl::bind(this->texture_, gl::texture_target::array2D);
 		gl::bind(this->vao_);
+
+		// Upload model uniform
+		this->set_model_uniform();
+
 		gl::draw_arrays(gl::primitive::triangles, this->vertices_);
 	};
 
