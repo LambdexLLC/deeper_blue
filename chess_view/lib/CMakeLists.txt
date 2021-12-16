@@ -7,7 +7,7 @@ ADD_GIT_DEPENDENCY("${CMAKE_CURRENT_LIST_DIR}/glm" glm "https://github.com/g-tru
 ADD_GIT_DEPENDENCY("${CMAKE_CURRENT_LIST_DIR}/freetype" freetype "https://github.com/freetype/freetype")
 
 add_subdirectory("glad")
-
+add_subdirectory("cppfreetype")
 
 add_library(lodepng STATIC "lodepng/lodepng.h" "lodepng/lodepng.cpp")
 target_include_directories(lodepng PUBLIC "lodepng")

@@ -14,7 +14,9 @@ uniform sampler2DArray piece_textures;
 
 
 
-out vec3 color;
+const float alpha = 1.0;
+
+out vec4 color;
 
 
 void main()
@@ -23,7 +25,7 @@ void main()
 	vec4 _pieceColor = vec4(_rawTexel.rgb, min(_rawTexel.a, piece_alpha_mask));
 
 	// Mix piece color into background
-	vec4 _finalColor = mix(vec4(background_color.rgb, 1.0), _pieceColor, _pieceColor.a);
+	vec4 _finalColor = mix(vec4(background_color.rgb, alpha), _pieceColor, _pieceColor.a);
 	
-	color = _finalColor.rgb;
+	color = _finalColor;
 };
