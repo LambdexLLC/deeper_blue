@@ -7,8 +7,6 @@
 	See https://lichess.org/arg for docs.
 */
 
-#include "lichess.hpp"
-
 #include "utility/http.hpp"
 
 #include <jclib/maybe.h>
@@ -45,5 +43,6 @@ namespace lbx::api::lichess
 	// Resigns from the game
 	// https://lichess.org/api#operation/botGameResign
 	jc::maybe<bool, std::string> resign_game(http::Client& _client, std::string_view _gameID);
+
 
 };

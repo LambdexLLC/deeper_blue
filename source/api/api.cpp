@@ -1,7 +1,7 @@
 #include "api.hpp"
-#include "env.hpp"
+#include "application/env.hpp"
 
-#include "lichess_http_api.hpp"
+#include "lichess/lichess_http_api.hpp"
 
 #include "utility/io.hpp"
 #include "utility/httpstream.hpp"
@@ -75,7 +75,7 @@ namespace lbx::api
 			static auto make_client()
 			{
 				http::Client _client{ lichess_url_v };
-				api::set_lichess_bearer_token_auth(_client);
+				chess::set_lichess_bearer_token_auth(_client);
 				return _client;
 			};
 
@@ -176,7 +176,7 @@ namespace lbx::api
 			static auto make_client()
 			{
 				http::Client _client{ lichess_url_v };
-				api::set_lichess_bearer_token_auth(_client);
+				chess::set_lichess_bearer_token_auth(_client);
 				return _client;
 			};
 

@@ -6,7 +6,7 @@
 #include <string>
 #include <utility>
 
-namespace lbx::api
+namespace lbx::chess
 {
 	/**
 	 * @brief Sets the environment variable folder path
