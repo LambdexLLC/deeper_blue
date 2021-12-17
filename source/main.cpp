@@ -24,10 +24,6 @@ int main(int _nargs, char* _vargs[])
 	chess::set_application_root_path(_rootPath);
 
 
-
-	return 0;
-
-
 	AccountAPI _accountAPI{};
 	api::set_account_api(&_accountAPI);
 

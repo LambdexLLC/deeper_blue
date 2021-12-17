@@ -2,6 +2,8 @@
 
 #include "basic.hpp"
 
+#include <lambdex/utility/format.hpp>
+
 #include <charconv>
 
 namespace lbx::chess
@@ -640,25 +642,22 @@ namespace lbx::chess
 
 #pragma region FORMATTERS
 
-namespace std
+namespace lbx
 {
 	template <>
-	struct formatter<lbx::chess::PositionPair> : public formatter<std::string, char>
+	struct formatter<chess::PositionPair>
 	{
-		auto format(const lbx::chess::PositionPair& _value, auto& _ctx)
+		auto format(const lbx::chess::PositionPair& _value)
 		{
-			const auto _str = lbx::chess::to_string(_value);
-			return formatter<std::string, char>::format(_str, _ctx);
+			return chess::to_string(_value);
 		};
 	};
-
 	template <>
-	struct formatter<lbx::chess::Position> : public formatter<std::string, char>
+	struct formatter<chess::Position>
 	{
-		auto format(const lbx::chess::Position& _value, auto& _ctx)
+		auto format(const chess::Position& _value)
 		{
-			const auto _str = lbx::chess::to_string(_value);
-			return formatter<std::string, char>::format(_str, _ctx);
+			return chess::to_string(_value);
 		};
 	};
 };
