@@ -164,7 +164,7 @@ namespace lbx::chess
 					PositionPair _pair{ _from };
 
 					// Look ahead 2
-					bool _lookAhead2 = _pair.rank() == Rank::r7;
+					bool _lookAhead2 = _pair.rank() == Rank::r2;
 
 					if (_pair.file() != File::a)
 					{
