@@ -9,7 +9,6 @@
 
 #include <array>
 #include <string>
-#include <format>
 #include <charconv>
 #include <string_view>
 

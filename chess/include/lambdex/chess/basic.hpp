@@ -7,14 +7,14 @@
 #include <jclib/concepts.h>
 #include <jclib/type_traits.h>
 
+#include <array>
 #include <iosfwd>
-#include <format>
 #include <string>
 #include <cstdint>
 #include <charconv>
 #include <string_view>
 
-#if JCLIB_FEATURE_THREE_WAY_COMPARE_V
+#if JCLIB_FEATURE_THREE_WAY_COMPARISON_V
 #include <compare>
 #endif
 

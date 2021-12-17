@@ -9,7 +9,6 @@
 
 #include <array>
 #include <iosfwd>
-#include <format>
 #include <string>
 #include <optional>
 
@@ -165,14 +164,13 @@ namespace lbx::chess
 	};
 };
 
-namespace std
+namespace lbx
 {
 	template <>
-	struct formatter<lbx::chess::BoardWithState, char> :
-		formatter<lbx::chess::PieceBoard, char>
+	struct formatter<chess::BoardWithState> : public formatter<lbx::chess::PieceBoard>
 	{
-		using formatter<lbx::chess::PieceBoard, char>::formatter;
-		using formatter<lbx::chess::PieceBoard, char>::format;
+		using formatter<chess::PieceBoard>::formatter;
+		using formatter<chess::PieceBoard>::format;
 	};
 };
 

@@ -7,11 +7,12 @@
 
 #include "lambdex/chess/basic.hpp"
 
+#include <lambdex/utility/format.hpp>
+
 #include <jclib/config.h>
 
 #include <array>
 #include <string>
-#include <format>
 #include <iosfwd>
 #include <optional>
 
@@ -203,15 +204,14 @@ namespace lbx::chess
 		}());
 };
 
-namespace std
+namespace lbx
 {
 	template <>
-	struct formatter<lbx::chess::PieceBoard, char> :
-		formatter<std::string, char>
+	struct formatter<chess::PieceBoard>
 	{
-		auto format(const lbx::chess::PieceBoard& _board, auto& _ctx)
+		auto format(const chess::PieceBoard& _board)
 		{
-			auto _str = lbx::chess::stringify_board(_board);
+			auto _str = chess::stringify_board(_board);
 			_str.insert(_str.begin() + 64, '\n');
 			_str.insert(_str.begin() + 56, '\n');
 			_str.insert(_str.begin() + 48, '\n');
@@ -220,7 +220,7 @@ namespace std
 			_str.insert(_str.begin() + 24, '\n');
 			_str.insert(_str.begin() + 16, '\n');
 			_str.insert(_str.begin() + 8,  '\n');
-			return formatter<std::string, char>::format(_str, _ctx);
+			return _str;
 		};
 	};
 };
