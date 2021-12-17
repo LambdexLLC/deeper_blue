@@ -5,6 +5,8 @@
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 project(deeper_blue LANGUAGES CXX VERSION 0.0.1)
 
+set(CMAKE_CXX_STANDARD 20)
+
 
 include ("CMakeUtils.cmake")
 add_subdirectory("lib")
