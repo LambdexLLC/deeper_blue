@@ -11,9 +11,12 @@
 #include <format>
 #include <string>
 #include <cstdint>
-#include <compare>
 #include <charconv>
 #include <string_view>
+
+#if JCLIB_FEATURE_THREE_WAY_COMPARE_V
+#include <compare>
+#endif
 
 namespace lbx::chess
 {
@@ -35,9 +38,37 @@ namespace lbx::chess
 		END
 	};
 
+#if JCLIB_FEATURE_THREE_WAY_COMPARISON_V
 	constexpr inline auto operator<=>(Rank lhs, Rank rhs) noexcept
 	{
 		return jc::to_underlying(lhs) <=> jc::to_underlying(rhs);
+	};
+#endif
+
+	constexpr inline auto operator==(Rank lhs, Rank rhs) noexcept
+	{
+		return jc::to_underlying(lhs) == jc::to_underlying(rhs);
+	};
+	constexpr inline auto operator!=(Rank lhs, Rank rhs) noexcept
+	{
+		return jc::to_underlying(lhs) != jc::to_underlying(rhs);
+	};
+
+	constexpr inline auto operator>(Rank lhs, Rank rhs) noexcept
+	{
+		return jc::to_underlying(lhs) > jc::to_underlying(rhs);
+	};
+	constexpr inline auto operator<(Rank lhs, Rank rhs) noexcept
+	{
+		return jc::to_underlying(lhs) < jc::to_underlying(rhs);
+	};
+	constexpr inline auto operator>=(Rank lhs, Rank rhs) noexcept
+	{
+		return jc::to_underlying(lhs) >= jc::to_underlying(rhs);
+	};
+	constexpr inline auto operator<=(Rank lhs, Rank rhs) noexcept
+	{
+		return jc::to_underlying(lhs) <= jc::to_underlying(rhs);
 	};
 
 	constexpr inline Rank operator+(Rank lhs, jc::cx_integer auto rhs) noexcept
@@ -106,9 +137,37 @@ namespace lbx::chess
 		END,
 	};
 
+#if JCLIB_FEATURE_THREE_WAY_COMPARISON_V
 	constexpr inline auto operator<=>(File lhs, File rhs) noexcept
 	{
 		return jc::to_underlying(lhs) <=> jc::to_underlying(rhs);
+	};
+#endif
+
+	constexpr inline auto operator==(File lhs, File rhs) noexcept
+	{
+		return jc::to_underlying(lhs) == jc::to_underlying(rhs);
+	};
+	constexpr inline auto operator!=(File lhs, File rhs) noexcept
+	{
+		return jc::to_underlying(lhs) != jc::to_underlying(rhs);
+	};
+
+	constexpr inline auto operator>(File lhs, File rhs) noexcept
+	{
+		return jc::to_underlying(lhs) > jc::to_underlying(rhs);
+	};
+	constexpr inline auto operator<(File lhs, File rhs) noexcept
+	{
+		return jc::to_underlying(lhs) < jc::to_underlying(rhs);
+	};
+	constexpr inline auto operator>=(File lhs, File rhs) noexcept
+	{
+		return jc::to_underlying(lhs) >= jc::to_underlying(rhs);
+	};
+	constexpr inline auto operator<=(File lhs, File rhs) noexcept
+	{
+		return jc::to_underlying(lhs) <= jc::to_underlying(rhs);
 	};
 
 	constexpr inline File operator+(File lhs, jc::cx_integer auto rhs) noexcept
