@@ -186,13 +186,59 @@ namespace lbx::chess
 		*/
 		using value_type = uint8_t;
 
+	private:
+
+		/**
+		 * @brief Bit masks for getting the rank and file from the held position index.
+		*/
+		enum class BitMask : value_type
+		{
+			file = 0b000111,
+			rank = 0b111000
+		};
+
+		/**
+		 * @brief Gets the file from single byte position.
+		 * @param _value Single byte position.
+		 * @return File for the position.
+		*/
+		constexpr static File get_file_from_pos(value_type _value) noexcept
+		{
+			return File( _value & jc::to_underlying(BitMask::file) );
+		};
+
+		/**
+		 * @brief Gets the rank from single byte position.
+		 * @param _value Single byte position.
+		 * @return Rank for the position.
+		*/
+		constexpr static Rank get_rank_from_pos(value_type _value) noexcept
+		{
+			return Rank( (_value & jc::to_underlying(BitMask::rank)) >> 3 );
+		};
+
+		/**
+		 * @brief Turns a rank, file pair into a single byte position value.
+		 * 
+		 * @param _file Position file value.
+		 * @param _rank Position rank value.
+		 * 
+		 * @return Single byte position value.
+		*/
+		constexpr static value_type concat_pair(File _file, Rank _rank) noexcept
+		{
+			return (jc::to_underlying(_rank) << 3) | jc::to_underlying(_file);
+		};
+
+	public:
+
 		/**
 		 * @brief Gets the file held by this position
 		 * @return File number
 		*/
 		constexpr File file() const noexcept
 		{
-			return static_cast<File>(this->file_);
+			return this->get_file_from_pos(this->index_);
 		};
 
 		/**
@@ -201,7 +247,7 @@ namespace lbx::chess
 		*/
 		constexpr Rank rank() const noexcept
 		{
-			return static_cast<Rank>(this->rank_);
+			return this->get_rank_from_pos(this->index_);
 		};
 
 		/**
@@ -254,9 +300,9 @@ namespace lbx::chess
 		friend constexpr inline PositionPair operator+(const PositionPair& lhs, const PositionPair_Offset& rhs)
 		{
 			PositionPair _out{ lhs };
-			_out.file_ += rhs.file_offset();
-			_out.rank_ += rhs.rank_offset();
-			JCLIB_ASSERT(_out.file_ < 8 && _out.rank_ < 8);
+			_out.index_ += rhs.file_offset();
+			_out.index_ += (rhs.rank_offset() * 8);
+			JCLIB_ASSERT(_out.index_ <= 64);
 			return _out;
 		};
 		friend constexpr inline PositionPair operator+(const PositionPair_Offset& lhs, const PositionPair& rhs)
@@ -266,7 +312,7 @@ namespace lbx::chess
 
 		friend constexpr inline PositionPair_Offset operator-(const PositionPair& lhs, const PositionPair& rhs)
 		{
-			return PositionPair_Offset{ lhs.file_ - rhs.file_, lhs.rank_ - rhs.rank_ };
+			return PositionPair_Offset{ (int8_t)lhs.file() - (int8_t)rhs.file(), (int8_t)lhs.rank() - (int8_t)rhs.rank() };
 		};
 
 
@@ -275,8 +321,7 @@ namespace lbx::chess
 		 * @brief Default constructs the pair to hold the position "a1"
 		*/
 		constexpr PositionPair() noexcept :
-			file_{ 0 },
-			rank_{ 0 }
+			index_{ 0 }
 		{};
 
 		/**
@@ -284,8 +329,7 @@ namespace lbx::chess
 		 * @param Board position as an index
 		*/
 		constexpr PositionPair(const Position& _pos) noexcept :
-			file_{ static_cast<value_type>(_pos.get() % 8) },
-			rank_{ static_cast<value_type>(_pos.get() / 8) }
+			index_{ _pos.get() }
 		{};
 
 		/**
@@ -294,8 +338,7 @@ namespace lbx::chess
 		 * @param _file File of the position
 		*/
 		constexpr explicit PositionPair(File _file, Rank _rank) noexcept :
-			file_{ jc::to_underlying(_file) },
-			rank_{ jc::to_underlying(_rank) }
+			index_{ concat_pair(_file, _rank) }
 		{};
 
 		/**
@@ -308,8 +351,18 @@ namespace lbx::chess
 		{};
 
 	private:
-		uint8_t file_ : 4, rank_ : 4;
+
+		/**
+		 * @brief The actual position value for this object.
+		 * 
+		 * The least significant three bits are the file.
+		 * The next 3 bits are the rank.
+		*/
+		uint8_t index_ = 0;
+
 	};
+
+
 
 	/**
 	 * @brief Creates a position pair value from a rank and file

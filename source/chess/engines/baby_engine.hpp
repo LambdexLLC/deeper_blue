@@ -12,6 +12,25 @@
 
 namespace lbx::chess
 {
+
+	struct OpeningBook
+	{
+		bool has_response_to_move(Move _move) const
+		{
+			if (this->at_)
+			{
+				this->at_->responses();
+			};
+		};
+
+
+	
+		MoveTree tree_{};
+		jc::borrow_ptr<MoveTree::Node> at_{};
+	};
+
+
+
 	/**
 	 * @brief Babys first bot that isnt random
 	*/
