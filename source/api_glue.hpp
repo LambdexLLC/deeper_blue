@@ -13,7 +13,6 @@
 #include "utility/json.hpp"
 #include "utility/http.hpp"
 
-#include "api/env.hpp"
 #include "api/api.hpp"
 
 #include <jclib/thread.h>

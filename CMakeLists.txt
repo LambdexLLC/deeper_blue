@@ -27,7 +27,7 @@ enable_testing()
 
 add_subdirectory("chess")
 
-add_executable(${PROJECT_NAME}-exe "main.cpp")
+add_executable(${PROJECT_NAME}-exe "source/main.cpp")
 
 target_compile_features(${PROJECT_NAME}-exe PUBLIC cxx_std_20)
 target_include_directories(${PROJECT_NAME}-exe PRIVATE ${private_include})
@@ -36,3 +36,11 @@ target_link_libraries(${PROJECT_NAME}-exe PUBLIC jclib lbx::chess-lib PRIVATE ${
 add_subdirectory("source")
 
 target_compile_definitions(${PROJECT_NAME}-exe PRIVATE SOURCE_ROOT="${CMAKE_CURRENT_LIST_DIR}")
+
+
+
+#	Make sure that the env folder is coppied to the build output to ensure the environment is
+#	defined correctly
+
+file(COPY "${CMAKE_CURRENT_LIST_DIR}/env" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+

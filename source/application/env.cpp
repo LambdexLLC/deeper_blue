@@ -7,7 +7,7 @@
 
 #include <optional>
 
-namespace lbx::api
+namespace lbx::chess
 {
 	/**
 	 * @brief Environment variable storage
@@ -44,6 +44,9 @@ namespace lbx::api
 			return _env;
 		};
 	};
+
+
+
 
 	/**
 	 * @brief Sets the environment variable folder path
