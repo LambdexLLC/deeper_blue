@@ -1,6 +1,9 @@
+#
+#   Root cmake lists for the deeper_blue project
+#
 
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
-project(deeper_blue VERSION 0.0.1)
+project(deeper_blue LANGUAGES CXX VERSION 0.0.1)
 
 
 include ("CMakeUtils.cmake")
