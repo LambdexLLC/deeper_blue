@@ -372,7 +372,7 @@ namespace lbx::chess
 		}
 		else
 		{
-			_treeDepth = 4;
+			_treeDepth = 3;
 		};
 
 
@@ -439,9 +439,15 @@ R"(
 					Move line {}
 ==================================================
 )", n);
-
+					// The line we will be logging
+					auto& _line = _lines[n];
+					
+					// Reset the board
 					_lineBoard = _board;
-					for (auto& m : _bestLine)
+					_myTurn = true;
+
+					// Loop through move in the move line
+					for (auto& m : _line)
 					{
 						if (_myTurn)
 						{
