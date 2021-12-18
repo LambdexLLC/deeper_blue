@@ -52,13 +52,13 @@ namespace lbx::chess
 		{
 			_treeDepth = 5;
 		}
-		else if (_pieceCount <= 12)
+		else if (_pieceCount <= 15)
 		{
 			_treeDepth = 4;
 		}
 		else
 		{
-			_treeDepth = 4;
+			_treeDepth = 3;
 		};
 
 
@@ -133,6 +133,7 @@ namespace lbx::chess
 		auto it = _final.begin();
 		for (auto& m : _lines)
 		{
+			if (m.empty()) { __debugbreak(); };
 			*it = m.front().get_move();
 			++it;
 		};
@@ -237,6 +238,8 @@ R"(
 				this->logger_ = Logger{ _game.get_game_name() };
 			};
 		};
+
+		println("playing turn for game {}", _game.get_game_name());
 
 		const auto _moves = this->calculate_multiple_moves(_game.get_board(), _game.get_color());
 		for (auto& m : _moves)

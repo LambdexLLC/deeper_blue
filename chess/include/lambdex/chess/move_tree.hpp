@@ -120,6 +120,12 @@ namespace lbx::chess
 			void set_responses(const RangeT& _range)
 			{
 				const auto _size = jc::ranges::distance(_range) + 1;
+				if (_size == 1)
+				{
+					this->responses_.reset();
+					return;
+				};
+
 				this->responses_ = std::unique_ptr<Node[]>( new Node[_size] );
 				this->responses_.get()[_size - 1] = jc::null;
 				std::ranges::copy(_range, this->responses_.get());

@@ -551,7 +551,7 @@ namespace lbx::chess
 				auto& _square = _board[_squarePos];
 				if (_square != Piece::empty && _pieceColor != get_color(_square))
 				{
-					it->piece = _square;
+					it->piece = as_white(_square);
 					it->pos = _squarePos;
 					++it;
 					++_opponentPieceCount;
@@ -657,24 +657,6 @@ namespace lbx::chess
 						// Pawn would take
 						return _squarePosPair;
 					};
-
-					if (_squarePosPair.rank() == Rank::r2)
-					{
-						// Look for diagonal + 2 capture, make sure to check for blocking pieces
-						if ((_squarePosPair.file() != File::h) &&
-							(_position == (_squarePosPair.rank() + 2, _squarePosPair.file() + 1)) &&
-							(_board[(_squarePosPair.rank() + 1, _squarePosPair.file())] == Piece::empty))
-						{
-							// Pawn would take
-							return _squarePosPair;
-						};
-						if ((_squarePosPair.file() != File::a) &&
-							(_position == (_squarePosPair.rank() + 2, _squarePosPair.file() - 1)))
-						{
-							// Pawn would take
-							return _squarePosPair;
-						};
-					};
 				}
 				else if (_pawnColor == Color::black)
 				{
@@ -690,23 +672,6 @@ namespace lbx::chess
 					{
 						// Pawn would take
 						return _squarePosPair;
-					};
-
-					if (_squarePosPair.rank() == Rank::r7)
-					{
-						// Look for diagonal - 2 capture
-						if ((_squarePosPair.file() != File::h) &&
-							(_position == (_squarePosPair.rank() - 2, _squarePosPair.file() + 1)))
-						{
-							// Pawn would take
-							return _squarePosPair;
-						};
-						if ((_squarePosPair.file() != File::a) &&
-							(_position == (_squarePosPair.rank() - 2, _squarePosPair.file() - 1)))
-						{
-							// Pawn would take
-							return _squarePosPair;
-						};
 					};
 				};
 			};

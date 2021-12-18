@@ -101,14 +101,44 @@ namespace lbx::chess
 		int rate(const BoardWithState& _board, Color _player) const
 		{
 			const auto _materialRating = chess::rate<BoardRater_Material>(_board, _player);
-			const auto _checkmateRating = chess::rate<BoardRater_Checkmate>(_board, _player);
+			const auto _checkmateRating = chess::rate(_board, _player, this->checkmate_rater_);
 			const auto _castleOpportunityRating = chess::rate<BoardRater_CastleOpportunity>(_board, _player);
 
 			const auto _final = _materialRating + _checkmateRating + _castleOpportunityRating;
-			return _final;
+			return std::clamp(_final, -this->checkmate_rater_.checkmate_value, this->checkmate_rater_.checkmate_value);
 		};
+
+
+		BoardRater_Checkmate checkmate_rater_{};
 	};
 	static_assert(cx_board_rater<BoardRater_Complete>);
+
+
+
+	using MoveTreeNode = MoveTree::Node;
+
+	/**
+	 * @brief Holds a move tree node and its evaluated rating
+	*/
+	struct RatedNode
+	{
+		const MoveTreeNode* node = nullptr;
+		Rating rating{};
+	};
+
+
+
+	/**
+	 * @brief Find the best response from a move tree node's responses.
+	 *
+	 * @param _toNode Node to find best response to.
+	 * @param _line Optional rated line to add responses to.
+	 * @return Pointer to the best response, or nullptr if none were found.
+	*/
+	RatedNode find_best_response(const MoveTree::Node& _toNode, RatedLine* _line = nullptr);
+
+
+
 
 
 	/**
@@ -119,6 +149,8 @@ namespace lbx::chess
 	 * @return Move rating
 	*/
 	int last_move_rating(const RatedLine& _line, Color _player);
+
+
 
 	struct TreeBuilder
 	{
@@ -151,7 +183,12 @@ namespace lbx::chess
 
 		std::vector<Move> calculate_multiple_moves(const BoardWithState& _board, Color _player);
 
-		const MoveTree::Node* pick_best_from_tree(const MoveTree::Node& _node, RatedLine& _line);
+
+
+
+
+
+
 		std::vector<RatedLine> pick_best_from_tree(const MoveTree& _tree);
 	};
 

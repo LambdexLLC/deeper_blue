@@ -4,6 +4,9 @@
 
 #include "cpu_profiling.hpp"
 
+#include <lambdex/chess/fen.hpp>
+
+
 int main(int _nargs, char* _vargs[])
 {
 	using namespace lbx;
@@ -22,6 +25,7 @@ int main(int _nargs, char* _vargs[])
 
 	// Set the application's root path
 	chess::set_application_root_path(_rootPath);
+
 
 	AccountAPI _accountAPI{};
 	api::set_account_api(&_accountAPI);

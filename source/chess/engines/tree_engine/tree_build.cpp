@@ -1,5 +1,7 @@
 #include "tree_build.hpp"
 
+#include "chess/engines/random_engine.hpp"
+
 #include <span>
 
 
@@ -9,7 +11,7 @@ namespace lbx::chess
 	std::vector<RatedMove> TreeBuilder::rank_possible_moves(const BoardWithState& _board)
 	{
 		// Generate possible boards from 1 move
-		auto _randomMoves = chess::find_possible_moves(_board);
+		auto _randomMoves = ChessEngine_Random{}.calculate_multiple_moves(_board, _board.turn);
 		std::vector<RatedMove> _rankedMoves(_randomMoves.size());
 		auto _it = _rankedMoves.begin();
 
@@ -80,44 +82,8 @@ namespace lbx::chess
 	};
 
 
-	const MoveTree::Node* TreeBuilder::pick_best_from_tree(const MoveTree::Node& _node, RatedLine& _line)
-	{
-		// Add the current move to the line
-		_line.push_back(_node);
 
-		// Look at opponent's responses to this move
-		const auto _responses = _node.responses();
-		std::vector<std::pair<RatedLine, const MoveTree::Node*>> _responseLines(_responses.size());
-		auto _responseIt = _responseLines.begin();
-		for (auto& m : _responses)
-		{
-			// Get their best response
-			RatedLine _responseLine{};
-			this->pick_best_from_tree(m, _responseLine);
-			_responseIt->second = &m;
-			_responseIt->first = std::move(_responseLine);
-			++_responseIt;
-		};
 
-		// Determine our best response to their best response
-		if (!_responseLines.empty())
-		{
-			// Determine which of thier responses is their best
-			std::ranges::sort(_responseLines, [](const auto& lhs, const auto& rhs) -> bool
-				{
-					return lhs.first.front() > rhs.first.front();
-				});
-			auto& _theirBest = _responseLines.front();
-
-			// Determine our best response to it
-
-		}
-		else
-		{
-			// This move is as good as it gets, return null
-			return nullptr;
-		};
-	};
 
 
 	/**
@@ -140,6 +106,87 @@ namespace lbx::chess
 		};
 	};
 
+	
+	/**
+	 * @brief Find the best response from a move tree node's responses.
+	 * 
+	 * @param _toNode Node to find best response to.
+	 * @return Pointer to the best response, or nullptr if none were found.
+	*/
+	RatedNode find_best_response(const MoveTree::Node& _toNode, RatedLine* _line)
+	{
+		// Return null if no responses exist
+		if (!_toNode.has_responses())
+		{
+			return RatedNode{};
+		};
+
+		// Kill me
+		struct RatedNodeWithLine : public RatedNode
+		{
+			RatedLine line;
+		};
+
+		// The responses to the node
+		const auto _responses = _toNode.responses();
+
+		std::vector<RatedNodeWithLine> _deepRatedResponses{};
+		{
+			RatedNodeWithLine _fillval{};
+			if (_line)
+			{
+				_fillval.line = *_line;
+			};
+			_deepRatedResponses.resize(_responses.size(), _fillval);
+		};
+
+		// Loop over the possible responses we could make
+		auto it = _deepRatedResponses.begin();
+		for (auto& _response : _responses)
+		{
+			// Set the deep rated response's pointer
+			it->node = &_response;
+
+			// Determine what the opponent's best response would be to this response
+			const auto _opponentBestResponse = find_best_response(_response, (_line)? &it->line : nullptr );
+
+			// If there are no responses to this one, then we use the initial response's rating
+			if (!_opponentBestResponse.node)
+			{
+				it->rating = _response.get_rating();
+			}
+			else
+			{
+				it->rating = -_opponentBestResponse.rating;
+			};
+
+			++it;
+		};
+
+		// Sort the deep rated responses
+		std::ranges::sort(_deepRatedResponses, [](auto& lhs, auto& rhs)
+			{
+				if (lhs.rating == rhs.rating)
+				{
+					return lhs.line.size() > rhs.line.size();
+				}
+				else
+				{
+					return lhs.rating > rhs.rating;
+				};
+			});
+		auto& _bestDeepResponse = _deepRatedResponses.front();
+
+		// If we are tracking the move line, append the moves we found to the line
+		if (_line)
+		{
+			_line->push_back(*_bestDeepResponse.node);
+			_line->insert(_line->end(), _bestDeepResponse.line.begin(), _bestDeepResponse.line.end());
+		};
+
+		// Return the highest deep rated response's node
+		return _deepRatedResponses.front();
+	};
 
 
 
@@ -147,101 +194,46 @@ namespace lbx::chess
 
 	std::vector<RatedLine> TreeBuilder::pick_best_from_tree(const MoveTree& _tree)
 	{
-		using Node = MoveTree::Node;
-		const Node* _at = {};
+		const auto& _baseBoard = _tree.initial_board_;
 
-		std::vector<RatedLine> _finalPicks{};
-		for (auto& r : _tree.moves_)
+
+		std::vector<std::pair<RatedLine, RatedNode>> _lines(_tree.moves_.size());
+		auto it = _lines.begin();
+		for (auto& _move : _tree.moves_)
 		{
 			RatedLine _line{};
-			_at = &r;
-			_line.push_back(*_at);
-
-			while (true)
+			const auto _myMove = find_best_response(_move, &_line);
+			it->first.push_back(_move);
+			if (_myMove.node)
 			{
-				// Determine the opponent's best move
-				const Node* _opponentResponse{};
-
-				if (_at->has_responses())
-				{
-					// Look through opponent's responses to our move
-					auto _rsrs = _at->responses();
-
-					// Only look if there are responses to our move possible
-					if (!_rsrs.empty())
-					{
-						// Build up look-ahead rating for opponent response
-						std::vector<std::pair<const Node*, int>> _responseToResponseRatings{};
-						for (auto& _rsrsrs : _rsrs)
-						{
-							if (_rsrsrs.has_responses())
-							{
-								_responseToResponseRatings.push_back(std::pair<const Node*, int>{ &_rsrsrs, -_rsrsrs.responses().front().get_rating()});
-							}
-							else
-							{
-								_responseToResponseRatings.push_back({ &_rsrsrs, _rsrsrs.get_rating() });
-							};
-						};
-
-						// Sort look-ahead responses
-						std::ranges::sort(_responseToResponseRatings, [](auto& lhs, auto& rhs)
-							{
-								return lhs.second > rhs.second;
-							});
-						_opponentResponse = _responseToResponseRatings.front().first;
-					}
-					else
-					{
-						// There are no possible responses to our move
-						break;
-					};
-				}
-				else
-				{
-					// There are no possible responses to our move
-					break;
-				};
-
-				// If the opponent has a response to our move, look into our responses to its
-				// response and determine the best
-				if (_opponentResponse)
-				{
-					// Check that we can response to it
-					if (_opponentResponse->has_responses())
-					{
-						// Add their response to the line
-						_line.push_back(*_opponentResponse);
-						_at = &_opponentResponse->responses().front();
-						_line.push_back(*_at);
-					}
-					else
-					{
-						_line.push_back(*_opponentResponse);
-						break;
-					};
-				};
+				it->first.insert(it->first.end(), _line.begin(), _line.end());
+				it->second = _myMove;
+				++it;
+			}
+			else
+			{
+				it->second.node = &_move;
+				it->second.rating = -_move.get_rating();
+				++it;
 			};
-
-			// Add the line to the final set of lines to evaluate
-			_finalPicks.push_back(_line);
 		};
 
-		// My side's color
-		const auto _myColor = _tree.initial_board_.turn;
 
-		// Sort lines based on final outcome so that the first line in the container
-		// is the one with the best outcome for us
-		std::ranges::sort(_finalPicks, [_myColor](const RatedLine& lhs, const RatedLine& rhs)
+		// Sort by the best evaluated move
+		std::ranges::sort(_lines, [](auto& lhs, auto& rhs) -> bool
 			{
-				// Make sure we get the rating of the last move from OUR POV
-				const auto _lhsRating = last_move_rating(lhs, _myColor);
-				const auto _rhsRating = last_move_rating(rhs, _myColor);
-				return _lhsRating > _rhsRating;
+				return lhs.second.rating < rhs.second.rating;
 			});
 
-		// Return our sorted lines
-		return _finalPicks;
+		std::vector<RatedLine> _out(_lines.size());
+		auto _outIt = _out.begin();
+		for (auto& l : _lines)
+		{
+			*_outIt = l.first;
+			++_outIt;
+		};
+
+		return _out;
 	};
 
 
