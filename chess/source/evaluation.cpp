@@ -20,7 +20,7 @@ namespace lbx::chess
 		if (is_piece_threatened(_board, _kingPos))
 		{
 			// Check if there are any possible moves
-			static std::array<Move, 64> _moveBuffer{};
+			static thread_local std::array<Move, 128> _moveBuffer{};
 			const auto _count = find_possible_moves(_board, _moveBuffer);
 			if (_count == 0)
 			{
