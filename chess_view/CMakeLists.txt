@@ -2,8 +2,6 @@
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 project(deeper_blue-viewer VERSION 0.0.1)
 
-
-
 # Libraries to be privately linked
 set(private_link 
     nlohmann_json
@@ -37,3 +35,9 @@ target_compile_definitions(${PROJECT_NAME}-exe PRIVATE SOURCE_ROOT="${CMAKE_CURR
 # Trickle down!
 
 ADD_CMAKE_SUBDIRS_HERE()
+
+
+
+# Copy required things to build outputs
+
+file(COPY "${CMAKE_CURRENT_LIST_DIR}/config.json" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/")

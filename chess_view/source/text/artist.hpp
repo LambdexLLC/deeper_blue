@@ -51,11 +51,23 @@ namespace lbx::text
 		void draw();
 
 		TextBlockID add_text(const std::string_view _text, float _x, float _y);
+		
 		void set_text(TextBlockID _textBlock, const std::string_view _text);
+
+		/**
+		 * @brief Sets the position of a text block.
+		 * @param _textBlock Text block ID.
+		 * @param _x X position in pixels.
+		 * @param _y Y position in pixels.
+		*/
+		void set_text_position(TextBlockID _textBlock, float _x, float _y);
+
+
 		void append_text(TextBlockID _textBlock, const std::string_view _appendText);
 
-		TextArtist(jc::reference_ptr<LoadedFontFace> _font);
 
+		TextArtist(jc::reference_ptr<LoadedFontFace> _font);
+		TextArtist(jc::reference_ptr<LoadedFontFace> _font, jc::gl::program_id _shaderProgram);
 
 
 		// Transform values

@@ -25,19 +25,19 @@ namespace lbx::text
 {
 	/**
 	 * @brief Creates an opengl 2D texture array containing a font's glyphs
-	 * 
+	 *
 	 * @param _font Loaded font face to make texture for.
 	 * @return OpenGL 2D texture array owning handle.
 	*/
 	inline jc::gl::unique_texture new_font_face_texture_sheet(const LoadedFontFace& _font)
 	{
 		auto _texture = gl::new_texture(gl::texture_target::array2D);
-		
+
 		gl::set(_texture, gl::texture_parameter::min_filter, GL_LINEAR);
 		gl::set(_texture, gl::texture_parameter::mag_filter, GL_LINEAR);
 		gl::set(_texture, gl::texture_parameter::wrap_s, GL_CLAMP_TO_EDGE);
 		gl::set(_texture, gl::texture_parameter::wrap_t, GL_CLAMP_TO_EDGE);
-		
+
 		gl::set_storage_3D(_texture, gl::internal_format::r8, _font.width_px_, _font.height_px_, _font.glyphs_.size());
 
 
@@ -204,6 +204,20 @@ namespace lbx::text
 		this->buffer_data();
 	};
 
+	/**
+	 * @brief Sets the position of a text block.
+	 * @param _textBlock Text block ID.
+	 * @param _x X position in pixels.
+	 * @param _y Y position in pixels.
+	*/
+	void TextArtist::set_text_position(TextBlockID _textBlock, float _x, float _y)
+	{
+		auto& _text = this->blocks_.at(_textBlock);
+		_text.x = _x;
+		_text.y = _y;
+		this->buffer_data();
+	};
+
 	void TextArtist::append_text(TextBlockID _textBlock, const std::string_view _appendText)
 	{
 		this->blocks_.at(_textBlock).text.append(_appendText);
@@ -288,9 +302,16 @@ namespace lbx::text
 
 
 
-
 	TextArtist::TextArtist(jc::reference_ptr<LoadedFontFace> _font) :
 		font_{ _font }
-	{};
+	{
+		this->init();
+	};
+	TextArtist::TextArtist(jc::reference_ptr<LoadedFontFace> _font, gl::program_id _shaderProgram) :
+		font_{ _font }, shader_{ _shaderProgram }
+	{
+		this->init();
+		this->configure_attributes(_shaderProgram);
+	};
 
 }
