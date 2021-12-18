@@ -1,0 +1,15 @@
+{
+		"shaders" :
+		[
+				{
+						"name" : "board",
+						"vertex_path" : "assets/shaders/board/vertex.glsl",
+						"fragment_path" : "assets/shaders/board/fragment.glsl"
+				},
+				{
+						"name" : "text",
+						"vertex_path" : "assets/shaders/text/vertex.glsl",
+						"fragment_path" : "assets/shaders/text/fragment.glsl"
+				}
+		]
+}

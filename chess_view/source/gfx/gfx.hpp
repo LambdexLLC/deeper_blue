@@ -54,7 +54,7 @@ namespace lbx::chess_view
 
 		void pull_events()
 		{
-			glfwWaitEventsTimeout(0.1);
+			glfwWaitEventsTimeout(0.01);
 		};
 
 		void update()
