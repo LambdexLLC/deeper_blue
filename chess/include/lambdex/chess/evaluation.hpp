@@ -194,6 +194,15 @@ namespace lbx::chess
 		return RatedMove{ _move, _rating };
 	};
 
+
+
+	/**
+	 * @brief Rates the overall complexity of the board based on which pieces are present.
+	 * @param _board Chess board.
+	 * @return Complexity value as a rating.
+	*/
+	Rating rate_complexity(const BoardWithState& _board);
+
 };
 
 #endif // LAMBDEX_CHESS_EVALUATION_HPP

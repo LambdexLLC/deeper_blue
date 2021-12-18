@@ -6,7 +6,7 @@ namespace lbx
 	// Called when the object is initialized but no games are being played
 	void AccountAPI::on_no_current_games()
 	{
-		this->challenge_ai(3);
+		this->challenge_ai(4);
 	};
 };
 
@@ -67,7 +67,7 @@ namespace lbx
 		auto _games = this->get_current_games();
 		if (_games.empty())
 		{
-			this->on_no_current_games();
+			//this->on_no_current_games();
 		};
 	};
 
@@ -77,7 +77,7 @@ namespace lbx
 		const auto _games = this->get_current_games();
 		for (auto& _game : _games)
 		{
-			this->assign_to_game(_game, jc::make_unique<chess::ChessEngine_Baby>());
+			//this->assign_to_game(_game, jc::make_unique<chess::ChessEngine_Baby>());
 		};
 
 		if (_games.empty())

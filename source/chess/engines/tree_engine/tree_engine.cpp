@@ -38,21 +38,23 @@ namespace lbx::chess
 		jc::timer _turnTime{};
 		_turnTime.start();
 
-		// Get number of pieces, this can be used to help tune the search depth
-		auto _pieceCount = _board.count_pieces();
-
-		// How many turns to search down
+		
+		const auto _complexity = rate_complexity(_board);
 		size_t _treeDepth = 3;
-
-		if (_pieceCount <= 4)
+		
+		if (_complexity <= 50)
+		{
+			_treeDepth = 7;
+		}
+		else if (_complexity <= 100)
 		{
 			_treeDepth = 6;
 		}
-		else if (_pieceCount <= 7)
+		else if (_complexity <= 250)
 		{
 			_treeDepth = 5;
 		}
-		else if (_pieceCount <= 15)
+		else if (_complexity <= 600)
 		{
 			_treeDepth = 4;
 		}
@@ -60,7 +62,7 @@ namespace lbx::chess
 		{
 			_treeDepth = 3;
 		};
-
+		println("complexity = {}", _complexity);
 
 
 
