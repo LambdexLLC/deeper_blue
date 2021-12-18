@@ -2,7 +2,7 @@
 
 #include "application/application.hpp"
 
-
+#include "cpu_profiling.hpp"
 
 int main(int _nargs, char* _vargs[])
 {
@@ -24,8 +24,25 @@ int main(int _nargs, char* _vargs[])
 	chess::set_application_root_path(_rootPath);
 
 
+	const auto fmtd = [](const std::chrono::duration<double> _duration)
+	{
+		double _val = _duration.count();
+		using namespace std::chrono;
+		return format("{}", duration_cast<nanoseconds>(_duration));
+	};
 
-	return 0;
+	{
+		using namespace chess;
+
+		const auto _board = BoardWithState{ make_standard_board() };
+		const auto _move = Move{ (File::a, Rank::r2), (File::a, Rank::r4) };
+		const auto _fn = [_board, _move]()
+		{
+			return is_move_valid(_board, _move, _board.turn);
+		};
+		auto _result = profile_cpu_usage(10000000, _fn);
+		println("times = {}\nmax = {}\navg = {}", _result.runtimes, _result.max_time, fmtd(_result.average_time));
+	};
 
 
 	AccountAPI _accountAPI{};

@@ -21,8 +21,8 @@ namespace lbx::chess
 		auto _moves = find_possible_moves(_board);
 
 		// Randomize found moves
-		static std::random_device rd{};
-		static std::mt19937 g(rd());
+		static thread_local std::random_device rd{};
+		static thread_local std::mt19937 g(rd());
 		std::shuffle(_moves.data(), _moves.data() + _moves.size(), g);
 
 		// Return randomized moves

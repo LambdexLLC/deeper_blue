@@ -1,5 +1,9 @@
 #include <lambdex/chess/apply_move.hpp>
 
+#include <lambdex/chess/move_validation.hpp>
+#include <lambdex/chess/piece_movement.hpp>
+
+#include <random>
 #include <numeric>
 #include <algorithm>
 
@@ -144,4 +148,30 @@ namespace lbx::chess
 		};
 
 	};
+
+
+
+	/**
+	 * @brief Makes a random but valid move for a given chess board.
+	 *
+	 * @param _board Chess board to make a move for.
+	 * @return A random but valid move if one is possble, or nullopt if non are possible.
+	*/
+	std::optional<Move> make_random_move(const BoardWithState& _board)
+	{
+		static thread_local std::random_device rnd_device{};
+		static thread_local std::mt19937 rnd{ rnd_device() };
+
+		const auto _moves = find_possible_moves(_board);
+		if (!_moves.empty())
+		{
+			const auto _index = std::clamp<size_t>(rnd(), 0, _moves.size() - 1);
+			return _moves.at(_index);
+		}
+		else
+		{
+			return std::nullopt;
+		};
+	};
+
 };

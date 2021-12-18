@@ -38,7 +38,7 @@ namespace lbx::chess
 	{
 	private:
 
-		std::vector<RatedMove> rank_possible_moves(const BoardWithState& _board, Color _player);
+		std::vector<RatedMove> rank_possible_moves(const BoardWithState& _board);
 		
 		void calculate_move_tree_node_responses(const BoardWithState& _board, MoveTree::Node* _previous, size_t _depth);
 		void calculate_move_tree_node_responses(const BoardWithState& _board, MoveTree::Node* _previous);

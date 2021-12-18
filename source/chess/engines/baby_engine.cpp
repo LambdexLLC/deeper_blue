@@ -4,6 +4,7 @@
 
 #include <lambdex/chess/chess.hpp>
 #include <lambdex/chess/fen.hpp>
+#include <lambdex/chess/piece_movement.hpp>
 
 #include <jclib/timer.h>
 #include <jclib/ranges.h>
@@ -111,10 +112,10 @@ namespace lbx::chess
 	};
 	static_assert(cx_board_rater<BoardRater_Complete>);
 
-	std::vector<RatedMove> ChessEngine_Baby::rank_possible_moves(const BoardWithState& _board, Color _player)
+	std::vector<RatedMove> ChessEngine_Baby::rank_possible_moves(const BoardWithState& _board)
 	{
 		// Generate possible boards from 1 move
-		auto _randomMoves = this->random_fallback_.calculate_multiple_moves(_board, _player);
+		auto _randomMoves = chess::find_possible_moves(_board);
 		std::vector<RatedMove> _rankedMoves(_randomMoves.size());
 		auto _it = _rankedMoves.begin();
 		
@@ -138,7 +139,7 @@ namespace lbx::chess
 		}
 		else
 		{
-			auto _moves = this->rank_possible_moves(_board, _board.turn);
+			auto _moves = this->rank_possible_moves(_board);
 			_previous->set_responses(_moves);
 		};
 	};
@@ -162,7 +163,7 @@ namespace lbx::chess
 		MoveTree _out{};
 		_out.initial_board_ = _board;
 
-		auto _moves = this->rank_possible_moves(_board, _board.turn);
+		auto _moves = this->rank_possible_moves(_board);
 		_out.moves_.resize(_moves.size());
 		std::ranges::copy(_moves, _out.moves_.begin());
 
@@ -372,7 +373,7 @@ namespace lbx::chess
 		}
 		else
 		{
-			_treeDepth = 3;
+			_treeDepth = 4;
 		};
 
 

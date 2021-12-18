@@ -52,6 +52,25 @@ namespace lbx::chess
 			return Position{ 64 };
 		};
 
+		/**
+		 * @brief Gets the maximum valid value a position may be.
+		 * @return Maximum valid position.
+		*/
+		constexpr static Position max() noexcept
+		{
+			return Position{ 63 };
+		};
+
+		/**
+		 * @brief Gets the minimum valid value a position may be.
+		 * @return Minimum valid position.
+		*/
+		constexpr static Position min() noexcept
+		{
+			return Position{ 0 };
+		};
+
+
 
 		// Three-way-compare lets goo
 		constexpr auto operator<=>(const Position& rhs) const noexcept = default;
@@ -590,8 +609,9 @@ namespace lbx::chess
 		// Convert each component and set their characters for the output string
 		const auto _file = to_string(_value.file());
 		const auto _rank = to_string(_value.rank());
+
 		_out[0] = _file[0];
-		_out[1] = _file[2];
+		_out[1] = _rank[0];
 
 		return _out;
 	};

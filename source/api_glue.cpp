@@ -6,10 +6,7 @@ namespace lbx
 	// Called when the object is initialized but no games are being played
 	void AccountAPI::on_no_current_games()
 	{
-
-		this->challenge_user("BitSlime");
-
-		//this->challenge_ai_bullet(3);
+		this->challenge_ai_bullet(3);
 	};
 };
 
@@ -70,7 +67,7 @@ namespace lbx
 		auto _games = this->get_current_games();
 		if (_games.empty())
 		{
-			//this->on_no_current_games();
+			this->on_no_current_games();
 		};
 	};
 
