@@ -21,11 +21,42 @@ namespace lbx::chess
 	{
 	private:
 
-		std::vector<Move> calculate_multiple_moves(const BoardWithState& _board, Color _player);
+		/**
+		 * @brief Determines the best move to play.
+		 * 
+		 * @param _board The state of the chess board.
+		 * @param _player The player who we are playing as.
+		 * @return The best move in our opinion.
+		*/
+		Move determine_best_move(const BoardWithState& _board, Color _player);
+
+		/**
+		 * @brief Determines the search depth to use for a give board state.
+		 * @param _board Chess board to get search depth for.
+		 * @return Search depth.
+		*/
+		size_t determine_search_depth(const BoardWithState& _board) const;
+
+		/**
+		 * @brief Constructs a move tree for a chess board.
+		 * 
+		 * This will use the thread pool to parralelize the construction of the tree.
+		 * 
+		 * @param _board Chess board initial state.
+		 * @param _depth Depth for the tree.
+		 * @return Constructed move tree.
+		*/
+		MoveTree construct_move_tree(const BoardWithState& _board, size_t _depth);
 
 	public:
 
+		/**
+		 * @brief Plays a turn using this chess engine
+		 * @param _game The game to play a turn in.
+		*/
 		void play_turn(IGameInterface& _game) final;
+
+
 
 		ChessEngine_Baby();
 

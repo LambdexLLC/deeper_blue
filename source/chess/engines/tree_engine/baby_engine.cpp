@@ -1,4 +1,4 @@
-#include "tree_engine.hpp"
+#include "baby_engine.hpp"
 
 #include "utility/io.hpp"
 
@@ -26,27 +26,21 @@ namespace lbx::chess
 	constexpr auto dc = [](const auto& v) { return std::chrono::duration_cast<std::chrono::duration<double>>(v); };
 
 
-
-
-
-
-	std::vector<Move> ChessEngine_Baby::calculate_multiple_moves(const BoardWithState& _board, Color _player)
+	/**
+	 * @brief Determines the search depth to use for a give board state.
+	 * @param _board Chess board to get search depth for.
+	 * @return Search depth.
+	*/
+	size_t ChessEngine_Baby::determine_search_depth(const BoardWithState& _board) const
 	{
-		jc::timer _tm{};
-		_tm.start();
-
-		jc::timer _turnTime{};
-		_turnTime.start();
-
-		
 		const auto _complexity = rate_complexity(_board);
 		size_t _treeDepth = 3;
-		
+
 		if (_complexity <= 50)
 		{
 			_treeDepth = 7;
 		}
-		else if (_complexity <= 100)
+		else if (_complexity <= 150)
 		{
 			_treeDepth = 6;
 		}
@@ -54,7 +48,7 @@ namespace lbx::chess
 		{
 			_treeDepth = 5;
 		}
-		else if (_complexity <= 600)
+		else if (_complexity <= 500)
 		{
 			_treeDepth = 4;
 		}
@@ -62,26 +56,39 @@ namespace lbx::chess
 		{
 			_treeDepth = 3;
 		};
-		println("complexity = {}", _complexity);
 
+		return _treeDepth;
+	};
 
-
+	/**
+	 * @brief Constructs a move tree for a chess board.
+	 *
+	 * This will use the thread pool to parralelize the construction of the tree.
+	 *
+	 * @param _board Chess board initial state.
+	 * @param _depth Depth for the tree.
+	 * @return Constructed move tree.
+	*/
+	MoveTree ChessEngine_Baby::construct_move_tree(const BoardWithState& _board, size_t _depth)
+	{
 		TreeBuilder _builder{};
 
+		// Create the initial set of responses
 		auto _moveTree = _builder.make_move_tree(_board);
-		
+
+		// Fill out branches
 		{
 			auto& _buildThreads = this->build_threads_;
-			
+
 			auto _buildThreadIt = _buildThreads.begin();
 			const auto _buildThreadsEnd = _buildThreads.end();
 
 			// Assign nodes out to the threads
-			for (auto& m : _moveTree.moves_)
+			for (auto& m : _moveTree)
 			{
 				auto _board = _moveTree.initial_board_;
 				apply_move(_board, m.get_move());
-				TreeBuildTask _task{ _board, m, _treeDepth - 1 };
+				TreeBuildTask _task{ _board, m, _depth };
 
 				// Keep going until we've assigned the task to a thread
 				while (true)
@@ -113,10 +120,34 @@ namespace lbx::chess
 			};
 		};
 
-		const auto _treeTime = _tm.elapsed();
+		// Return finished tree
+		return _moveTree;
+	};
+
+	/**
+	 * @brief Determines the best move to play.
+	 *
+	 * @param _board The state of the chess board.
+	 * @param _player The player who we are playing as.
+	 * @return The best move in our opinion.
+	*/
+	Move ChessEngine_Baby::determine_best_move(const BoardWithState& _board, Color _player)
+	{
+		jc::timer _tm{};
 		_tm.start();
 
+		jc::timer _turnTime{};
+		_turnTime.start();
 
+		
+		const auto _treeDepth = this->determine_search_depth(_board);
+
+
+		const auto _treeTime = _tm.elapsed();
+		_tm.start();
+		auto _moveTree = this->construct_move_tree(_board, _treeDepth);
+
+		TreeBuilder _builder{};
 
 		auto _lines = _builder.pick_best_from_tree(_moveTree);
 		const auto _pickTime = _tm.elapsed();
@@ -224,7 +255,7 @@ R"(
 			f.flush(); 
 		}
 
-		return _final;
+		return _final.front();
 	};
 
 
@@ -243,15 +274,11 @@ R"(
 
 		println("playing turn for game {}", _game.get_game_name());
 
-		const auto _moves = this->calculate_multiple_moves(_game.get_board(), _game.get_color());
-		for (auto& m : _moves)
+		const auto _move = this->determine_best_move(_game.get_board(), _game.get_color());
+		if (!_game.submit_move(_move))
 		{
-			if (_game.submit_move(m))
-			{
-				return;
-			};
+			_game.resign();
 		};
-		_game.resign();
 	};
 
 

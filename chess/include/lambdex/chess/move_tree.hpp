@@ -11,7 +11,6 @@
 
 namespace lbx::chess
 {
-
 	/**
 	 * @brief Tree structure for holding many possible moves over time, ie. simulated games
 	*/
@@ -169,6 +168,27 @@ namespace lbx::chess
 			RatedMove move_;
 
 		};
+
+
+		// Iterator support
+
+		auto begin() { return jc::begin(this->moves_); };
+		auto begin() const { return jc::begin(this->moves_); };
+		auto cbegin() const { return jc::begin(this->moves_); };
+
+		auto end() { return jc::end(this->moves_); };
+		auto end() const { return jc::end(this->moves_); };
+		auto cend() const { return jc::end(this->moves_); };
+
+
+
+
+
+
+
+
+
+
 
 		/**
 		 * @brief The initial board state
