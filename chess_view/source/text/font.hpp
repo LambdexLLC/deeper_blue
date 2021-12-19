@@ -25,6 +25,16 @@ namespace lbx::text
 	};
 
 	/**
+	 * @brief Holds a font size in pixels
+	*/
+	struct FontSize_Pixels
+	{
+		uint32_t width;
+		uint32_t height;
+	};
+
+
+	/**
 	 * @brief Holds the data associated with a single font face
 	*/
 	class LoadedFontFace
@@ -47,6 +57,20 @@ namespace lbx::text
 		iterator end() noexcept { return this->glyphs_.end(); };
 		const_iterator end() const noexcept { return this->glyphs_.end(); };
 		const_iterator cend() const noexcept { return this->glyphs_.end(); };
+
+
+
+		using size_type = uint32_t;
+
+
+		/**
+		 * @brief Gets the maximum size for a glyph in this face.
+		 * @return Glyph size in pixels.
+		*/
+		FontSize_Pixels max_glyph_size() const noexcept
+		{
+			return FontSize_Pixels{ this->width_px_, this->height_px_ };
+		};
 
 
 
@@ -134,21 +158,15 @@ namespace lbx::text
 
 
 
+
+
+
 		std::vector<LoadedGlyph> glyphs_{};
 		uint32_t width_px_ = 0;
 		uint32_t height_px_ = 0;
 
 		int32_t x_scale_ = 0;
 		int32_t y_scale_ = 0;
-	};
-
-	/**
-	 * @brief Holds a font size in pixels
-	*/
-	struct FontSize_Pixels
-	{
-		uint32_t width;
-		uint32_t height;
 	};
 
 
