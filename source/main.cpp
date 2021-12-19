@@ -2,6 +2,9 @@
 
 #include "application/application.hpp"
 
+#include "cpu_profiling.hpp"
+
+#include <lambdex/chess/fen.hpp>
 
 
 int main(int _nargs, char* _vargs[])
@@ -22,10 +25,6 @@ int main(int _nargs, char* _vargs[])
 
 	// Set the application's root path
 	chess::set_application_root_path(_rootPath);
-
-
-
-	return 0;
 
 
 	AccountAPI _accountAPI{};

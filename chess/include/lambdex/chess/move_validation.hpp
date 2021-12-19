@@ -14,6 +14,7 @@
 
 #include "move.hpp"
 
+#include <chrono>
 #include <optional>
 
 namespace lbx::chess
@@ -214,6 +215,7 @@ namespace lbx::chess
 	 * @return True if move is valid, false otherwise
 	*/
 	MoveValidity is_move_valid(const BoardWithState& _board, const Move& _move, const Color& _player);
+
 };
 
 #endif // LAMBDEX_CHESS_MOVE_VALIDATION_HPP

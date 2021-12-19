@@ -16,110 +16,110 @@ namespace lbx::chess
 			Functions below are for validating movement for particular pieces
 		*/
 		
-			constexpr inline BitBoard bits_below_rank(Rank _rank)
+		constexpr inline BitBoard bits_below_rank(Rank _rank)
+		{
+			// TODO: Precompute this at compile time
+			BitBoard _out{};
+			for (Rank r = Rank::r1; r != _rank; ++r)
 			{
-				// TODO: Precompute this at compile time
-				BitBoard _out{};
-				for (Rank r = Rank::r1; r != _rank; ++r)
-				{
-					_out |= bits_in_rank(r);
-				};
-				return _out;
+				_out |= bits_in_rank(r);
 			};
-			constexpr inline BitBoard bits_above_rank(Rank _rank)
+			return _out;
+		};
+		constexpr inline BitBoard bits_above_rank(Rank _rank)
+		{
+			// TODO: Precompute this at compile time
+			BitBoard _out{};
+			for (Rank r = Rank::r8; r != _rank; --r)
 			{
-				// TODO: Precompute this at compile time
-				BitBoard _out{};
-				for (Rank r = Rank::r8; r != _rank; --r)
+				_out |= bits_in_rank(r);
+				if (_rank == Rank::r1)
 				{
-					_out |= bits_in_rank(r);
-					if (_rank == Rank::r1)
-					{
-						break;
-					};
+					break;
 				};
-				return _out;
 			};
+			return _out;
+		};
 			
-			constexpr inline BitBoard bits_right_of_file(File _file)
+		constexpr inline BitBoard bits_right_of_file(File _file)
+		{
+			// TODO: Precompute this at compile time
+			BitBoard _out{};
+			for (File f = File::h; f != _file; --f)
 			{
-				// TODO: Precompute this at compile time
-				BitBoard _out{};
-				for (File f = File::h; f != _file; --f)
+				_out |= bits_in_file(f);
+				if (_file == File::a)
 				{
-					_out |= bits_in_file(f);
-					if (_file == File::a)
-					{
-						break;
-					};
+					break;
 				};
-				return _out;
 			};
-			constexpr inline BitBoard bits_left_of_file(File _file)
+			return _out;
+		};
+		constexpr inline BitBoard bits_left_of_file(File _file)
+		{
+			// TODO: Precompute this at compile time
+			BitBoard _out{};
+			for (File f = File::a; f != _file; ++f)
 			{
-				// TODO: Precompute this at compile time
-				BitBoard _out{};
-				for (File f = File::a; f != _file; ++f)
-				{
-					_out |= bits_in_file(f);
-				};
-				return _out;
+				_out |= bits_in_file(f);
 			};
+			return _out;
+		};
 
-			constexpr inline BitBoard bits_outside_range(File _file1, File _file2)
-			{
-				return	bits_left_of_file(std::min(_file1, _file2)) |
-						bits_right_of_file(std::max(_file1, _file2));
-			};
-			constexpr inline BitBoard bits_outside_range(Rank _rank1, Rank _rank2)
-			{
-				return	bits_below_rank(std::min(_rank1, _rank2)) |
-						bits_above_rank(std::max(_rank1, _rank2));
-			};
+		constexpr inline BitBoard bits_outside_range(File _file1, File _file2)
+		{
+			return	bits_left_of_file(std::min(_file1, _file2)) |
+					bits_right_of_file(std::max(_file1, _file2));
+		};
+		constexpr inline BitBoard bits_outside_range(Rank _rank1, Rank _rank2)
+		{
+			return	bits_below_rank(std::min(_rank1, _rank2)) |
+					bits_above_rank(std::max(_rank1, _rank2));
+		};
 
-			constexpr inline BitBoard bits_inside_range_inclusive(File _file1, File _file2)
-			{
-				return ~bits_outside_range(_file1, _file2);
-			};
-			constexpr inline BitBoard bits_inside_range_inclusive(Rank _rank1, Rank _rank2)
-			{
-				return ~bits_outside_range(_rank1, _rank2);
-			};
+		constexpr inline BitBoard bits_inside_range_inclusive(File _file1, File _file2)
+		{
+			return ~bits_outside_range(_file1, _file2);
+		};
+		constexpr inline BitBoard bits_inside_range_inclusive(Rank _rank1, Rank _rank2)
+		{
+			return ~bits_outside_range(_rank1, _rank2);
+		};
 
-			constexpr inline BitBoard bits_inside_range(File _file1, File _file2)
-			{
-				return bits_inside_range_inclusive(_file1, _file2) & ~(bits_in_file(_file1) | bits_in_file(_file2));
-			};
-			constexpr inline BitBoard bits_inside_range(Rank _rank1, Rank _rank2)
-			{
-				return bits_inside_range_inclusive(_rank1, _rank2) & ~(bits_in_rank(_rank1) | bits_in_rank(_rank2));
-			};
+		constexpr inline BitBoard bits_inside_range(File _file1, File _file2)
+		{
+			return bits_inside_range_inclusive(_file1, _file2) & ~(bits_in_file(_file1) | bits_in_file(_file2));
+		};
+		constexpr inline BitBoard bits_inside_range(Rank _rank1, Rank _rank2)
+		{
+			return bits_inside_range_inclusive(_rank1, _rank2) & ~(bits_in_rank(_rank1) | bits_in_rank(_rank2));
+		};
 
-			constexpr inline BitBoard bits_outside_range_inclusive(File _file1, File _file2)
-			{
-				return	bits_outside_range(_file1, _file2) |
-						bits_in_file(_file1) |
-						bits_in_file(_file2);
-			};
-			constexpr inline BitBoard bits_outside_range_inclusive(Rank _rank1, Rank _rank2)
-			{
-				return	bits_outside_range(_rank1, _rank2) |
-						bits_in_rank(_rank1) |
-						bits_in_rank(_rank2);
-			};
+		constexpr inline BitBoard bits_outside_range_inclusive(File _file1, File _file2)
+		{
+			return	bits_outside_range(_file1, _file2) |
+					bits_in_file(_file1) |
+					bits_in_file(_file2);
+		};
+		constexpr inline BitBoard bits_outside_range_inclusive(Rank _rank1, Rank _rank2)
+		{
+			return	bits_outside_range(_rank1, _rank2) |
+					bits_in_rank(_rank1) |
+					bits_in_rank(_rank2);
+		};
 
-			constexpr inline BitBoard make_bitboard_with_path(File _file, Rank _rank1, Rank _rank2)
-			{
-				// Mask allows only bits in the file within the range [_rank1, _rank2]
-				const auto _bitsWithinRange = bits_inside_range_inclusive(_rank1, _rank2);
-				return bits_in_file(_file) & _bitsWithinRange;
-			};
-			constexpr inline BitBoard make_bitboard_with_path(Rank _rank, File _file1, File _file2)
-			{
-				// Mask allows only bits in the file within the range [_file1, _file2]
-				const auto _bitsWithinRange = bits_inside_range_inclusive(_file1, _file2);
-				return bits_in_rank(_rank) & _bitsWithinRange;
-			};
+		constexpr inline BitBoard make_bitboard_with_path(File _file, Rank _rank1, Rank _rank2)
+		{
+			// Mask allows only bits in the file within the range [_rank1, _rank2]
+			const auto _bitsWithinRange = bits_inside_range_inclusive(_rank1, _rank2);
+			return bits_in_file(_file) & _bitsWithinRange;
+		};
+		constexpr inline BitBoard make_bitboard_with_path(Rank _rank, File _file1, File _file2)
+		{
+			// Mask allows only bits in the file within the range [_file1, _file2]
+			const auto _bitsWithinRange = bits_inside_range_inclusive(_file1, _file2);
+			return bits_in_rank(_rank) & _bitsWithinRange;
+		};
 			
 
 
@@ -528,172 +528,167 @@ namespace lbx::chess
 		JCLIB_ASSERT(_piece != Piece::empty);
 		const auto _pieceColor = get_color(_piece);
 
-		Position _squarePos{ 0 };
-		for (_squarePos; _squarePos != Position{ 64 }; ++_squarePos)
+
+		struct FoundPiece
 		{
-			auto& _square = _board[_squarePos];
-			const auto _squarePosPair = PositionPair{ _squarePos };
+			PositionPair pos;
+			
+			/**
+			 * @brief The piece type, always white
+			*/
+			Piece piece;
+		};
 
-			if (_square != Piece::empty && _pieceColor != get_color(_square))
+		// Buffer for holding where the opponent's pieces are 
+		std::array<FoundPiece, 16> _opponentPiecesBuffer{};
+		size_t _opponentPieceCount = 0;
+		
+		// Find opponent pieces before doing threat checks
+		{
+			auto it = _opponentPiecesBuffer.begin();
+			for (Position _squarePos{}; _squarePos != Position::end(); ++_squarePos)
 			{
-				// Found enemy piece
-				const auto _squarePiece = as_white(_square);
-				switch (_squarePiece)
+				auto& _square = _board[_squarePos];
+				if (_square != Piece::empty && _pieceColor != get_color(_square))
 				{
-				case Piece::bishop:
-				{
-					const auto _movementType = classify_movement(_squarePosPair, _position);
-					if (_movementType == MovementClass::diagonal)
-					{
-						// Determine if a piece is in the path
-						auto _collidePos = find_piece_in_path(_board, _squarePosPair, _position, _movementType);
-						if (!_collidePos)
-						{
-							// Found threat!
-							return _squarePosPair;
-						};
-					};
+					it->piece = as_white(_square);
+					it->pos = _squarePos;
+					++it;
+					++_opponentPieceCount;
 				};
-				break;
-				case Piece::queen:
-				{
-					const auto _movementType = classify_movement(_squarePosPair, _position);
-					if (_movementType != MovementClass::invalid)
-					{
-						// Determine if a piece is in the path
-						auto _collidePos = find_piece_in_path(_board, _squarePosPair, _position, _movementType);
-						if (!_collidePos)
-						{
-							// Found threat!
-							return _squarePosPair;
-						};
-					};
-				};
-				break;
-				case Piece::rook:
-				{
-					const auto _movementType = classify_movement(_squarePosPair, _position);
-					if (_movementType == MovementClass::rank || _movementType == MovementClass::file)
-					{
-						// Determine if a piece is in the path
-						auto _collidePos = find_piece_in_path(_board, _squarePosPair, _position, _movementType);
-						if (!_collidePos)
-						{
-							// Found threat!
-							return _squarePosPair;
-						};
-					};
-				};
-				break;
-				case Piece::knight:
-				{
-					// The position offsets for where the knight can move
-					constexpr auto _offendingOffsets = std::array
-					{
-						PositionPair_Offset{ +2, +1 },
-						PositionPair_Offset{ +1, +2 },
-						PositionPair_Offset{ -2, -1 },
-						PositionPair_Offset{ -1, -2 },
-						PositionPair_Offset{ -2, +1 },
-						PositionPair_Offset{ -1, +2 },
-						PositionPair_Offset{ +2, -1 },
-						PositionPair_Offset{ +1, -2 }
-					};
-					
-					// Determine if the pieces are offset such that the knight can hit the piece
-					const auto _offset = _squarePosPair - _position;
-					if (jc::contains(_offendingOffsets, _offset))
-					{
-						return _squarePos;
-					};
-				};
-				break;
-				case Piece::pawn:
-				{
-					const auto _pawnColor = get_color(_board[_squarePosPair]);
-					if (_pawnColor == Color::white)
-					{
-						// Look for diagonal + 1 capture
-						if ((_squarePosPair.file() != File::h) &&
-							(_position == (_squarePosPair.rank() + 1, _squarePosPair.file() + 1)))
-						{
-							// Pawn would take
-							return _squarePosPair;
-						};
-						if ((_squarePosPair.file() != File::a) &&
-							(_position == (_squarePosPair.rank() + 1, _squarePosPair.file() - 1)))
-						{
-							// Pawn would take
-							return _squarePosPair;
-						};
-
-						if (_squarePosPair.rank() == Rank::r2)
-						{
-							// Look for diagonal + 2 capture, make sure to check for blocking pieces
-							if ((_squarePosPair.file() != File::h) &&
-								(_position == (_squarePosPair.rank() + 2, _squarePosPair.file() + 1)) &&
-								(_board[(_squarePosPair.rank() + 1, _squarePosPair.file())] == Piece::empty))
-							{
-								// Pawn would take
-								return _squarePosPair;
-							};
-							if ((_squarePosPair.file() != File::a) &&
-								(_position == (_squarePosPair.rank() + 2, _squarePosPair.file() - 1)))
-							{
-								// Pawn would take
-								return _squarePosPair;
-							};
-						};
-					}
-					else if (_pawnColor == Color::black)
-					{
-						// Look for diagonal - 1 capture
-						if ((_squarePosPair.file() != File::h) && (_squarePosPair.rank() != Rank::r1) &&
-							(_position == (_squarePosPair.rank() - 1, _squarePosPair.file() + 1)))
-						{
-							// Pawn would take
-							return _squarePosPair;
-						};
-						if ((_squarePosPair.file() != File::a) && (_squarePosPair.rank() != Rank::r1) &&
-							(_position == (_squarePosPair.rank() - 1, _squarePosPair.file() - 1)))
-						{
-							// Pawn would take
-							return _squarePosPair;
-						};
-
-						if (_squarePosPair.rank() == Rank::r7)
-						{
-							// Look for diagonal - 2 capture
-							if ((_squarePosPair.file() != File::h) &&
-								(_position == (_squarePosPair.rank() - 2, _squarePosPair.file() + 1)))
-							{
-								// Pawn would take
-								return _squarePosPair;
-							};
-							if ((_squarePosPair.file() != File::a) &&
-								(_position == (_squarePosPair.rank() - 2, _squarePosPair.file() - 1)))
-							{
-								// Pawn would take
-								return _squarePosPair;
-							};
-						};
-					};
-				};
-				break;
-				case Piece::king:
-				{
-					if (distance(_squarePosPair.file(), _position.file()) <= 1 &&
-						distance(_squarePosPair.rank(), _position.rank()) <= 1)
-					{
-						// King is threatening
-						return _squarePos;
-					};
-				};
-				break;
-				default:
-					break;
-				}
 			};
+		};
+
+		const auto _opponentPieces = std::span<FoundPiece>
+		{
+			_opponentPiecesBuffer.data(), _opponentPieceCount
+		};
+
+		for (auto& _opponentPiece : _opponentPieces)
+		{
+			auto& _squarePiece = _opponentPiece.piece;
+			const auto _squarePosPair = PositionPair{ _opponentPiece.pos };
+
+			switch (_squarePiece)
+			{
+			case Piece::bishop:
+			{
+				const auto _movementType = classify_movement(_squarePosPair, _position);
+				if (_movementType == MovementClass::diagonal)
+				{
+					// Determine if a piece is in the path
+					auto _collidePos = find_piece_in_path(_board, _squarePosPair, _position, _movementType);
+					if (!_collidePos)
+					{
+						// Found threat!
+						return _squarePosPair;
+					};
+				};
+			};
+			break;
+			case Piece::queen:
+			{
+				const auto _movementType = classify_movement(_squarePosPair, _position);
+				if (_movementType != MovementClass::invalid)
+				{
+					// Determine if a piece is in the path
+					auto _collidePos = find_piece_in_path(_board, _squarePosPair, _position, _movementType);
+					if (!_collidePos)
+					{
+						// Found threat!
+						return _squarePosPair;
+					};
+				};
+			};
+			break;
+			case Piece::rook:
+			{
+				const auto _movementType = classify_movement(_squarePosPair, _position);
+				if (_movementType == MovementClass::rank || _movementType == MovementClass::file)
+				{
+					// Determine if a piece is in the path
+					auto _collidePos = find_piece_in_path(_board, _squarePosPair, _position, _movementType);
+					if (!_collidePos)
+					{
+						// Found threat!
+						return _squarePosPair;
+					};
+				};
+			};
+			break;
+			case Piece::knight:
+			{
+				// The position offsets for where the knight can move
+				constexpr auto _offendingOffsets = std::array
+				{
+					PositionPair_Offset{ +2, +1 },
+					PositionPair_Offset{ +1, +2 },
+					PositionPair_Offset{ -2, -1 },
+					PositionPair_Offset{ -1, -2 },
+					PositionPair_Offset{ -2, +1 },
+					PositionPair_Offset{ -1, +2 },
+					PositionPair_Offset{ +2, -1 },
+					PositionPair_Offset{ +1, -2 }
+				};
+					
+				// Determine if the pieces are offset such that the knight can hit the piece
+				const auto _offset = _squarePosPair - _position;
+				if (jc::contains(_offendingOffsets, _offset))
+				{
+					return _opponentPiece.pos;
+				};
+			};
+			break;
+			case Piece::pawn:
+			{
+				const auto _pawnColor = !_pieceColor;
+				if (_pawnColor == Color::white)
+				{
+					// Look for diagonal + 1 capture
+					if ((_squarePosPair.file() != File::h) &&
+						(_position == (_squarePosPair.rank() + 1, _squarePosPair.file() + 1)))
+					{
+						// Pawn would take
+						return _squarePosPair;
+					};
+					if ((_squarePosPair.file() != File::a) &&
+						(_position == (_squarePosPair.rank() + 1, _squarePosPair.file() - 1)))
+					{
+						// Pawn would take
+						return _squarePosPair;
+					};
+				}
+				else if (_pawnColor == Color::black)
+				{
+					// Look for diagonal - 1 capture
+					if ((_squarePosPair.file() != File::h) && (_squarePosPair.rank() != Rank::r1) &&
+						(_position == (_squarePosPair.rank() - 1, _squarePosPair.file() + 1)))
+					{
+						// Pawn would take
+						return _squarePosPair;
+					};
+					if ((_squarePosPair.file() != File::a) && (_squarePosPair.rank() != Rank::r1) &&
+						(_position == (_squarePosPair.rank() - 1, _squarePosPair.file() - 1)))
+					{
+						// Pawn would take
+						return _squarePosPair;
+					};
+				};
+			};
+			break;
+			case Piece::king:
+			{
+				if (distance(_squarePosPair.file(), _position.file()) <= 1 &&
+					distance(_squarePosPair.rank(), _position.rank()) <= 1)
+				{
+					// King is threatening
+					return _opponentPiece.pos;
+				};
+			};
+			break;
+			default:
+				break;
+			}
 		};
 
 		return std::nullopt;
