@@ -22,20 +22,65 @@ namespace lbx::chess
 	private:
 
 		/**
+		 * @brief Contains information about a turn played by this engine.
+		*/
+		struct TurnStats
+		{
+		public:
+
+			/**
+			 * @brief The full time to play the turn.
+			*/
+			std::chrono::duration<double> turn_duration{ 0.0f };
+			
+			/**
+			 * @brief The time it took to make the move tree.
+			*/
+			std::chrono::duration<double> tree_build_duration{ 0.0f };
+
+			/**
+			 * @brief The time it took to search through the move tree.
+			*/
+			std::chrono::duration<double> tree_search_duration{ 0.0f };
+
+			/**
+			 * @brief The list of move lines the engine searched down sorted from best to worst.
+			*/
+			std::vector<RatedLine> possible_lines{};
+
+			/**
+			 * @brief The depth of search for the move tree.
+			*/
+			size_t search_depth = 0;
+
+			/**
+			 * @brief The total number of nodes constructed in the move tree.
+			*/
+			size_t move_tree_node_count = 0;
+
+			/**
+			 * @brief The initial board state.
+			*/
+			BoardWithState initial_board{};
+		};
+
+		/**
 		 * @brief Determines the best move to play.
 		 * 
 		 * @param _board The state of the chess board.
 		 * @param _player The player who we are playing as.
+		 * @param _stats Optional stats object to fill out.
 		 * @return The best move in our opinion.
 		*/
-		Move determine_best_move(const BoardWithState& _board, Color _player);
+		Move determine_best_move(const BoardWithState& _board, Color _player, TurnStats* _stats = nullptr);
 
 		/**
 		 * @brief Determines the search depth to use for a give board state.
 		 * @param _board Chess board to get search depth for.
+		 * @param _stats Optional stats object to fill out.
 		 * @return Search depth.
 		*/
-		size_t determine_search_depth(const BoardWithState& _board) const;
+		size_t determine_search_depth(const BoardWithState& _board, TurnStats* _stats = nullptr) const;
 
 		/**
 		 * @brief Constructs a move tree for a chess board.
@@ -44,9 +89,10 @@ namespace lbx::chess
 		 * 
 		 * @param _board Chess board initial state.
 		 * @param _depth Depth for the tree.
+		 * @param _stats Optional stats object to fill out.
 		 * @return Constructed move tree.
 		*/
-		MoveTree construct_move_tree(const BoardWithState& _board, size_t _depth);
+		MoveTree construct_move_tree(const BoardWithState& _board, size_t _depth, TurnStats* _stats = nullptr);
 
 	public:
 
@@ -78,6 +124,8 @@ namespace lbx::chess
 				while (fs::exists(_movePath));
 				return std::ofstream{ _movePath };
 			};
+
+			void append_log(const TurnStats& _stats);
 
 			Logger(std::string _gameName)
 			{
@@ -111,6 +159,7 @@ namespace lbx::chess
 			fs::path folder_;
 			int move_number_ = 1;
 		};
+		friend Logger;
 
 		std::optional<Logger> logger_{};
 
@@ -118,7 +167,7 @@ namespace lbx::chess
 		/**
 		 * @brief Just the one for now
 		*/
-		std::array<TreeBuildThread, 8> build_threads_{};
+		basic_worker_pool<TreeBuildTask> build_pool_{ 8 };
 
 	};
 };

@@ -1,6 +1,7 @@
 #include "baby_engine.hpp"
 
 #include "utility/io.hpp"
+#include "utility/json.hpp"
 
 #include <lambdex/chess/chess.hpp>
 #include <lambdex/chess/fen.hpp>
@@ -18,20 +19,14 @@
 #include <fstream>
 #include <algorithm>
 
-#include <barrier>
-
 
 namespace lbx::chess
 {
 	constexpr auto dc = [](const auto& v) { return std::chrono::duration_cast<std::chrono::duration<double>>(v); };
 
 
-	/**
-	 * @brief Determines the search depth to use for a give board state.
-	 * @param _board Chess board to get search depth for.
-	 * @return Search depth.
-	*/
-	size_t ChessEngine_Baby::determine_search_depth(const BoardWithState& _board) const
+
+	size_t ChessEngine_Baby::determine_search_depth(const BoardWithState& _board, TurnStats* _stats) const
 	{
 		const auto _complexity = rate_complexity(_board);
 		size_t _treeDepth = 3;
@@ -40,11 +35,11 @@ namespace lbx::chess
 		{
 			_treeDepth = 7;
 		}
-		else if (_complexity <= 150)
+		else if (_complexity <= 100)
 		{
 			_treeDepth = 6;
 		}
-		else if (_complexity <= 250)
+		else if (_complexity <= 150)
 		{
 			_treeDepth = 5;
 		}
@@ -60,98 +55,96 @@ namespace lbx::chess
 		return _treeDepth;
 	};
 
-	/**
-	 * @brief Constructs a move tree for a chess board.
-	 *
-	 * This will use the thread pool to parralelize the construction of the tree.
-	 *
-	 * @param _board Chess board initial state.
-	 * @param _depth Depth for the tree.
-	 * @return Constructed move tree.
-	*/
-	MoveTree ChessEngine_Baby::construct_move_tree(const BoardWithState& _board, size_t _depth)
+	MoveTree ChessEngine_Baby::construct_move_tree(const BoardWithState& _board, size_t _depth, TurnStats* _stats)
 	{
 		TreeBuilder _builder{};
 
-		// Create the initial set of responses
-		auto _moveTree = _builder.make_move_tree(_board);
-
-		// Fill out branches
+		if (_depth <= 3)
 		{
-			auto& _buildThreads = this->build_threads_;
+			// Construct tree in this thread
+			return _builder.make_move_tree(_board, _depth);
+		}
+		else
+		{
+			// Contruct tree using thread pool
 
-			auto _buildThreadIt = _buildThreads.begin();
-			const auto _buildThreadsEnd = _buildThreads.end();
+			// Create the initial set of responses
+			auto _moveTree = _builder.make_move_tree(_board);
 
-			// Assign nodes out to the threads
-			for (auto& m : _moveTree)
+			// Fill out branches
 			{
-				auto _board = _moveTree.initial_board_;
-				apply_move(_board, m.get_move());
-				TreeBuildTask _task{ _board, m, _depth };
+				auto& _buildPool = this->build_pool_;
 
-				// Keep going until we've assigned the task to a thread
-				while (true)
+				// Assign nodes out to the threads
+				for (auto& m : _moveTree)
 				{
-					const auto _assignedWork = !_buildThreadIt->is_working();
-					if (_assignedWork)
-					{
-						_buildThreadIt->assign_work(_task);
-					};
+					// Create the task
+					auto _board = _moveTree.initial_board_;
+					apply_move(_board, m.get_move());
+					TreeBuildTask _task{ _board, m, _depth - 1 };
 
-					++_buildThreadIt;
-					if (_buildThreadIt == _buildThreadsEnd)
-					{
-						_buildThreadIt = _buildThreads.begin();
-						std::this_thread::yield();
-					};
-
-					if (_assignedWork)
-					{
-						break;
-					};
+					// Assign work to pool
+					_buildPool.assign_work(std::move(_task));
 				};
+
+				// Wait until pool is finished
+				_buildPool.wait_until_all_finished();
 			};
 
-			// Make sure they've all finished
-			for (auto& _thread : _buildThreads)
-			{
-				_thread.wait_until_finished();
-			};
+			// Return finished tree
+			return _moveTree;
 		};
-
-		// Return finished tree
-		return _moveTree;
 	};
 
-	/**
-	 * @brief Determines the best move to play.
-	 *
-	 * @param _board The state of the chess board.
-	 * @param _player The player who we are playing as.
-	 * @return The best move in our opinion.
-	*/
-	Move ChessEngine_Baby::determine_best_move(const BoardWithState& _board, Color _player)
+	Move ChessEngine_Baby::determine_best_move(const BoardWithState& _board, Color _player, TurnStats* _stats)
 	{
+		if (_stats)
+		{
+			_stats->initial_board = _board;
+		};
+
+
 		jc::timer _tm{};
 		_tm.start();
 
 		jc::timer _turnTime{};
 		_turnTime.start();
-
 		
+		// Determine how deep to search
 		const auto _treeDepth = this->determine_search_depth(_board);
+		if (_stats)
+		{
+			_stats->search_depth = _treeDepth;
+		};
 
-
-		const auto _treeTime = _tm.elapsed();
-		_tm.start();
+		// Build our move tree
 		auto _moveTree = this->construct_move_tree(_board, _treeDepth);
+		const auto _treeTime = _tm.elapsed();
+
+		if (_stats)
+		{
+			_stats->move_tree_node_count = _moveTree.child_count();
+			_stats->tree_build_duration = _treeTime;
+		};
+		
+		_tm.start();
+
+
+		// Search the move tree to find the set of lines we may play
 
 		TreeBuilder _builder{};
 
 		auto _lines = _builder.pick_best_from_tree(_moveTree);
 		const auto _pickTime = _tm.elapsed();
+		
+		if (_stats)
+		{
+			_stats->possible_lines = _lines;
+			_stats->tree_search_duration = _pickTime;
+		};
+
 		_tm.start();
+
 
 
 
@@ -174,91 +167,67 @@ namespace lbx::chess
 		// How long it took to play the turn
 		const auto _fullTurnTime = _turnTime.elapsed();
 
-		// Logging for the selected line to play
-		if (auto& _logger = this->logger_; _logger)
+		if (_stats)
 		{
-			auto& _bestLine = _lines.front();
-			std::ofstream f = _logger->start_logging_move();
-		
-			{
-				f << "Stats:\n";
-				writeln(f, "full turn time  = {}s", dc(_fullTurnTime).count());
-				writeln(f, "tree build time = {}s", dc(_treeTime).count());
-				writeln(f, "pick time       = {}s", dc(_pickTime).count());
-
-				writeln(f,
-R"(
-==================================================
-				Inputs and ideas
-==================================================
-)");
-
-				bool _myTurn = true;
-				writeln(f, "\ninitial : fen = {}\n", chess::get_board_fen(_board));
-				f << _board << '\n';
-				f << "possible moves:\n";
-				for (auto& m : _lines)
-				{
-					write(f, "\t{{ ");
-					
-					_myTurn = true;
-					for (auto& _move : m)
-					{
-						auto _rating = _move.get_rating();
-						if (!_myTurn)
-						{
-							_rating *= -1;
-						};
-
-						write(f, "{}({}) ", _move.get_move(), _rating);
-						_myTurn = !_myTurn;
-					};
-					writeln(f, " }}");
-				};
-
-				BoardWithState _lineBoard{ _board };
-				for (size_t n = 0; n != _lines.size() && n != 3; ++n)
-				{
-					writeln(f,
-R"(
-==================================================
-					Move line {}
-==================================================
-)", n);
-					// The line we will be logging
-					auto& _line = _lines[n];
-					
-					// Reset the board
-					_lineBoard = _board;
-					_myTurn = true;
-
-					// Loop through move in the move line
-					for (auto& m : _line)
-					{
-						if (_myTurn)
-						{
-							writeln(f, "\nme : {}\n", m.get_rating());
-						}
-						else
-						{
-							writeln(f, "\nopponent : {}\n", m.get_rating());
-						};
-
-						apply_move(_lineBoard, m.get_move());
-						f << m.get_move().to_string() << " fen = " << chess::get_board_fen(_lineBoard) << '\n' << _lineBoard;
-
-						_myTurn = !_myTurn;
-					};
-				};
-			};
-
-			f.flush(); 
-		}
+			_stats->turn_duration = _fullTurnTime;
+		};
 
 		return _final.front();
 	};
 
 
+	void ChessEngine_Baby::Logger::append_log(const TurnStats& _stats)
+	{
+		std::ofstream f = this->start_logging_move();
+
+		json _json = json::object();
+		
+		{
+			json _times = json::object();
+			_times["turn"] = _stats.turn_duration.count();
+			_times["tree_build"] = _stats.tree_build_duration.count();
+			_times["tree_search"] = _stats.tree_search_duration.count();
+			_json["times"] = _times;
+		};
+
+		{
+			json _tree = json::object();
+			_tree["depth"] = _stats.search_depth;
+			_tree["size"] = _stats.move_tree_node_count;
+			_json["tree"] = _tree;
+		};
+		
+		{
+			json _lines = json::array();
+			for (auto& l : _stats.possible_lines)
+			{
+				json _line = json::array();
+				bool _myTurn = true;
+				for (auto& m : l)
+				{
+					json _move = json::object();
+					_move["move"] = m.get_move().to_string();
+					
+					if (_myTurn)
+					{
+						_move["rating"] = m.get_rating();
+					}
+					else
+					{
+						_move["rating"] = -m.get_rating();
+					};
+					_myTurn = !_myTurn;
+
+					_line.push_back(_move);
+				};
+				_lines.push_back(_line);
+			};
+			_json["lines"] = _lines;
+		};
+
+		f << _json.dump(1, '\t');
+		f.flush();
+	};
 
 
 	void ChessEngine_Baby::play_turn(IGameInterface& _game)
@@ -274,7 +243,14 @@ R"(
 
 		println("playing turn for game {}", _game.get_game_name());
 
-		const auto _move = this->determine_best_move(_game.get_board(), _game.get_color());
+		TurnStats _stats{};
+		const auto _move = this->determine_best_move(_game.get_board(), _game.get_color(), &_stats);
+		
+		if (this->logger_)
+		{
+			this->logger_->append_log(_stats);
+		};
+
 		if (!_game.submit_move(_move))
 		{
 			_game.resign();

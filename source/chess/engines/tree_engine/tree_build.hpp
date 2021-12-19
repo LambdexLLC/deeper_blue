@@ -1,6 +1,8 @@
 #pragma once
 
 #include "utility/io.hpp"
+#include "utility/thread_pool.hpp"
+
 
 #include <lambdex/chess/move_tree.hpp>
 
@@ -206,6 +208,10 @@ namespace lbx::chess
 			auto& _board = this->board_;
 			_builder.calculate_move_tree_node_responses(_board, this->node_.get(), this->depth_);
 		};
+		void operator()()
+		{
+			this->invoke();
+		};
 
 		TreeBuildTask(BoardWithState _board, jc::reference_ptr<MoveTree::Node> _node, size_t _depth) :
 			board_{ _board },
@@ -231,162 +237,6 @@ namespace lbx::chess
 		size_t depth_;
 	};
 
-	/**
-	 * @brief Provides an interface around a thread for running TreeBuildTask(s)
-	*/
-	class TreeBuildThread
-	{
-	private:
-
-		struct DropBarrierGuarded
-		{
-		public:
-
-			void reset()
-			{
-				this->barrier_->barrier_.arrive_and_drop();
-			};
-
-			DropBarrierGuarded(jc::reference_ptr<TreeBuildThread> _barrier) :
-				barrier_{ _barrier }
-			{};
-
-		private:
-			jc::reference_ptr<TreeBuildThread> barrier_;
-		};
-		friend DropBarrierGuarded;
-
-		using DropBarrierGuard = jc::guard<DropBarrierGuarded>;
-
-
-
-		/**
-		 * @brief The actual main function for the thread
-		 * @param _stop Stop token
-		 * @param _thread The thread object that owns this thread
-		*/
-		static void thread_main(std::stop_token _stop, jc::reference_ptr<TreeBuildThread> _thread)
-		{
-			auto& _barrier = _thread->barrier_;
-			auto& _task = _thread->task_;
-
-			// Ensures that the barrier is dropped when exiting the thread
-			DropBarrierGuard _barrierGuard{ _thread };
-
-			std::string _threadID{};
-			{
-				std::stringstream _sstr{};
-				_sstr << std::this_thread::get_id();
-				_threadID = _sstr.str();
-			};
-
-			// Run until done
-			while (!_stop.stop_requested())
-			{
-				// Wait until a task was set or we are being queued to exit
-				_barrier.arrive_and_wait();
-
-				// Skip if no task was set
-				{
-					// Lock our mutex
-					auto _lck = std::unique_lock{ _thread->mtx_ };
-
-					if (!_task.has_value())
-					{
-						continue;
-					};
-					
-					// Run the task
-					_task->invoke();
-
-					// Remove task
-					_task.reset();
-				};
-
-			};
-
-		};
-
-	public:
-
-		void assign_work(TreeBuildTask _task)
-		{
-			// Set the task
-			{
-				auto _lck = std::unique_lock{ this->mtx_ };
-				this->task_ = std::move(_task);
-			};
-
-			// Allow thread to continue
-			this->barrier_.arrive_and_wait();
-		};
-
-		bool is_working() const
-		{
-			return this->task_.has_value();
-		};
-
-		void wait_until_finished()
-		{
-			this->barrier_.arrive_and_wait();
-		};
-
-
-
-
-
-		TreeBuildThread() :
-			barrier_{ 2, {} },
-			thread_{ thread_main, jc::reference_ptr{ *this } },
-			task_{ std::nullopt }
-		{};
-
-		~TreeBuildThread()
-		{
-			// Activate stop token
-			if (this->thread_.request_stop())
-			{
-				// Remove task
-				{
-					auto _lck = std::unique_lock{ this->mtx_ };
-					this->task_.reset();
-				};
-
-				// Allow thread to continue
-				this->barrier_.arrive_and_drop();
-			};
-		};
-
-	private:
-
-		/**
-		 * @brief Barrier used to hold the thread when no task is assigned
-		*/
-		mutable std::barrier<> barrier_;
-
-		/**
-		 * @brief The actual thread object
-		*/
-		std::jthread thread_;
-
-		/**
-		 * @brief Mutex for our data
-		*/
-		mutable std::mutex mtx_;
-
-		/**
-		 * @brief The task assigned to this thread
-		*/
-		std::optional<TreeBuildTask> task_;
-		
-		// Prevent move/copy
-
-		TreeBuildThread(const TreeBuildThread& other) = delete;
-		TreeBuildThread& operator=(const TreeBuildThread& other) = delete;
-
-		TreeBuildThread(TreeBuildThread&& other) noexcept = delete;
-		TreeBuildThread& operator=(TreeBuildThread&& other) noexcept = delete;
-	};
-
+	using TreeBuildThread = basic_worker_thread<TreeBuildTask>;
 
 }
