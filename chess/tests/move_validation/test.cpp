@@ -96,11 +96,8 @@ int subtest_threatened()
 
 	{
 		auto _board = create_board_from_fen("1n1k4/8/1pbpPbB1/p2p1N2/P2P4/5NP1/1P2K3/2R5 b - - 3 34");
-		JCLIB_ASSERT(is_piece_threatened(_board, (File::f, Rank::r6)).has_value() == false);
-		__debugbreak();
+		ASSERT(is_piece_threatened(_board, (File::f, Rank::r6)).has_value() == false);
 	};
-
-	return 0;
 
 	PASS();
 };
