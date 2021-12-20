@@ -19,6 +19,5 @@ namespace lbx::chess
 	void set_application_root_path(const fs::path& _filepath);
 
 
-
 };
 

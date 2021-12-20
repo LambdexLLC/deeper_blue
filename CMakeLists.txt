@@ -2,15 +2,15 @@
 #   Root cmake lists for the deeper_blue project
 #
 
-cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
-project(deeper_blue LANGUAGES CXX VERSION 0.0.1)
-
-set(CMAKE_CXX_STANDARD 20)
+cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
+project(deeper_blue VERSION 0.0.1)
 
 
 include ("CMakeUtils.cmake")
-add_subdirectory("lib")
 
+foreach(i IN LISTS add_subdirs)
+    add_subdirectory("${i}")
+endforeach()
 
 
 # Libraries to be privately linked
@@ -29,8 +29,6 @@ include (CTest)
 enable_testing()
 
 
-
-add_subdirectory("chess")
 
 add_executable(${PROJECT_NAME}-exe "source/main.cpp")
 

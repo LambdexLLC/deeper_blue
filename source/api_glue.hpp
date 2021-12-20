@@ -5,6 +5,8 @@
 	to interact with the chess engines
 */
 
+#include "controller/controller_host.hpp"
+
 #include "chess/engines/random_engine.hpp"
 #include "chess/engines/baby_engine.hpp"
 #include "chess/engines/neural_engine.hpp"
@@ -93,6 +95,9 @@ namespace lbx::chess
 
 namespace lbx
 {
+	// Forward decl for controller API.
+	class AccountAPI;
+
 	/**
 	 * @brief Interface implementation for interacting with a single chess game
 	*/
@@ -323,9 +328,39 @@ namespace lbx
 	};
 
 	/**
+	 * @brief Interface implementation for the remote controller.
+	*/
+	class ControllerAPI final : public lbx::chess::IControllerAPI
+	{
+	public:
+
+		/**
+		 * @brief Challenges a user on lichess to a chess match.
+		 * @param _username The name of the user to challenge.
+		*/
+		Result challenge_lichess_user(const std::string& _username) final;
+
+		/**
+		 * @brief Challenges a bot on lichess to a chess match.
+		 * @param _level Stockfish level to challenge.
+		*/
+		Result challenge_lichess_bot(int _level) final;
+
+		/**
+		 * @brief Constructs the controller API referencing the account API for callbacks.
+		*/
+		ControllerAPI(jc::reference_ptr<AccountAPI> _account);
+
+	private:
+
+		jc::reference_ptr<AccountAPI> account_;
+	};
+
+
+	/**
 	 * @brief Implementation for the AccountAPI interface
 	*/
-	struct AccountAPI final : public lbx::api::LichessAccountAPI
+	class AccountAPI final : public lbx::api::LichessAccountAPI
 	{
 	protected:
 
@@ -340,6 +375,12 @@ namespace lbx
 		void assign_to_game(const std::string& _gameID, std::unique_ptr<chess::IChessEngine> _engine);
 
 	public:
+
+		// Expose some of the lichess API
+
+		using api::LichessAccountAPI::challenge_user;
+		using api::LichessAccountAPI::challenge_ai;
+
 
 		/**
 		 * @brief Invoked when a player challenges you
@@ -365,6 +406,10 @@ namespace lbx
 		*/
 		std::vector<std::unique_ptr<lbx::api::LichessGameAPI>> games_{};
 
+		/**
+		 * @brief The remote controller host object.
+		*/
+		chess::ControllerHost controller_;
 	};
 
 };

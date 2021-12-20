@@ -11,13 +11,23 @@ namespace lbx::chess
 	*/
 	void ControllerHost::start_server(const std::string& _host, int _port)
 	{
-		auto& _api = *this->api_;
 		auto& _server = this->server_;
-
-		_server.Get("/test", [this](const http::Request& _request, http::Response& _response)
+		_server.Post("/lichess/challenge/user", [this](const http::Request& _request, http::Response& _response)
 			{
-				_response.set_content(this->api_->test(), "text/plain");
-				_response.status = 200;
+				if (!_request.has_param("username"))
+				{
+					_response.status = 400;
+					_response.body = R"({ "error" : "missing name param" })";
+					return;
+				};
+
+				const auto _username = _request.get_param_value("username");
+				const auto _result = this->api_->challenge_lichess_user(_username);
+
+				_response.status = _result.status;
+				_response.body = _result.content.dump();
+
+				return;
 			});
 
 		_server.listen(_host, _port);

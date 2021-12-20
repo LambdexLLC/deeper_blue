@@ -16,6 +16,8 @@
 #include <iostream>
 #include <functional>
 
+
+
 namespace lbx
 {
 	/**
@@ -114,6 +116,14 @@ namespace lbx
 	template <typename TaskT, typename Enable = void>
 	class basic_worker_thread;
 
+
+	/**
+	 * @brief When true, enables some debug logging for the worker threads.
+	*/
+	constexpr inline bool log_debug_messages_for_worker_threads_v = true;
+
+
+
 	/**
 	 * @brief Interface for a thread that can be assigned work to process.
 	 * 
@@ -189,6 +199,12 @@ namespace lbx
 			{
 				// Wait until a task was set or we are being queued to exit
 				_barrier.arrive_and_wait();
+
+				// Log start message if enabled
+				if constexpr (log_debug_messages_for_worker_threads_v)
+				{
+					std::cout << std::this_thread::get_id() << "Started";
+				};
 
 				// Process ALL assigned tasks
 				while (true)

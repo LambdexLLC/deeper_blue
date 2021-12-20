@@ -106,6 +106,13 @@ namespace lbx::http
 				this->state_->server.Get(_pattern, std::move(_handler));
 				return *this;
 			};
+			
+			// DO NOT CALL AFTER LISTENING !!!!
+			Server& Post(const std::string& _pattern, http::Server::Handler _handler)
+			{
+				this->state_->server.Post(_pattern, std::move(_handler));
+				return *this;
+			};
 
 			// DO NOT CALL AFTER LISTENING !!!!
 			Server& Post(const std::string& _pattern, http::Server::HandlerWithContentReader _handler)

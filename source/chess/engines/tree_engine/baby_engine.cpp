@@ -59,7 +59,7 @@ namespace lbx::chess
 	{
 		TreeBuilder _builder{};
 
-		if (_depth <= 3)
+		if (_depth <= 2)
 		{
 			// Construct tree in this thread
 			return _builder.make_move_tree(_board, _depth);

@@ -14,6 +14,56 @@ namespace lbx
 namespace lbx
 {
 	/**
+	 * @brief Challenges a user on lichess to a chess match.
+	 * @param _username The name of the user to challenge.
+	*/
+	ControllerAPI::Result ControllerAPI::challenge_lichess_user(const std::string& _username)
+	{
+		Result _result{};
+		_result.content = json::object();
+
+		if (this->account_->challenge_user(_username))
+		{
+			_result.status = 200;
+			_result.content["result"] = "good challenge";
+		}
+		else
+		{
+			_result.status = 400;
+			_result.content["error"] = "something failed i guess lol";
+		};
+
+		return _result;
+	};
+
+	/**
+	 * @brief Challenges a bot on lichess to a chess match.
+	 * @param _level Stockfish level to challenge.
+	*/
+	ControllerAPI::Result ControllerAPI::challenge_lichess_bot(int _level)
+	{
+		Result _result{};
+		_result.status = 200;
+		_result.content = json::object();
+		_result.content["what"] = "your mom your mom";
+		return _result;
+	};
+
+
+
+	/**
+	 * @brief Constructs the controller API referencing the account API for callbacks.
+	*/
+	ControllerAPI::ControllerAPI(jc::reference_ptr<AccountAPI> _account) :
+		account_{ _account }
+	{};
+
+};
+
+
+namespace lbx
+{
+	/**
 	 * @brief Assigns a chess engine to a game
 	 * @param _gameID ID of the game to assign the engine to
 	 * @param _engine Engine to assign to the game
@@ -71,18 +121,14 @@ namespace lbx
 		};
 	};
 
-	AccountAPI::AccountAPI()
-	{
-		// Create a game API for each of the current games
-		const auto _games = this->get_current_games();
-		for (auto& _game : _games)
-		{
-			//this->assign_to_game(_game, jc::make_unique<chess::ChessEngine_Baby>());
-		};
 
-		if (_games.empty())
+	AccountAPI::AccountAPI() :
+		controller_
 		{
-			this->on_no_current_games();
-		};
+			jc::make_unique<ControllerAPI>(jc::reference_ptr{ *this }),
+			"localhost", 42069
+		}
+	{
+		// Nothing for now
 	};
 };
