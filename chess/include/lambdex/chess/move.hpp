@@ -5,9 +5,10 @@
 #include "basic.hpp"
 #include "position.hpp"
 
+#include <lambdex/utility/format.hpp>
+
 #include <array>
 #include <string>
-#include <format>
 #include <charconv>
 #include <string_view>
 
@@ -203,16 +204,16 @@ namespace lbx::chess
 
 };
 #pragma endregion STRING_CONVERSIONS
+
 #pragma region MOVE_FORMATTER
-namespace std
+namespace lbx
 {
 	template <>
-	struct formatter<lbx::chess::Move> : public formatter<std::string, char>
+	struct formatter<chess::Move>
 	{
-		auto format(const lbx::chess::Move& _move, auto& _ctx)
+		auto format(const chess::Move& _move)
 		{
-			const auto _str = _move.to_string();
-			return formatter<std::string, char>::format(_str, _ctx);
+			return _move.to_string();
 		};
 	};
 };
