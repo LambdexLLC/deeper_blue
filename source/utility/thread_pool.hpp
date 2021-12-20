@@ -18,6 +18,33 @@
 
 
 
+#pragma region THREAD_ID_FORMATTER
+
+// Quick formatter for thread IDs
+
+#include <sstream>
+
+namespace lbx
+{
+	/**
+	 * @brief Just preforms the string conversion for thread IDs
+	*/
+	template <>
+	struct formatter<std::thread::id>
+	{
+		auto format(const std::thread::id& _id)
+		{
+			std::stringstream _sstr{};
+			_sstr << _id;
+			return _sstr.str();
+		};
+	};
+};
+
+#pragma endregion
+
+
+
 namespace lbx
 {
 	/**
@@ -120,7 +147,7 @@ namespace lbx
 	/**
 	 * @brief When true, enables some debug logging for the worker threads.
 	*/
-	constexpr inline bool log_debug_messages_for_worker_threads_v = true;
+	constexpr inline bool log_debug_messages_for_worker_threads_v = false;
 
 
 
@@ -200,10 +227,10 @@ namespace lbx
 				// Wait until a task was set or we are being queued to exit
 				_barrier.arrive_and_wait();
 
-				// Log start message if enabled
+				// Log working message if enabled
 				if constexpr (log_debug_messages_for_worker_threads_v)
 				{
-					std::cout << std::this_thread::get_id() << "Started";
+					println("Thread {} : Started", std::this_thread::get_id());
 				};
 
 				// Process ALL assigned tasks
@@ -215,10 +242,22 @@ namespace lbx
 					// Exit from processing if there is no task to process
 					if (!_state->task)
 					{
+						// Log working message if enabled
+						if constexpr (log_debug_messages_for_worker_threads_v)
+						{
+							println("Thread {} : Finished", std::this_thread::get_id());
+						};
+
 						break;
 					}
 					else
 					{
+						// Log working message if enabled
+						if constexpr (log_debug_messages_for_worker_threads_v)
+						{
+							println("Thread {} : Working", std::this_thread::get_id());
+						};
+
 						auto& _task = _state->task.value();
 						jc::invoke(_task);
 						_state->task.reset();

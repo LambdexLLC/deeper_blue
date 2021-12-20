@@ -73,7 +73,7 @@ namespace lbx::chess
 
 			// Fill out branches
 			{
-				auto& _buildPool = this->build_pool_;
+				auto& _buildPool = *this->build_pool_;
 
 				// Assign nodes out to the threads
 				for (auto& m : _moveTree)
@@ -182,6 +182,8 @@ namespace lbx::chess
 
 		json _json = json::object();
 		
+		_json["initial_board"] = chess::get_board_fen(_stats.initial_board);
+
 		{
 			json _times = json::object();
 			_times["turn"] = _stats.turn_duration.count();
@@ -258,6 +260,9 @@ namespace lbx::chess
 	};
 
 
-	ChessEngine_Baby::ChessEngine_Baby()
-	{};
+	ChessEngine_Baby::ChessEngine_Baby(std::shared_ptr<TreeBuildPool> _pool) :
+		build_pool_{ std::move(_pool) }
+	{
+		JCLIB_ASSERT(this->build_pool_);
+	};
 };

@@ -43,9 +43,19 @@ namespace lbx
 	ControllerAPI::Result ControllerAPI::challenge_lichess_bot(int _level)
 	{
 		Result _result{};
-		_result.status = 200;
 		_result.content = json::object();
-		_result.content["what"] = "your mom your mom";
+
+		if (this->account_->challenge_ai(_level))
+		{
+			_result.status = 200;
+			_result.content["result"] = "good challenge";
+		}
+		else
+		{
+			_result.status = 400;
+			_result.content["error"] = "something failed i guess lol";
+		};
+		
 		return _result;
 	};
 
@@ -103,7 +113,7 @@ namespace lbx
 		const std::string _gameID = _event.at("game").at("id");
 
 		// Assign a new engine to the game
-		this->assign_to_game(_gameID, jc::make_unique<chess::ChessEngine_Baby>());
+		this->assign_to_game(_gameID, jc::make_unique<chess::ChessEngine_Baby>(this->tree_build_pool_));
 	};
 
 	/**

@@ -410,6 +410,11 @@ namespace lbx
 		 * @brief The remote controller host object.
 		*/
 		chess::ControllerHost controller_;
+
+		/**
+		 * @brief TEMPORARY thread pool for tree building.
+		*/
+		std::shared_ptr<chess::TreeBuildPool> tree_build_pool_{ new chess::TreeBuildPool{ 8 } };
 	};
 
 };
