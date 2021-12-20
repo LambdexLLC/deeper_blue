@@ -15,8 +15,6 @@
 
 
 
-
-
 int main(int _nargs, const char* _vargs[])
 {
 	using namespace lbx::chess_view;
@@ -39,35 +37,10 @@ int main(int _nargs, const char* _vargs[])
 	GraphicsState _state{};
 	if (!init_graphics(_state)) { return -1; };
 
-	std::unordered_map<std::string, gl::unique_program> _shaderPrograms{};
-	try
-	{
-		const auto _shadersJson = get_config_value("shaders");
-		const auto _root = get_application_root();
-
-		for (auto& s : _shadersJson)
-		{
-			const std::string _name = s.at("name");
-			const std::string_view _vertexPath = s.at("vertex_path");
-			const std::string_view _fragmentPath = s.at("fragment_path");
-
-			auto _program = load_simple_shader_program(_root / _vertexPath, _root / _fragmentPath);
-			_shaderPrograms.insert_or_assign(_name, std::move(_program));
-		};
-	}
-	catch (const lbx::json::exception& _exc)
-	{
-		std::cout << _exc.what() << '\n';
-	};
 
 
 
-	 
 	
-
-	auto _boardShader = _shaderPrograms.at("board").id();
-	auto _textShader = _shaderPrograms.at("text").id();
-
 
 
 
@@ -76,6 +49,35 @@ int main(int _nargs, const char* _vargs[])
 	WindowOrthoProjection _projection{ _state.window_.size_buffer() };
 	_projection.invoke(_state.window_);
 
+
+
+	auto _viewBuffer = gl::new_vbo();
+	
+	{
+		const auto _mat = _projection.matrix();
+		gl::buffer_data(_viewBuffer, std::span{ &_mat[0][0], 16 });
+	};
+
+	{
+		gl::program_id _program = _state.resources().board_shader;
+
+		struct UniformBlock
+		{
+			gl::uniform_block_location location;
+			std::string name;
+		};
+
+		const auto _location = glGetUniformBlockIndex(_program.get(), "View");
+		std::cout << _location << '\n';
+
+		glUniformBlockBinding(_program.get(), _location, 0);
+		_viewBuffer.bind(gl::vbo_target::uniform);
+		glBindBufferRange(GL_UNIFORM_BUFFER, 0, _viewBuffer.get(), 0, sizeof(float) * 16);
+	};
+
+
+
+
 	using namespace lbx;
 
 	auto _fontSize = text::FontSize_Pixels{ 0, 64 };
@@ -83,7 +85,7 @@ int main(int _nargs, const char* _vargs[])
 
 
 	// Draws text
-	text::TextArtist _arialTextArtist{ _arialFont, _textShader };
+	text::TextArtist _arialTextArtist{ _arialFont, _state.resources().text_shader };
 
 	auto _block = _arialTextArtist.add_text("Your mom", 400.0f, 400.0f);
 	_arialTextArtist.set_text(_block, "No, your mom.");
@@ -92,7 +94,7 @@ int main(int _nargs, const char* _vargs[])
 
 	{
 		auto _artist = jc::make_unique<BoardArtist>(chess::make_standard_board(), _state.window_);
-		_artist->configure_attributes(_boardShader);
+		_artist->configure_attributes(_state.resources().board_shader);
 		_state.insert_artist(std::move(_artist));
 	};
 
@@ -101,8 +103,14 @@ int main(int _nargs, const char* _vargs[])
 	{
 		{
 			const auto _mat = _projection.matrix();
-			const auto _uni = gl::get_program_resource_location(_textShader, gl::resource_type::uniform, "projection").value();
-			gl::set_uniform(_textShader, _uni, _mat);
+			gl::buffer_subdata(_viewBuffer, std::span{ &_mat[0][0], 16 });
+		};
+
+		{
+			const auto _mat = _projection.matrix();
+			gl::program_id _shader = _state.resources().text_shader;
+			const auto _uni = gl::get_resource_location(_shader, gl::resource_type::uniform, "projection").value();
+			gl::set_uniform(_shader, _uni, _mat);
 		};
 
 		_state.clear();

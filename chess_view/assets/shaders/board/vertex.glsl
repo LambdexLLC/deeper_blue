@@ -25,8 +25,13 @@ out float piece_alpha_mask;
 uniform vec2 square_size;
 
 // Standard object uniforms
-uniform mat4 projection;
 uniform mat4 model;
+
+layout(std140) uniform View
+{
+	mat4 projection;
+};
+
 
 
 void main()

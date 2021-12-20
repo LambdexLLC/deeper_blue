@@ -6,6 +6,7 @@
 set(add_subdirs 
     "lib"
     "chess"
+    "chess_view"
     "controller")
 
 

@@ -8,7 +8,6 @@ namespace lbx::chess_view
 {
 	inline std::string read_text_file(const fs::path& _path)
 	{
-		std::cout << _path.generic_string() << '\n';
 		std::ifstream _file{ _path };
 		std::string _data(fs::file_size(_path), '\0');
 		_file.read(_data.data(), _data.size());

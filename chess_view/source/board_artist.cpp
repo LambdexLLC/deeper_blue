@@ -184,11 +184,11 @@ namespace lbx::chess_view
 		gl::set_vertex_divisor(_instanceBindingIdx, 1);
 
 
-		gl::vertex_attribute_index _basePos = gl::get_program_resource_location(_program, gl::resource_type::program_input, "base_pos").value();
+		gl::vertex_attribute_index _basePos = gl::get_resource_location(_program, gl::resource_type::program_input, "base_pos").value();
 		gl::enable_attribute_array(_basePos);
 		gl::set_attribute_binding(_basePos, _baseBindingIdx);
 
-		gl::vertex_attribute_index _baseUVs = gl::get_program_resource_location(_program, gl::resource_type::program_input, "base_uvs").value();
+		gl::vertex_attribute_index _baseUVs = gl::get_resource_location(_program, gl::resource_type::program_input, "base_uvs").value();
 		gl::enable_attribute_array(_baseUVs);
 		gl::set_attribute_binding(_baseUVs, _baseBindingIdx);
 
@@ -196,19 +196,19 @@ namespace lbx::chess_view
 		gl::set_attribute_format(_baseUVs, gl::typecode::gl_float, 2, false, sizeof(float) * 3);
 
 
-		gl::vertex_attribute_index _instancePos = gl::get_program_resource_location(_program, gl::resource_type::program_input, "instance_pos").value();
+		gl::vertex_attribute_index _instancePos = gl::get_resource_location(_program, gl::resource_type::program_input, "instance_pos").value();
 		gl::enable_attribute_array(_instancePos);
 		gl::set_attribute_binding(_instancePos, _instanceBindingIdx);
 
-		gl::vertex_attribute_index _instancePiece = gl::get_program_resource_location(_program, gl::resource_type::program_input, "instance_piece").value();
+		gl::vertex_attribute_index _instancePiece = gl::get_resource_location(_program, gl::resource_type::program_input, "instance_piece").value();
 		gl::enable_attribute_array(_instancePiece);
 		gl::set_attribute_binding(_instancePiece, _instanceBindingIdx);
 
-		gl::vertex_attribute_index _instanceAlpha = gl::get_program_resource_location(_program, gl::resource_type::program_input, "instance_alpha").value();
+		gl::vertex_attribute_index _instanceAlpha = gl::get_resource_location(_program, gl::resource_type::program_input, "instance_alpha").value();
 		gl::enable_attribute_array(_instanceAlpha);
 		gl::set_attribute_binding(_instanceAlpha, _instanceBindingIdx);
 
-		gl::vertex_attribute_index _instanceBgCol = gl::get_program_resource_location(_program, gl::resource_type::program_input, "instance_background_color").value();
+		gl::vertex_attribute_index _instanceBgCol = gl::get_resource_location(_program, gl::resource_type::program_input, "instance_background_color").value();
 		gl::enable_attribute_array(_instanceBgCol);
 		gl::set_attribute_binding(_instanceBgCol, _instanceBindingIdx);
 
@@ -218,9 +218,9 @@ namespace lbx::chess_view
 		gl::set_attribute_format(_instanceBgCol, gl::typecode::gl_unsigned_byte, 3, true, sizeof(float) * 4);
 
 
-		this->square_size_uni_ = gl::get_program_resource_location(_program, gl::resource_type::uniform, "square_size").value();
-		this->projection_uni_ = gl::get_program_resource_location(_program, gl::resource_type::uniform, "projection").value();
-		this->model_uni_ = gl::get_program_resource_location(_program, gl::resource_type::uniform, "model").value();
+		this->square_size_uni_ = gl::get_resource_location(_program, gl::resource_type::uniform, "square_size").value();
+		//this->projection_uni_ = gl::get_resource_location(_program, gl::resource_type::uniform, "projection").value();
+		this->model_uni_ = gl::get_resource_location(_program, gl::resource_type::uniform, "model").value();
 	};
 
 	void BoardArtist::draw(lbx::chess_view::GraphicsState& _state)
@@ -231,7 +231,7 @@ namespace lbx::chess_view
 		gl::bind(this->piece_texture_, gl::texture_target::array2D);
 
 		gl::set_uniform(this->program_, this->square_size_uni_, this->square_width_, this->square_height_);
-		gl::set_uniform(this->program_, this->projection_uni_, this->projection_.matrix());
+		//gl::set_uniform(this->program_, this->projection_uni_, this->projection_.matrix());
 		gl::set_uniform(this->program_, this->model_uni_, this->model_matrix_);
 
 		glDrawArraysInstanced(GL_TRIANGLES, 0, this->base_verts_.size(), this->instances_.size());

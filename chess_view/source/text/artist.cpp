@@ -251,18 +251,18 @@ namespace lbx::text
 		gl::bind_vertex_buffer(_baseBindingIdx, this->vbo_, 0, sizeof(Vertex));
 		gl::set_vertex_divisor(_baseBindingIdx, 0);
 
-		gl::vertex_attribute_index _basePos = gl::get_program_resource_location(_program, gl::resource_type::program_input, "in_pos").value();
+		gl::vertex_attribute_index _basePos = gl::get_resource_location(_program, gl::resource_type::program_input, "in_pos").value();
 		gl::enable_attribute_array(_basePos);
 		gl::set_attribute_binding(_basePos, _baseBindingIdx);
 
-		gl::vertex_attribute_index _baseUVs = gl::get_program_resource_location(_program, gl::resource_type::program_input, "in_uvs").value();
+		gl::vertex_attribute_index _baseUVs = gl::get_resource_location(_program, gl::resource_type::program_input, "in_uvs").value();
 		gl::enable_attribute_array(_baseUVs);
 		gl::set_attribute_binding(_baseUVs, _baseBindingIdx);
 
 		gl::set_attribute_format(_basePos, gl::typecode::gl_float, 2, false, 0);
 		gl::set_attribute_format(_baseUVs, gl::typecode::gl_float, 3, false, sizeof(float) * 2);
 
-		this->model_uni_ = gl::get_program_resource_location(_program, gl::resource_type::uniform, "model").value_or(gl::resource_location{});
+		this->model_uni_ = gl::get_resource_location(_program, gl::resource_type::uniform, "model").value_or(gl::resource_location{});
 	};
 
 	bool TextArtist::init()

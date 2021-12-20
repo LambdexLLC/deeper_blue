@@ -1,6 +1,7 @@
 #pragma once
 
 #include "window.hpp"
+#include "resources.hpp"
 
 #include <jclib/memory.h>
 
@@ -25,6 +26,9 @@ namespace lbx::chess_view
 		virtual ~IArtist() = default;
 	};
 
+	/**
+	 * @brief Application wide graphics state
+	*/
 	class GraphicsState
 	{
 	public:
@@ -72,9 +76,34 @@ namespace lbx::chess_view
 		};
 
 
+		/**
+		 * @brief Accessor method for graphics resources.
+		 * @return Graphics resources object.
+		*/
+		GFXResources& resources() noexcept
+		{
+			return this->resources_;
+		};
+
+		/**
+		 * @brief Accessor method for graphics resources.
+		 * @return Graphics resources object.
+		*/
+		const GFXResources& resources() const noexcept
+		{
+			return this->resources_;
+		};
+
+
+
 
 		Window window_;
 		std::vector<std::unique_ptr<IArtist>> artists_{};
+
+	private:
+		
+		GFXResources resources_{};
+
 	};
 
 

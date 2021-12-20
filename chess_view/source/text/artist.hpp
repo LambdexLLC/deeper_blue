@@ -13,7 +13,9 @@
 
 namespace lbx::text
 {
-	
+	/**
+	 * @brief Groups glyphs and draws them onto the screen.
+	*/
 	class TextArtist
 	{
 	private:

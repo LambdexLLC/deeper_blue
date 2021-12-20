@@ -31,6 +31,41 @@ namespace lbx::chess_view
 		};
 	};
 
+
+	/**
+	 * @brief Sets the opengl options we are using.
+	*/
+	inline void set_gl_options()
+	{
+		gl::enable_debug_output_synchronous();
+		gl::set_debug_callback(test_debug_callback, nullptr);
+
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	};
+
+	/**
+	 * @brief Loads opengl and sets gl options.
+	 * @param _window Window (context) to load.
+	 * @return True on good load, false otherwise.
+	*/
+	inline bool init_gl_context(GLFWwindow* _window)
+	{
+		glfwMakeContextCurrent(_window);
+		if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+		{
+			return false;
+		}
+		else
+		{
+			set_gl_options();
+			return true;
+		};
+	};
+
+
+
 	bool init_graphics(GraphicsState& _state)
 	{
 		if (!glfwInit()) { return false; };
@@ -39,16 +74,15 @@ namespace lbx::chess_view
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 
 		_state.window_ = GLFWWindowHandle{ glfwCreateWindow(800, 600, "ChessView", nullptr, nullptr) };
-		glfwMakeContextCurrent(_state.window_);
-		if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) { return false; };
+		if (!init_gl_context(_state.window_))
+		{
+			return false;
+		};
 
-
-		gl::enable_debug_output_synchronous();
-		gl::set_debug_callback(test_debug_callback, nullptr);
-
-		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		if (!_state.resources().load())
+		{
+			return false;
+		};
 
 		return true;
 	};
