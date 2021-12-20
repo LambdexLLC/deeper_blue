@@ -13,9 +13,15 @@
 
 namespace lbx::chess
 {
+	/**
+	 * @brief The thread pool type for move tree construction.
+	*/
+	using TreeBuildPool = basic_worker_pool<TreeBuildTask>;
+
+
 
 	/**
-	 * @brief Babys first bot that isnt random
+	 * @brief Babys first bot that isnt random.
 	*/
 	class ChessEngine_Baby : public IChessEngine
 	{
@@ -103,8 +109,8 @@ namespace lbx::chess
 		void play_turn(IGameInterface& _game) final;
 
 
-
-		ChessEngine_Baby();
+		// Assigns the engine to use a thread pool for tree building
+		ChessEngine_Baby(std::shared_ptr<TreeBuildPool> _pool);
 
 	private:
 
@@ -165,9 +171,9 @@ namespace lbx::chess
 
 
 		/**
-		 * @brief Just the one for now
+		 * @brief The thread pool to use for move tree construction
 		*/
-		basic_worker_pool<TreeBuildTask> build_pool_{ 8 };
+		std::shared_ptr<TreeBuildPool> build_pool_;
 
 	};
 };

@@ -1,5 +1,7 @@
 #include "lichess_http_api.hpp"
 
+#include <lambdex/chess/fen.hpp>
+
 #include "utility/io.hpp"
 #include "utility/json.hpp"
 
@@ -62,57 +64,6 @@ namespace lbx::api::lichess
 		};
 	};
 
-	// Returns a true or an error string on failure
-	// https://lichess.org/api#operation/challengeCreate
-	jc::maybe<bool, std::string> challenge_user(http::Client& _client, std::string_view _username)
-	{
-		const auto _path = format("/api/challenge/{}", _username);
-		http::Params _params
-		{
-			{ "rated", "false" },
-			{ "days",  "1" },
-			{ "color", "random" },
-			{ "fen",  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" },
-			{ "message", "Your game with {opponent} is ready: {game}." }
-		};
-		const auto _result = _client.Post(_path.c_str(), _params);
-		if (_result)
-		{
-			if (_result->status == 200)
-			{
-				const auto _response = json::parse(_result->body, nullptr, false);
-				if (_response.is_discarded())
-				{
-					JCLIB_ABORT();
-					return std::string{};
-				};
-
-				return true;
-			}
-			else if (_result->status == 400)
-			{
-				const auto _response = json::parse(_result->body, nullptr, false);
-				if (_response.is_discarded())
-				{
-					JCLIB_ABORT();
-					return std::string{};
-				};
-
-				const std::string _error = _response.at("error");
-				return _error;
-			}
-			else
-			{
-				JCLIB_ABORT();
-				return std::string{};
-			};
-		}
-		else
-		{
-			JCLIB_ABORT();
-			return std::string{};
-		};
-	};
 
 	// Returns a true or an error string on failure
 	// https://lichess.org/api#operation/boardGameMove
@@ -155,11 +106,18 @@ namespace lbx::api::lichess
 		};
 	};
 
-	// Challenges the AI to a game
-	// https://lichess.org/api#operation/challengeAi
-	inline jc::maybe<bool, std::string> challenge_ai(http::Client& _client, const http::Params& _params)
+
+	/**
+	 * @brief Implementation helper for creating a lichess challenge.
+	 *
+	 * @param _client HTTP client object to send request.
+	 * @param _path HTTP POST endpoint.
+	 * @param _params POST parameters.
+	 * @return True on success, error string otherwise.
+	*/
+	inline jc::maybe<bool, std::string> make_challenge(http::Client& _client, const std::string& _path, const http::Params& _params)
 	{
-		const auto _result = _client.Post("/api/challenge/ai", _params);
+		const auto _result = _client.Post(_path.c_str(), _params);
 		if (_result)
 		{
 			if (_result->status == 200 || _result->status == 201)
@@ -192,32 +150,92 @@ namespace lbx::api::lichess
 			return std::string{};
 		};
 	};
-	
-	jc::maybe<bool, std::string> challenge_ai(http::Client& _client, int _level)
+
+	/**
+	 * @brief Creates HTTP parameters for a challenge's game settings.
+	 * @param _settings Game settings.
+	 * @return The challenge parameters object.
+	*/
+	inline http::Params make_challenge_http_params(const GameSettings& _settings)
 	{
 		http::Params _params
 		{
-			{ "level", std::to_string(_level) },
-			{ "days", "1" },
 			{ "color", "random" },
-			{ "variant", "standard" },
-			{ "fen",  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" }
+			{ "fen", chess::get_board_fen(chess::make_standard_board()) },
+			{ "variant", _settings.variant },
+			{ "rated", format("{}", _settings.rated) },
+			{ "message", "Your game with {opponent} is ready: {game}." }
 		};
-		return challenge_ai(_client, _params);
-	};
-	jc::maybe<bool, std::string> challenge_ai_bullet(http::Client& _client, int _level)
-	{
-		http::Params _params
+
+		// Set time controls
+		switch (_settings.time_control.type())
 		{
-			{ "level", std::to_string(_level) },
-			{ "clock.limit", "300" },
-			{ "clock.increment", "0" },
-			{ "color", "random" },
-			{ "variant", "standard" },
-			{ "fen",  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" }
+		case TimeControl::Type::unlimited:
+			// No params
+			break;
+		
+		case TimeControl::Type::real_time:
+		{
+			auto& _tc = _settings.time_control.get<TimeControl::Type::real_time>();
+			_params.insert({ "clock.limit", std::to_string(_tc.limit.count()) });
+			_params.insert({ "clock.increment", std::to_string(_tc.increment.count()) });
 		};
-		return challenge_ai(_client, _params);
+		break;
+
+		case TimeControl::Type::correspondence:
+		{
+			auto& _tc = _settings.time_control.get<TimeControl::Type::correspondence>();
+			_params.insert({ "days", std::to_string(_tc.limit.count()) });
+		};
+		break;
+
+		default:
+			JCLIB_ABORT();
+			break;
+		}
+
+		return _params;
 	};
+
+	/**
+	 * @brief Returns a true or an error string on failure
+	 *
+	 * See https://lichess.org/api#operation/challengeCreate
+	 *
+	 * @param _client HTTP client to make request with.
+	 * @param _username Name of the user to challenge.
+	 * @param _settings Game settings for the challenge.
+	 *
+	 * @return True on success, error string otherwise.
+	*/
+	jc::maybe<bool, std::string> challenge_user(http::Client& _client, std::string_view _username, GameSettings _settings)
+	{
+		const auto _path = format("/api/challenge/{}", _username);
+		const auto _params = make_challenge_http_params(_settings);
+		return make_challenge(_client, _path, _params);
+	};
+
+
+	/**
+	 * @brief Challenges the stockfish AI to a game.
+	 *
+	 * See https://lichess.org/api#operation/challengeAi
+	 *
+	 * @param _level Stockfish level.
+	 * @param _settings Game settings for the challenge.
+	 * 
+	 * @return True on success, error string otherwise.
+	*/
+	jc::maybe<bool, std::string> challenge_ai(http::Client& _client, int _level, GameSettings _settings)
+	{
+		const auto _path = "/api/challenge/ai";
+
+		auto _params = make_challenge_http_params(_settings);
+		_params.insert({ "level", std::to_string(_level) });
+		
+		return make_challenge(_client, _path, _params);
+	};
+
 
 	// Resigns from the game
 	// https://lichess.org/api#operation/botGameResign
@@ -259,3 +277,42 @@ namespace lbx::api::lichess
 	};
 
 };
+
+namespace lbx::api::lichess
+{
+
+	/**
+	 * @brief Constructs the game settings for standard bullet chess.
+	 * @return Game settings.
+	*/
+	GameSettings GameSettings::bullet_chess(bool _rated)
+	{
+		using namespace std::chrono_literals;
+		
+		// Use default settings
+		GameSettings _out = default_settings(_rated);
+		
+		// But change the time control
+		_out.time_control = TimeControl::RealTime
+		{
+			.limit = 5min,
+			.increment = 0s
+		};
+
+		return _out;
+	};
+
+	/**
+	 * @brief Constructs the default game settings.
+	 * @return Game settings.
+	*/
+	GameSettings GameSettings::default_settings(bool _rated)
+	{
+		GameSettings _out{};
+		_out.time_control = TimeControl::Correspondence{ std::chrono::days{ 1 } };
+		_out.variant = "standard";
+		_out.rated = _rated;
+		return _out;
+	};
+
+}

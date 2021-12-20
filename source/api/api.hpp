@@ -10,6 +10,7 @@
 
 #include <jclib/memory.h>
 
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -22,6 +23,8 @@ namespace lbx::api
 
 	// Forward decl for account API
 	class LichessGameAPI;
+
+	
 
 	/**
 	 * @brief Abstract base class for recieving and reacting to

@@ -248,7 +248,7 @@ namespace lbx::api
 	*/
 	bool LichessAccountAPI::challenge_ai_bullet(int _level)
 	{
-		const auto _result = lichess::challenge_ai_bullet(get_account_api_state().client(), _level);
+		const auto _result = lichess::challenge_ai(get_account_api_state().client(), _level, lichess::GameSettings::bullet_chess());
 		return _result.has_value() && _result.value();
 	};
 
