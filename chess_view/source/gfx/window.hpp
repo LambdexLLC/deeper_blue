@@ -49,6 +49,8 @@ namespace lbx::chess_view
 	*/
 	using WindowSizeListener = WindowSizeBuffer::listener_type;
 
+
+
 	/**
 	 * @brief Small interface for interacting with a window
 	*/

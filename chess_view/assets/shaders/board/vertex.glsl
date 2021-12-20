@@ -27,7 +27,7 @@ uniform vec2 square_size;
 // Standard object uniforms
 uniform mat4 model;
 
-layout(std140) uniform View
+layout(std140) uniform UIView
 {
 	mat4 projection;
 };

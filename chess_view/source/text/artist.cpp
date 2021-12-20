@@ -226,6 +226,11 @@ namespace lbx::text
 		this->buffer_data();
 	};
 
+	void TextArtist::remove_text(TextBlockID _textBlock)
+	{
+		this->blocks_.erase(_textBlock);
+		this->buffer_data();
+	};
 
 
 	void TextArtist::set_model_uniform()

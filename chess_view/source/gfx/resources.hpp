@@ -20,6 +20,9 @@ namespace lbx::chess_view
 		bool load();
 
 
+
+
+
 		/**
 		 * @brief The text shader program.
 		*/
@@ -30,6 +33,5 @@ namespace lbx::chess_view
 		*/
 		gl::unique_program board_shader{};
 	};
-
 
 };

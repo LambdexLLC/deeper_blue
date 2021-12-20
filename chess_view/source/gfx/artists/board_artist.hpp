@@ -9,9 +9,7 @@
 
 #include <jclib/ranges.h>
 
-
 #include <lambdex/chess/board.hpp>
-
 
 namespace lbx
 {
@@ -118,22 +116,37 @@ namespace lbx::chess_view
 
 		void resync_square_size();
 
-		void create_instances(const lbx::chess::PieceBoard& _board);
+		void create_instances(const chess::PieceBoard& _board);
 
 	public:
 
 		void set_square_size(float _width, float _height);
 
-		bool init(lbx::chess_view::Window& _window);
-
 		void configure_attributes(gl::program_id _program);
 
-		void draw(lbx::chess_view::GraphicsState& _state) final;
 
-		void set_board(const lbx::chess::PieceBoard& _board);
 
-		BoardArtist(const lbx::chess::PieceBoard& _board, lbx::chess_view::Window& _window);
+		/**
+		 * @brief Intializes the artist and acquires resources.
+		 * @param _state Graphics state.
+		 * @return True on good init, false otherwise.
+		*/
+		bool init(GraphicsState& _state) final;
 
+		/**
+		 * @brief Draws the artist's data onto the screen.
+		 * @param _state Graphics state.
+		*/
+		void draw(GraphicsState& _state) final;
+
+		/**
+		 * @brief Sets the board that is being drawn.
+		 * @param _board Chess board to draw.
+		*/
+		void set_board(const chess::PieceBoard& _board);
+
+		// Sets the board for this to draw
+		BoardArtist(const chess::PieceBoard& _board);
 
 	private:
 
@@ -163,10 +176,7 @@ namespace lbx::chess_view
 
 		gl::uniform_location square_size_uni_{};
 
-		gl::uniform_location projection_uni_{};
 		gl::uniform_location model_uni_{};
-
-		lbx::chess_view::WindowOrthoProjection projection_{};
 		glm::mat4 model_matrix_{ 1.0f };
 	};
 

@@ -126,10 +126,13 @@ namespace lbx::chess_view
 		this->resync_square_size();
 	};
 
-	bool BoardArtist::init(lbx::chess_view::Window& _window)
+	/**
+	 * @brief Intializes the artist and acquires resources.
+	 * @param _state Graphics state.
+	 * @return True on good init, false otherwise.
+	*/
+	bool BoardArtist::init(GraphicsState& _state)
 	{
-		this->projection_ = lbx::chess_view::WindowOrthoProjection{ _window.size_buffer() };
-
 		// Load up the image
 		{
 			auto _image = lbx::chess_view::load_png_file(SOURCE_ROOT "/assets/textures/chess_pieces.png");
@@ -165,6 +168,10 @@ namespace lbx::chess_view
 		_ibo = gl::new_vbo();
 		gl::bind(_ibo, gl::vbo_target::array);
 		gl::buffer_data(_ibo, this->instances_);
+
+
+		// Configure attributes with shader
+		this->configure_attributes(_state.resources().board_shader);
 
 		return true;
 	};
@@ -219,7 +226,6 @@ namespace lbx::chess_view
 
 
 		this->square_size_uni_ = gl::get_resource_location(_program, gl::resource_type::uniform, "square_size").value();
-		//this->projection_uni_ = gl::get_resource_location(_program, gl::resource_type::uniform, "projection").value();
 		this->model_uni_ = gl::get_resource_location(_program, gl::resource_type::uniform, "model").value();
 	};
 
@@ -231,29 +237,22 @@ namespace lbx::chess_view
 		gl::bind(this->piece_texture_, gl::texture_target::array2D);
 
 		gl::set_uniform(this->program_, this->square_size_uni_, this->square_width_, this->square_height_);
-		//gl::set_uniform(this->program_, this->projection_uni_, this->projection_.matrix());
 		gl::set_uniform(this->program_, this->model_uni_, this->model_matrix_);
 
-		glDrawArraysInstanced(GL_TRIANGLES, 0, this->base_verts_.size(), this->instances_.size());
+		gl::draw_arrays_instanced(this->instances_.size(), this->base_verts_.size());
 	};
 
 	void BoardArtist::set_board(const lbx::chess::PieceBoard& _board)
 	{
 		this->create_instances(_board);
-		gl::buffer_data(this->ibo_, this->instances_);
+		gl::buffer_subdata(this->ibo_, this->instances_);
 	};
 
-	BoardArtist::BoardArtist(const lbx::chess::PieceBoard& _board, lbx::chess_view::Window& _window)
+	BoardArtist::BoardArtist(const lbx::chess::PieceBoard& _board)
 	{
-		int _fbWidth, _fbHeight;
-		glfwGetFramebufferSize(_window, &_fbWidth, &_fbHeight);
-		const auto _squareHeight = static_cast<float>(_fbHeight) / 8.0f;
-
-		this->set_square_size(_squareHeight, _squareHeight);
+		const auto _squareSize = 64.0f;
+		this->set_square_size(_squareSize, _squareSize);
 		this->create_instances(_board);
-
-		const auto _goodInit = this->init(_window);
-		JCLIB_ASSERT(_goodInit);
 	};
 
 };

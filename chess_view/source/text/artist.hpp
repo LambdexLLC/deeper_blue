@@ -64,8 +64,10 @@ namespace lbx::text
 		*/
 		void set_text_position(TextBlockID _textBlock, float _x, float _y);
 
-
 		void append_text(TextBlockID _textBlock, const std::string_view _appendText);
+
+		void remove_text(TextBlockID _textBlock);
+
 
 
 		TextArtist(jc::reference_ptr<LoadedFontFace> _font);

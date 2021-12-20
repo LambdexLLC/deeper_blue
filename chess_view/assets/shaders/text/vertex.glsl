@@ -14,7 +14,10 @@ out vec3 frag_uvs;
 
 // Standard uniform(s)
 
-uniform mat4 projection;
+layout(std140) uniform UIView
+{
+	mat4 projection;
+};
 uniform mat4 model;
 
 
