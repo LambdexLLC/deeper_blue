@@ -169,6 +169,15 @@ namespace lbx::text
 		int32_t y_scale_ = 0;
 	};
 
+	/**
+	 * @brief Holds a font size in pixels
+	*/
+	struct FontSize_Pixels
+	{
+		uint32_t width;
+		uint32_t height;
+	};
+
 
 
 	std::optional<LoadedFontFace> load_font_face_file(const char* _fontFilePath, FontSize_Pixels _sizePx, uint32_t _maxCodepoint = 255);
