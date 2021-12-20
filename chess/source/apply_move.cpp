@@ -80,6 +80,17 @@ namespace lbx::chess
 			}
 		};
 
+
+		// Check for en passant
+		if (_board.has_en_passant() &&
+			_board.get_en_passant() == Position{ _move.to } &&
+			as_white(_board.at(_move.from)) == Piece::pawn_white)
+		{
+			// Capture stupid pawn
+			const auto _pawnPos = (_move.to.file(), _move.from.rank());
+			_board[_pawnPos] = Piece::empty;
+		};
+
 		// If this is a pawn moving two squares, set en passant
 		if (as_white(_board[_move.from]) == Piece::pawn && distance(_move.from.rank(), _move.to.rank()) == 2)
 		{
@@ -126,6 +137,7 @@ namespace lbx::chess
 		
 		// Replace old piece with empty
 		_board[_move.from] = Piece::empty;
+
 
 		// If a pawn made it to the back rank and no promotion piece was specified, set
 		// the promotion piece to queen
