@@ -17,6 +17,10 @@ set(CMAKE_CXX_STANDARD 20)
 
 include ("CMakeUtils.cmake")
 
+# Enable tests
+include (CTest)
+enable_testing()
+
 foreach(i IN LISTS add_subdirs)
     add_subdirectory("${i}")
 endforeach()
@@ -32,10 +36,6 @@ set(private_link
 set(private_include 
     "source")
 
-
-# Enable tests
-include (CTest)
-enable_testing()
 
 
 
